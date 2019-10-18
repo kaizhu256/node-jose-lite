@@ -498,7 +498,7 @@ gtudSqQGI0ogrSbNb6UIxUILysbRmFN8d25kszDukf0KkssHGpuU8orfknxC8RoL
 Pk+DWW+eF1neo8zw7kAkMW0QBnVEYAVYcqxSX42Osl2d0l/KaskavT06unvCzjiR
 CwIDAQAB
 -----END PUBLIC KEY-----`));
-    tokenDecrypted = require("./lib/jwt/sign")({
+    tokenDecrypted = require("./lib/jws/sign").sign2({
         "urn:example:claim": "foo"
     }, local.keyPrivate, {
         algorithm: "PS256",
