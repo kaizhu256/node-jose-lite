@@ -397,6 +397,93 @@ local.testRunDefault(local);
 
 // run shared js-env code - function
 (function () {
-return;
+local.testCase_jose_default = async function (opt, onError) {
+/*
+ * this function will test jose's default handling-behavior
+ */
+    if (local.isBrowser) {
+        onError(undefined, opt);
+        return;
+    }
+    let tokenDecrypted2;
+    let tokenDecrypted;
+    let tokenEncrypted;
+    //!! local.jose = require("./lib");
+    local.RSAKey = require("./lib/jwk/key/rsa");
+    //!! keyPrivate = await jose.JWK.generate("RSA");
+    local.keyPrivate = new local.RSAKey(require(
+        "./lib/help/key_object"
+    ).createPrivateKey(`-----BEGIN PRIVATE KEY-----
+MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDAeyuckBoOSIYW
+emUxSLkat93gIQ9TD2pui6bcCGG44TN/S7D9I6058uSQQ7EeblynwJQ2Qe0Q1Ur8
+7RXAXlRcGF61yWAScp/n31H0lVZU3VocQ+4R87b0lvHaTliqo3tTVZZg9Uogmf/F
+U1vGFvqC251KpAYjSiCtJs1vpQjFQgvKxtGYU3x3bmSzMO6R/QqSywcam5Tyit+S
+fELxGgvbbwJGaA0rujspoYEsC1r24V4FLNsQcJXomfaCK9bUJ9AVIraekGT+uOyW
+I/Ob0P4+T4NZb54XWd6jzPDuQCQxbRAGdURgBVhyrFJfjY6yXZ3SX8pqyRq9PTq6
+e8LOOJELAgMBAAECggEAMNYPdqXJNp6IBuP/EMYW0QSdsuQwcy6SHoIoT+OAh9v7
+qOyXd2K57N4Hx+Kk6ceukpF2CV4ovACiChJNVoWYedVlElKJoaSblcU/kgLh6J5Q
+4qMJoFxpqx0xN+Zw8LqR687nXKpfqG3qSzKfMl9aKCF4gxuiwwlnyQbzUMRauVFb
+7OLe3oIyn4wDavjGZH8pCFMvRw+Dtw/8yTx+TjQGaVJ4AWO7OvJs8IG/GjkU4M1y
+cmsMsAgt/HZNwEuHhA8CECmPHk8OcSjy7jRW+USn1e92e531LNfVscdifWk5kXyi
+DBYORZ0KTl0H99Kkqe85x6CPTCpjvMfb1UZ0uS0iwQKBgQDhQCOY2J2jceNbdwvg
+YyKsC6z5ZWXB9i5Mo1laWh5giWUxR0J41XeJV/LHrvWW3ffIJXIg31lgTuGsMkOF
+bHKMpl6THQ9293SvmJjiDLpS6RsS/e7VovCMZ4ZObAlDziihq7nlRWdk24YibcD1
+3Yi8Hzdbu5+cuSxaGzXpweieuQKBgQDawdWZqLk3pc1/+3rRwCooODn06r6OltDo
+Bdc68jaIcZ3nG2rZwt4CI7srmiY4892G2YxOvmj12jFUAJGsfhXasWeXON0rXJF2
+NsPUcahbe0YbU14JwEQWC00JCClYECh6yHiUUREc3DGbFeh8jlIlRh7HyJHgcCZs
+B0BGTUDr4wKBgQC9em+3TlhkuhPPx/eUnK/426V48WPE4mqWCz7Js08kU89swY3Y
+CXGRdgsDEFkEvNmHYoB7yIXtbs2FRY7o+I3vZK/fvq1YnNZqM8o/NQezYOVmd3dl
+/Leu1BL1ewncINqrDMLGaziLbeKKqZqM9/rijLvLjau5cUcu0P7sETK1+QKBgQCl
+CkBAoY67cRfNSsmqnbQwi9sN8Fy77wTFSELNche6cR2UUpcWm3IrYxG/H5letn2X
+U2ILtpQxh+BXY+aDoMyUJevlpz0Vjc0gxsiP6v/9pM+LpiX4bVnw163S9plamzYv
+DDgMjey/PVEflDPGZQmMnY5zY9rK3VHfhsjzQS2NyQKBgQDQZdDE0Y4bHapEFvNz
+ez/X2wNEluRu6v8k4j455g4EDu8KTCmMH/U0ys/rK3IoYaYuqZawnDjyiyJ9NJHa
+cOAS0HofeNqu+SbQwPBQv+xHQK+sCNKzT6WM0WSSv2JoIR2jmlpOLkuwkE077D/q
+KxcmCpeLiMhJ83MOPcXYadKhSA==
+-----END PRIVATE KEY-----
+`));
+    local.keyPublic = new local.RSAKey(require(
+        "./lib/help/key_object"
+    ).createPublicKey(`-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwHsrnJAaDkiGFnplMUi5
+Grfd4CEPUw9qboum3AhhuOEzf0uw/SOtOfLkkEOxHm5cp8CUNkHtENVK/O0VwF5U
+XBhetclgEnKf599R9JVWVN1aHEPuEfO29Jbx2k5YqqN7U1WWYPVKIJn/xVNbxhb6
+gtudSqQGI0ogrSbNb6UIxUILysbRmFN8d25kszDukf0KkssHGpuU8orfknxC8RoL
+228CRmgNK7o7KaGBLAta9uFeBSzbEHCV6Jn2givW1CfQFSK2npBk/rjsliPzm9D+
+Pk+DWW+eF1neo8zw7kAkMW0QBnVEYAVYcqxSX42Osl2d0l/KaskavT06unvCzjiR
+CwIDAQAB
+-----END PUBLIC KEY-----`));
+    tokenDecrypted = require("./lib/jwt/sign")({
+        "urn:example:claim": "foo"
+    }, local.keyPrivate, {
+        algorithm: "RS256",
+        audience: "urn:example:client_id",
+        expiresIn: "1 hour",
+        header: {
+            typ: "JWT"
+        },
+        issuer: "https://op.example.com"
+    });
+    tokenEncrypted = require(
+        "./lib/jwe"
+    ).encrypt(tokenDecrypted, local.keyPublic);
+    tokenDecrypted2 = String(require(
+        "./lib/jwe"
+    ).decrypt(tokenEncrypted, local.keyPrivate));
+    local.assertJsonEqual(tokenDecrypted2, tokenDecrypted);
+    require("./lib/jwt/verify")(tokenDecrypted, local.keyPrivate, {
+        issuer: "https://op.example.com",
+        audience: "urn:example:client_id",
+        algorithms: [
+            "RS256"
+        ]
+    });
+    //!! console.error(tokenDecrypted2);
+    //!! console.error(Buffer.from(tokenEncrypted, "base64").toString());
+    //!! console.error(tokenEncrypted);
+    onError(undefined, opt);
+};
+
+local.testCase_jose_default(undefined, local.onErrorDefault);
 }());
 }());
