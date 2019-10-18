@@ -511,11 +511,11 @@ CwIDAQAB
         issuer: "https://op.example.com"
     });
     tokenEncrypted = require(
-        "./lib/jwe"
-    ).encrypt(tokenDecrypted, local.keyPublic);
+        "./lib/jwe/encrypt"
+    )(tokenDecrypted, local.keyPublic);
     tokenDecrypted2 = String(require(
-        "./lib/jwe"
-    ).decrypt(tokenEncrypted, local.keyPrivate));
+        "./lib/jwe/decrypt"
+    )(tokenEncrypted, local.keyPrivate));
     local.assertJsonEqual(tokenDecrypted2, tokenDecrypted);
     require("./lib/jwt/verify")(tokenDecrypted, local.keyPrivate, {
         issuer: "https://op.example.com",
