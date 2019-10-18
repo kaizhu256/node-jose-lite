@@ -408,6 +408,9 @@ local.testCase_jose_default = async function (opt, onError) {
         onError(undefined, opt);
         return;
     }
+    globalThis.jwtEpoch = function (date) {
+        return Math.floor(date.getTime() / 1000);
+    };
     globalThis.jwtSecs = function (str) {
         let matched = (
             /^(\d+|\d+\.\d+)\u0020?(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)$/i
