@@ -401,13 +401,57 @@ local.testCase_jose_default = async function (opt, onError) {
 /*
  * this function will test jose's default handling-behavior
  */
+    let tokenDecrypted2;
+    let tokenDecrypted;
+    let tokenEncrypted;
     if (local.isBrowser) {
         onError(undefined, opt);
         return;
     }
-    let tokenDecrypted2;
-    let tokenDecrypted;
-    let tokenEncrypted;
+    globalThis.jwtSecs = function (str) {
+        let matched = (
+            /^(\d+|\d+\.\d+)\u0020?(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)$/i
+        ).exec(str);
+        if (!matched) {
+            throw new TypeError("invalid time period format (" + str + ")");
+        }
+        const value = parseFloat(matched[1]);
+        const unit = matched[2].toLowerCase();
+        switch (unit) {
+        case "day":
+        case "days":
+        case "d":
+            return Math.round(value * 60 * 60 * 24);
+        case "hour":
+        case "hours":
+        case "hr":
+        case "hrs":
+        case "h":
+            return Math.round(value * 60 * 60);
+        case "minute":
+        case "minutes":
+        case "min":
+        case "mins":
+        case "m":
+            return Math.round(value * 60);
+        case "sec":
+        case "secs":
+        case "second":
+        case "seconds":
+        case "s":
+            return Math.round(value);
+        case "week":
+        case "weeks":
+        case "w":
+            return Math.round(value * 60 * 60 * 24 * 7);
+        case "year":
+        case "years":
+        case "yr":
+        case "yrs":
+        case "y":
+            return Math.round(value * 60 * 60 * 24 * 365.25);
+        }
+    };
     local.RSAKey = require("./lib/jwk/key/rsa");
     local.keyPrivate = new local.RSAKey(require(
         "./lib/help/key_object"
