@@ -408,6 +408,7 @@ local.testCase_jose_default = async function (opt, onError) {
         onError(undefined, opt);
         return;
     }
+    globalThis.KEYOBJECT = Symbol("KEYOBJECT");
     globalThis.deepClone = local.jsonCopy;
     globalThis.jwtEpoch = function (date) {
         return Math.floor(date.getTime() / 1000);
