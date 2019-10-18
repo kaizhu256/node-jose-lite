@@ -403,6 +403,7 @@ local.testCase_jose_default = async function (opt, onError) {
  */
     let tokenDecrypted2;
     let tokenDecrypted;
+    let tokenEncrypted2;
     let tokenEncrypted;
     if (local.isBrowser) {
         onError(undefined, opt);
@@ -514,10 +515,14 @@ CwIDAQAB
     tokenEncrypted = require(
         "./lib/jwe.js"
     ).encrypt(tokenDecrypted, local.keyPublic);
+    tokenEncrypted2 = require(
+        "./lib/jwe.js"
+    ).encrypt(tokenDecrypted, local.keyPrivate);
     tokenDecrypted2 = String(require(
         "./lib/jwe.js"
     ).decrypt(tokenEncrypted, local.keyPrivate));
     local.assertJsonEqual(tokenDecrypted2, tokenDecrypted);
+    local.assertJsonEqual(tokenEncrypted2, tokenEncrypted);
     require("./lib/jwt/verify")(tokenDecrypted, local.keyPrivate, {
         issuer: "https://op.example.com",
         audience: "urn:example:client_id",
