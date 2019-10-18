@@ -459,7 +459,7 @@ local.testCase_jose_default = async function (opt, onError) {
             return Math.round(value * 60 * 60 * 24 * 365.25);
         }
     };
-    local.RSAKey = require("./lib/jwk/key/rsa");
+    local.RSAKey = require("./lib/jwk/rsa");
     local.keyPrivate = new local.RSAKey(require(
         "./lib/help/key_object"
     ).createPrivateKey(`-----BEGIN PRIVATE KEY-----
