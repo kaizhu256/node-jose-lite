@@ -408,9 +408,7 @@ local.testCase_jose_default = async function (opt, onError) {
     let tokenDecrypted2;
     let tokenDecrypted;
     let tokenEncrypted;
-    //!! local.jose = require("./lib");
     local.RSAKey = require("./lib/jwk/key/rsa");
-    //!! keyPrivate = await jose.JWK.generate("RSA");
     local.keyPrivate = new local.RSAKey(require(
         "./lib/help/key_object"
     ).createPrivateKey(`-----BEGIN PRIVATE KEY-----
@@ -456,7 +454,7 @@ CwIDAQAB
     tokenDecrypted = require("./lib/jwt/sign")({
         "urn:example:claim": "foo"
     }, local.keyPrivate, {
-        algorithm: "RS256",
+        algorithm: "PS256",
         audience: "urn:example:client_id",
         expiresIn: "1 hour",
         header: {
@@ -475,7 +473,7 @@ CwIDAQAB
         issuer: "https://op.example.com",
         audience: "urn:example:client_id",
         algorithms: [
-            "RS256"
+            "PS256"
         ]
     });
     //!! console.error(tokenDecrypted2);
