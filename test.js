@@ -402,6 +402,7 @@ local.testCase_jose_default = async function (opt, onError) {
  * this function will test jose's default handling-behavior
  */
     let tokenDecrypted2;
+    let tokenDecrypted3;
     let tokenDecrypted;
     let tokenEncrypted2;
     let tokenEncrypted;
@@ -521,8 +522,11 @@ CwIDAQAB
     tokenDecrypted2 = String(require(
         "./lib/jwe.js"
     ).decrypt(tokenEncrypted, local.keyPrivate));
+    tokenDecrypted3 = String(require(
+        "./lib/jwe.js"
+    ).decrypt(tokenEncrypted2, local.keyPrivate));
     local.assertJsonEqual(tokenDecrypted2, tokenDecrypted);
-    local.assertJsonEqual(tokenEncrypted2, tokenEncrypted);
+    local.assertJsonEqual(tokenDecrypted3, tokenDecrypted);
     require("./lib/jwt/verify")(tokenDecrypted, local.keyPrivate, {
         issuer: "https://op.example.com",
         audience: "urn:example:client_id",
