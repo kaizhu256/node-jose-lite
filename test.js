@@ -584,7 +584,7 @@ local.testCase_jose_default = async function (opt, onError) {
     const uint64be = function (value) {
         let buf = Buffer.allocUnsafe(8);
         buf.writeUInt32BE(Math.floor(value / 0x100000000), 0);
-        buf.writeUInt32BE(value % 0x100000000, 4);
+        buf.writeUInt32BE(value | 0, 4);
         return buf;
     };
     const xor = function (a, b) {
