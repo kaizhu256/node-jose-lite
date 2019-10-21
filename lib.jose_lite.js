@@ -610,7 +610,7 @@ local.jweWrapKey = function (opt) {
         ), "");
     };
     crypto = require("crypto");
-    iv = Buffer.alloc(16);
+    iv = new Uint8Array(16);
     KK = local.base64ToBuffer(opt.kek);
     PP = local.base64ToBuffer(opt.cek);
     // init RR
@@ -620,7 +620,9 @@ local.jweWrapKey = function (opt) {
         RR.push(PP.slice(ii, ii + 8));
         ii += 8;
     }
-    IV = Buffer.alloc(8, "a6", "hex");
+    IV = new Uint8Array([
+        0xa6, 0xa6, 0xa6, 0xa6, 0xa6, 0xa6, 0xa6, 0xa6
+    ]);
     // 2.2.1 Key Wrap
     // https://tools.ietf.org/html/rfc3394#section-2.2.1
     if (opt.mode === "wrap") {
@@ -680,7 +682,7 @@ local.uint64be = function (value) {
 
 local.xor = function (a, b) {
     const len = Math.max(a.length, b.length);
-    const result = Buffer.alloc(len);
+    const result = new Uint8Array(len);
     let ii = 0;
     while (len > ii) {
         result[ii] = (a[ii] || 0) ^ (b[ii] || 0);
