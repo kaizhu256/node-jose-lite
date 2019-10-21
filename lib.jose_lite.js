@@ -414,20 +414,141 @@ local.jose_lite = local;
 
 
 /* validateLineSortedReset */
-// run shared js-env code - init-before
+// run shared js-env code - function
 (function () {
-if (local.isBrowser) {
-    return;
-}
+local.base64FromBuffer = function (buf) {
+/*
+ * this function will convert Uint8Array <buf> to base64
+ * https://developer.mozilla.org/en-US/Add-ons/Code_snippets/StringView#The_code
+ */
+    let ii;
+    let mod3;
+    let text;
+    let uint24;
+    let uint6ToB64;
+    // convert utf8 to Uint8Array
+    if (typeof buf === "string") {
+        buf = new TextEncoder().encode(buf);
+    }
+    buf = buf || [];
+    text = "";
+    uint24 = 0;
+    uint6ToB64 = function (uint6) {
+        return (
+            uint6 < 26
+            ? uint6 + 65
+            : uint6 < 52
+            ? uint6 + 71
+            : uint6 < 62
+            ? uint6 - 4
+            : uint6 === 62
+            ? 43
+            : 47
+        );
+    };
+    ii = 0;
+    while (ii < buf.length) {
+        mod3 = ii % 3;
+        uint24 |= buf[ii] << (16 >>> mod3 & 24);
+        if (mod3 === 2 || buf.length - ii === 1) {
+            text += String.fromCharCode(
+                uint6ToB64(uint24 >>> 18 & 63),
+                uint6ToB64(uint24 >>> 12 & 63),
+                uint6ToB64(uint24 >>> 6 & 63),
+                uint6ToB64(uint24 & 63)
+            );
+            uint24 = 0;
+        }
+        ii += 1;
+    }
+    return text.replace((
+        /A(?=A$|$)/gm
+    ), "=");
+};
+
+local.base64ToBuffer = function (b64, mode) {
+/*
+ * this function will convert <b64> to Uint8Array
+ * https://gist.github.com/wang-bin/7332335
+ */
+    let buf;
+    let byte;
+    let chr;
+    let ii;
+    let jj;
+    let map64;
+    let mod4;
+    b64 = b64 || "";
+    buf = new Uint8Array(b64.length); // 3/4
+    byte = 0;
+    jj = 0;
+    map64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    mod4 = 0;
+    ii = 0;
+    while (ii < b64.length) {
+        chr = map64.indexOf(b64[ii]);
+        if (chr >= 0) {
+            mod4 %= 4;
+            if (mod4 === 0) {
+                byte = chr;
+            } else {
+                byte = byte * 64 + chr;
+                buf[jj] = 255 & (byte >> ((-2 * (mod4 + 1)) & 6));
+                jj += 1;
+            }
+            mod4 += 1;
+        }
+        ii += 1;
+    }
+    // optimization - create resized-view of buf
+    buf = buf.subarray(0, jj);
+    return local.bufferValidateAndCoerce(buf, mode);
+};
+
+local.bufferValidateAndCoerce = function (buf, mode) {
+/*
+ * this function will validate and coerce/convert
+ * <buf> to Buffer/Uint8Array, or String if <mode> = "string"
+ */
+    // validate not 0
+    if (buf !== 0) {
+        buf = buf || "";
+    }
+    if (typeof buf === "string" && mode === "string") {
+        return buf;
+    }
+    // convert utf8 to Uint8Array
+    if (typeof buf === "string") {
+        buf = new TextEncoder().encode(buf);
+    // validate instanceof Uint8Array
+    } else if (Object.prototype.toString.call(buf) !== "[object Uint8Array]") {
+        throw new Error(
+            "bufferValidateAndCoerce - value is not instanceof "
+            + "ArrayBuffer, String, or Uint8Array"
+        );
+    }
+    // convert Uint8Array to utf8
+    if (mode === "string") {
+        return new TextDecoder().decode(buf);
+    }
+    // coerce Uint8Array to Buffer
+    if (globalThis.Buffer && Buffer.isBuffer && !Buffer.isBuffer(buf)) {
+        Object.setPrototypeOf(buf, Buffer.prototype);
+    }
+    return buf;
+};
+
 local.jweWrapKey = function (opt) {
 /*
- * https://tools.ietf.org/html/rfc3394#section-2.2.1
+ * this function will wrap/unwrap <opt>.cek with the given symmetrick <opt>.kek
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
  */
     let AA;
     let IV;
     let KK;
     let PP;
     let RR;
+    let base64FromBuffer;
     let buf;
     let cipher;
     let cnt;
@@ -435,10 +556,15 @@ local.jweWrapKey = function (opt) {
     let ii;
     let iv;
     let jj;
+    base64FromBuffer = function (b64) {
+        return local.base64FromBuffer(b64).replace((
+            /\=/g
+        ), "");
+    };
     crypto = require("crypto");
     iv = Buffer.alloc(16);
-    KK = Buffer.from(opt.kek, "base64");
-    PP = Buffer.from(opt.cek, "base64");
+    KK = local.base64ToBuffer(opt.kek);
+    PP = local.base64ToBuffer(opt.cek);
     // init RR
     RR = [];
     ii = 0;
@@ -495,7 +621,7 @@ local.jweWrapKey = function (opt) {
             }
             jj -= 1;
         }
-        return Buffer.concat(RR).toString("base64");
+        return base64FromBuffer(Buffer.concat(RR));
     }
 };
 

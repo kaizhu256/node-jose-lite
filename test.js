@@ -586,7 +586,7 @@ local.testCase_jose_default = async function (opt, onError) {
             mode: "unwrap",
             kek: "GawgguFyGrWKav7AX4VKUg"
         }),
-        "BNMfxVSd/P4LZJ36P6pqzmt81C1vawnbyLEA8I+cLM8="
+        "BNMfxVSd/P4LZJ36P6pqzmt81C1vawnbyLEA8I+cLM8"
     );
 
     // encrypt
