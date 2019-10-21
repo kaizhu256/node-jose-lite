@@ -540,31 +540,20 @@ local.testCase_jose_default = async function (opt, onError) {
 
 
 
-    // jws
-    // https://tools.ietf.org/html/rfc7515#appendix-A.2
-    let jwsPayload;
-    let jwsToken;
-    jwsPayload = (
-        "{\"iss\":\"joe\",\r\n"
-        + " \"exp\":1300819380,\r\n"
-        + " \"http://example.com/is_root\":true}"
+    // jwe
+    // https://tools.ietf.org/html/rfc7516#appendix-A.3
+    let jweHeader;
+    let jwePlaintext;
+    jwePlaintext = "Live long and prosper.";
+    jweHeader = Buffer.from(
+        "{\"alg\":\"A128KW\",\"enc\":\"A128CBC-HS256\"}"
+    ).toString("base64").replace((
+        /\=+/g
+    ), "");
+    local.assertJsonEqual(
+        jweHeader,
+        "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0"
     );
-    jwsToken = (
-        "eyJhbGciOiJSUzI1NiJ9."
-        + Buffer.from(jwsPayload).toString("base64").replace((
-            /\=+?$/
-        ), "")
-    );
-    local.assertJsonEqual(jwsToken, (
-        "eyJhbGciOiJSUzI1NiJ9"
-        + "."
-        + "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFt"
-        + "cGxlLmNvbS9pc19yb290Ijp0cnVlfQ"
-    ));
-    //!! // https://tools.ietf.org/html/rfc7516#appendix-A.1
-    //!! let jweMsg;
-    //!! jweMsg = "The true sign of intelligence is not knowledge but imagination.";
-    //!! jweCek = "saH0gFSP4XM/tAP/a5rU9ooHbltwLiJpL4LLLnrqQPw";
 
 
 
