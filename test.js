@@ -620,7 +620,10 @@ local.testCase_jose_default = async function (opt, onError) {
                     AA, RR[ii]
                 ]);
                 buf = cipher.update(buf);
-                AA = xor(buf.slice(0, 8), uint64be((RR.length * jj) + ii + 1));
+                AA = xor(
+                    buf.slice(0, 8),
+                    uint64be((RR.length * jj) + ii + 1)
+                );
                 RR[ii] = buf.slice(8, 16);
                 ii += 1;
             }
