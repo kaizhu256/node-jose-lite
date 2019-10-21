@@ -602,6 +602,7 @@ local.testCase_jose_default = async function (opt, onError) {
      * https://tools.ietf.org/html/rfc3394#section-2.2.1
      */
         let AA;
+        let IV;
         let RR;
         let buf;
         let cipher;
@@ -618,7 +619,8 @@ local.testCase_jose_default = async function (opt, onError) {
             RR.push(PP.slice(ii, ii + 8));
             ii += 8;
         }
-        AA = Buffer.alloc(8, "a6", "hex");
+        IV = Buffer.alloc(8, "a6", "hex");
+        AA = IV;
         jj = 0;
         while (jj < 6) {
             ii = 0;
@@ -629,10 +631,7 @@ local.testCase_jose_default = async function (opt, onError) {
                     AA, RR[ii]
                 ]);
                 buf = cipher.update(buf);
-                AA = xor(
-                    buf.slice(0, 8),
-                    uint64be((RR.length * jj) + ii + 1)
-                );
+                AA = xor(buf.slice(0, 8), uint64be(cnt));
                 RR[ii] = buf.slice(8, 16);
                 ii += 1;
             }
@@ -647,6 +646,7 @@ local.testCase_jose_default = async function (opt, onError) {
 
     const unwrapKey = function (key, PP) {
         let AA;
+        let IV;
         let RR;
         let buf;
         let cipher;
@@ -663,12 +663,13 @@ local.testCase_jose_default = async function (opt, onError) {
             RR.push(PP.slice(ii, ii + 8));
             ii += 8;
         }
+        IV = Buffer.alloc(8, "a6", "hex");
         AA = RR[0];
         RR = RR.slice(1);
         jj = 5;
-        while (jj >= 0) {
+        while (0 <= jj) {
             ii = RR.length - 1;
-            while (ii >= 0) {
+            while (0 <= ii) {
                 cnt = (RR.length * jj) + ii + 1;
                 buf = xor(AA, uint64be(cnt));
                 buf = Buffer.concat([
@@ -682,7 +683,7 @@ local.testCase_jose_default = async function (opt, onError) {
             }
             jj -= 1;
         }
-        if (!crypto.timingSafeEqual(Buffer.alloc(8, "a6", "hex"), AA)) {
+        if (!crypto.timingSafeEqual(IV, AA)) {
             throw new Error("unwrap failed");
         }
         return Buffer.concat(RR).toString("base64");
