@@ -597,7 +597,7 @@ local.testCase_jose_default = async function (opt, onError) {
         }
         return result;
     };
-    const jweWrapKey = function (opt, key, PP) {
+    const jweWrapKey = function (opt, PP) {
     /*
      * https://tools.ietf.org/html/rfc3394#section-2.2.1
      */
@@ -611,8 +611,11 @@ local.testCase_jose_default = async function (opt, onError) {
         let ii;
         let iv;
         let jj;
+        let keySymmetric;
         crypto = require("crypto");
         iv = Buffer.alloc(16);
+        keySymmetric = Buffer.from(opt.k, "base64");
+        // init RR
         RR = [];
         ii = 0;
         while (ii < PP.length) {
@@ -629,7 +632,7 @@ local.testCase_jose_default = async function (opt, onError) {
                 ii = 0;
                 while (ii < RR.length) {
                     cnt = (RR.length * jj) + ii + 1;
-                    cipher = crypto.createCipheriv("aes128", key, iv);
+                    cipher = crypto.createCipheriv("aes128", keySymmetric, iv);
                     buf = Buffer.concat([
                         AA, RR[ii]
                     ]);
@@ -660,7 +663,11 @@ local.testCase_jose_default = async function (opt, onError) {
                     buf = Buffer.concat([
                         buf, RR[ii], iv
                     ]);
-                    cipher = crypto.createDecipheriv("aes128", key, iv);
+                    cipher = crypto.createDecipheriv(
+                        "aes128",
+                        keySymmetric,
+                        iv
+                    );
                     buf = cipher.update(buf);
                     AA = buf.slice(0, 8);
                     RR[ii] = buf.slice(8, 16);
@@ -674,9 +681,9 @@ local.testCase_jose_default = async function (opt, onError) {
     local.assertJsonEqual(
         jweWrapKey(
             {
-                mode: "wrap"
+                mode: "wrap",
+                k: "GawgguFyGrWKav7AX4VKUg"
             },
-            Buffer.from("GawgguFyGrWKav7AX4VKUg", "base64"),
             Buffer.from(jweCek, "base64")
         ),
         "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ"
@@ -684,9 +691,9 @@ local.testCase_jose_default = async function (opt, onError) {
     local.assertJsonEqual(
         jweWrapKey(
             {
-                mode: "unwrap"
+                mode: "unwrap",
+                k: "GawgguFyGrWKav7AX4VKUg"
             },
-            Buffer.from("GawgguFyGrWKav7AX4VKUg", "base64"),
             Buffer.from(
                 "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ",
                 "base64"
