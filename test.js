@@ -542,7 +542,9 @@ local.testCase_jose_default = async function (opt, onError) {
 
     // jwe
     // https://tools.ietf.org/html/rfc7516#appendix-A.3
+    let jweCek;
     let jweHeader;
+    let jweKeySymmetric;
     let jwePlaintext;
     jwePlaintext = "Live long and prosper.";
     jweHeader = Buffer.from(
@@ -554,6 +556,14 @@ local.testCase_jose_default = async function (opt, onError) {
         jweHeader,
         "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0"
     );
+    jweCek = "BNMfxVSd/P4LZJ36P6pqzmt81C1vawnbyLEA8I+cLM8";
+    jweKeySymmetric = {
+        "kty": "oct",
+        "k": "GawgguFyGrWKav7AX4VKUg"
+    };
+    console.error(jwePlaintext);
+    console.error(Buffer.from(jweCek, "base64").length * 8);
+    console.error(Buffer.from(jweKeySymmetric.k, "base64").length * 8);
 
 
 
