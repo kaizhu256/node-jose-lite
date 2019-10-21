@@ -644,12 +644,12 @@ local.testCase_jose_default = async function (opt, onError) {
 
     // encrypt
     //!! let cipher;
-    let decipher;
-    let decrypted;
-    let encrypted;
-    let iv;
+    //!! let decipher;
+    //!! let decrypted;
+    //!! let encrypted;
+    //!! let iv;
     //!! let plaintext;
-    key = Buffer.from(jweKeySymmetric.k, "base64");
+    //!! key = Buffer.from(jweKeySymmetric.k, "base64");
     //!! iv = Buffer.from("AxY8DCtDaGlsbGljb3RoZQ", "base64");
     //!! plaintext = jweCek;
 
