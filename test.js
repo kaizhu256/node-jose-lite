@@ -572,15 +572,15 @@ local.testCase_jose_default = async function (opt, onError) {
 
     // wrap 256-bit jweCek
     // with 128-bit jweKeySymmetric "GawgguFyGrWKav7AX4VKUg"
-    const split = function (input, size) {
-        const output = [];
-        let ii = 0;
-        while (input.length > ii) {
-            output.push(input.slice(ii, ii + size));
-            ii += size;
-        }
-        return output;
-    };
+    //!! const split = function (input, size) {
+        //!! const output = [];
+        //!! let ii = 0;
+        //!! while (input.length > ii) {
+            //!! output.push(input.slice(ii, ii + size));
+            //!! ii += size;
+        //!! }
+        //!! return output;
+    //!! };
     const uint64be = function (value) {
         let buf = Buffer.allocUnsafe(8);
         buf.writeUInt32BE(Math.floor(value / 0x100000000), 0);
@@ -597,7 +597,7 @@ local.testCase_jose_default = async function (opt, onError) {
         }
         return result;
     };
-    const wrapKey = function (key, cek) {
+    const wrapKey = function (key, PP) {
     /*
      * https://tools.ietf.org/html/rfc3394#section-2.2.1
      */
@@ -611,7 +611,13 @@ local.testCase_jose_default = async function (opt, onError) {
         let jj;
         crypto = require("crypto");
         iv = Buffer.alloc(16);
-        RR = split(Buffer.from(cek, "base64"), 8);
+        //!! RR = split(PP, 8);
+        RR = [];
+        ii = 0;
+        while (ii < PP.length) {
+            RR.push(PP.slice(ii, ii + 8));
+            ii += 8;
+        }
         AA = Buffer.alloc(8, "a6", "hex");
         jj = 0;
         while (jj < 6) {
@@ -641,7 +647,7 @@ local.testCase_jose_default = async function (opt, onError) {
     local.assertJsonEqual(
         wrapKey(
             Buffer.from("GawgguFyGrWKav7AX4VKUg", "base64"),
-            jweCek
+            Buffer.from(jweCek, "base64")
         ),
         "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ"
     );
