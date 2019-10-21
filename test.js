@@ -643,6 +643,42 @@ local.testCase_jose_default = async function (opt, onError) {
             /\=+/g
         ), "");
     };
+    const unwrapKey = function (key, PP) {
+        const key = (
+            keyObject.asInput
+            ? keyObject.asInput()
+            : keyObject
+        );
+        const iv = Buffer.alloc(16);
+        let RR = split(PP, 8);
+        let AA;
+        let B;
+        let cnt;
+        let jdx;
+        AA = RR[0];
+        RR = RR.slice(1);
+        jdx = 5;
+        while (jdx >= 0) {
+            let idx = RR.length - 1;
+            while (idx >= 0) {
+                cnt = (RR.length * jdx) + idx + 1;
+                B = xor(AA, uint64be(cnt));
+                B = Buffer.concat([
+                    B, RR[idx], iv
+                ]);
+                const cipher = local.crypto.createDecipheriv("aes128", key, iv);
+                B = cipher.update(B);
+                AA = B.slice(0, 8);
+                RR[idx] = B.slice(8, 16);
+                idx -= 1;
+            }
+            jdx -= 1;
+        }
+        if (!local.crypto.timingSafeEqual(IV, AA)) {
+            throw new Error("unwrap failed");
+        }
+        return Buffer.concat(RR);
+    };
 
     local.assertJsonEqual(
         wrapKey(
@@ -667,7 +703,7 @@ local.testCase_jose_default = async function (opt, onError) {
         //!! 1) Initialize variables.
             //!! Set A0 to an initial value (see 2.2.3)
             //!! For i = 1 to n
-                //!! R[0][i] = P[i]
+                //!! RR[0][i] = P[i]
         //!! */
         //!! nn = PP.byteLength / 8;
         //!! RR = [];
@@ -680,10 +716,10 @@ local.testCase_jose_default = async function (opt, onError) {
         //!! 2) Calculate intermediate values.
 
             //!! For t = 1 to s, where s = 6n
-                //!! A[t] = MSB(64, AES(K, A[t-1] | R[t-1][1])) ^ t
+                //!! AA[t] = MSB(64, AES(K, AA[t-1] | RR[t-1][1])) ^ t
                 //!! For i = 1 to n-1
-                    //!! R[t][i] = R[t-1][i+1]
-                //!! R[t][n] = LSB(64, AES(K, A[t-1] | R[t-1][1]))
+                    //!! RR[t][i] = RR[t-1][i+1]
+                //!! RR[t][n] = LSB(64, AES(K, AA[t-1] | RR[t-1][1]))
         //!! */
         //!! tt = 1;
         //!! while (tt < 6 * n) {
