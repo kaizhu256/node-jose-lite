@@ -625,57 +625,58 @@ local.testCase_jose_default = async function (opt, onError) {
             }
             jdx += 1;
         }
-        R = [
+        return Buffer.concat([
             A
-        ].concat(R);
-        return Buffer.concat(R);
+        ].concat(R)).toString("base64").replace((
+            /\=+/g
+        ), "");
     };
+
+    local.assertJsonEqual(
+        wrapKey(
+            Buffer.from("GawgguFyGrWKav7AX4VKUg", "base64"),
+            Buffer.from(jweCek, "base64")
+        ),
+        "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ"
+    );
 
 
 
     // encrypt
-    let cipher;
+    //!! let cipher;
     let decipher;
     let decrypted;
     let encrypted;
     let iv;
-    let plaintext;
-    iv = Buffer.from("AxY8DCtDaGlsbGljb3RoZQ", "base64");
+    //!! let plaintext;
     key = Buffer.from(jweKeySymmetric.k, "base64");
-    plaintext = jweCek;
+    //!! iv = Buffer.from("AxY8DCtDaGlsbGljb3RoZQ", "base64");
+    //!! plaintext = jweCek;
 
-    console.log(Array.from(
-        wrapKey(
-            debugInline(Buffer.from("GawgguFyGrWKav7AX4VKUg", "base64")),
-            //!! key,
-            debugInline(Buffer.from(jweCek, "base64"))
-        )
-    ));
+    //!! cipher = local.crypto.createCipheriv("aes-128-cbc", key, iv);
+    //!! //!! encrypted = cipher.update("hello world", "utf8", "base64");
+    //!! encrypted = cipher.update(
+        //!! plaintext,
+        //!! "base64",
+        //!! "base64"
+    //!! );
+    //!! encrypted += cipher.final("base64");
+    //!! console.log(encrypted);
 
-    cipher = local.crypto.createCipheriv("aes-128-cbc", key, iv);
-    //!! encrypted = cipher.update("hello world", "utf8", "base64");
-    encrypted = cipher.update(
-        plaintext,
-        "base64",
-        "base64"
-    );
-    encrypted += cipher.final("base64");
-    console.log(encrypted);
-
-    // decrypt
-    let buf;
-    buf = Buffer.from(
-        "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ",
-        "base64"
-    );
-    iv = buf.slice(0, 16);
-    encrypted = buf.slice(16).toString("base64");
-    decipher = local.crypto.createDecipheriv("aes-128-cbc", key, iv);
-    //!! decipher.setAuthTag(cipher.getAuthTag());
-    decrypted = decipher.update(encrypted, "base64", "utf8");
-    decrypted += decipher.final("utf8");
-    console.log(decrypted); // 'hello, world'
-    onError(undefined, opt);
+    //!! // decrypt
+    //!! let buf;
+    //!! buf = Buffer.from(
+        //!! "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ",
+        //!! "base64"
+    //!! );
+    //!! iv = buf.slice(0, 16);
+    //!! encrypted = buf.slice(16).toString("base64");
+    //!! decipher = local.crypto.createDecipheriv("aes-128-cbc", key, iv);
+    //!! //!! decipher.setAuthTag(cipher.getAuthTag());
+    //!! decrypted = decipher.update(encrypted, "base64", "utf8");
+    //!! decrypted += decipher.final("utf8");
+    //!! console.log(decrypted); // 'hello, world'
+    //!! onError(undefined, opt);
 };
 
 local.testCase_jose_default(undefined, local.onErrorDefault);
