@@ -645,7 +645,9 @@ local.testCase_jose_default = async function (opt, onError) {
     key = Buffer.from(jweKeySymmetric.k, "base64");
     plaintext = jweCek;
 
-    console.log(wrapKey(key, plaintext));
+    console.log(
+        wrapKey(key, Buffer.from(plaintext))
+    );
 
     cipher = local.crypto.createCipheriv("aes-128-cbc", key, iv);
     //!! encrypted = cipher.update("hello world", "utf8", "base64");
