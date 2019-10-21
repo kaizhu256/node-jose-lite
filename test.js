@@ -557,7 +557,9 @@ local.testCase_jose_default = async function (opt, onError) {
         jweHeader,
         "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0"
     );
-    jweCek = "BNMfxVSd/P4LZJ36P6pqzmt81C1vawnbyLEA8I+cLM8";
+    jweCek = String("BNMfxVSd/P4LZJ36P6pqzmt81C1vawnbyLEA8I+cLM8=").replace((
+        /\=+/g
+    ), "");
     jweKeySymmetric = {
         "kty": "oct",
         "k": "GawgguFyGrWKav7AX4VKUg"
@@ -574,15 +576,30 @@ local.testCase_jose_default = async function (opt, onError) {
     let decrypted;
     let encrypted;
     let iv;
+    let plaintext;
+    iv = Buffer.from("AxY8DCtDaGlsbGljb3RoZQ", "base64");
     key = Buffer.from(jweKeySymmetric.k, "base64");
-    iv = Buffer.from(local.crypto.randomBytes(16));
-    cipher = local.crypto.createCipheriv("aes-128-gcm", key, iv);
-    encrypted = cipher.update("hello world", "utf8", "base64");
+    plaintext = jweCek;
+    cipher = local.crypto.createCipheriv("aes-128-cbc", key, iv);
+    //!! encrypted = cipher.update("hello world", "utf8", "base64");
+    encrypted = cipher.update(
+        plaintext,
+        "base64",
+        "base64"
+    );
     encrypted += cipher.final("base64");
     console.log(encrypted);
+
     // decrypt
-    decipher = local.crypto.createDecipheriv("aes-128-gcm", key, iv);
-    decipher.setAuthTag(cipher.getAuthTag());
+    let buf;
+    buf = Buffer.from(
+        "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ",
+        "base64"
+    );
+    iv = buf.slice(0, 16);
+    encrypted = buf.slice(16).toString("base64");
+    decipher = local.crypto.createDecipheriv("aes-128-cbc", key, iv);
+    //!! decipher.setAuthTag(cipher.getAuthTag());
     decrypted = decipher.update(encrypted, "base64", "utf8");
     decrypted += decipher.final("utf8");
     console.log(decrypted); // 'hello, world'
