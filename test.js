@@ -570,6 +570,70 @@ local.testCase_jose_default = async function (opt, onError) {
 
 
 
+    // wrap-key
+    const split = function (input, size) {
+        const output = [];
+        let idx = 0;
+        while (input.length > idx) {
+            output.push(input.slice(idx, idx + size));
+            idx += size;
+        }
+        return output;
+    };
+    const uint64be = function (value) {
+        let buf = Buffer.allocUnsafe(8);
+        buf.writeUInt32BE(Math.floor(value / 0x100000000), 0);
+        buf.writeUInt32BE(value % 0x100000000, 4);
+        return buf;
+    };
+    const xor = function (a, b) {
+        const len = Math.max(a.length, b.length);
+        const result = Buffer.alloc(len);
+        let idx = 0;
+        while (len > idx) {
+            result[idx] = (a[idx] || 0) ^ (b[idx] || 0);
+            idx += 1;
+        }
+        return result;
+    };
+    const IV = Buffer.alloc(8, "a6", "hex");
+    const wrapKey = function (key, payload) {
+        let crypto;
+        crypto = require("crypto");
+        const iv = Buffer.alloc(16);
+        let R = split(payload, 8);
+        let A;
+        let B;
+        let count;
+        let idx;
+        let jdx;
+        A = IV;
+        jdx = 0;
+        while (jdx < 6) {
+            idx = 0;
+            while (R.length > idx) {
+                count = (R.length * jdx) + idx + 1;
+                const cipher = crypto.createCipheriv("aes128", key, iv);
+                B = Buffer.concat([
+                    A, R[idx]
+                ]);
+                B = cipher.update(B);
+                A = xor(B.slice(0, 8), uint64be(count));
+                R[idx] = B.slice(8, 16);
+                idx += 1;
+            }
+            jdx += 1;
+        }
+        R = [
+            A
+        ].concat(R);
+        return {
+            wrapped: Buffer.concat(R)
+        };
+    };
+
+
+
     // encrypt
     let cipher;
     let decipher;
@@ -580,6 +644,9 @@ local.testCase_jose_default = async function (opt, onError) {
     iv = Buffer.from("AxY8DCtDaGlsbGljb3RoZQ", "base64");
     key = Buffer.from(jweKeySymmetric.k, "base64");
     plaintext = jweCek;
+
+    console.log(wrapKey(key, plaintext));
+
     cipher = local.crypto.createCipheriv("aes-128-cbc", key, iv);
     //!! encrypted = cipher.update("hello world", "utf8", "base64");
     encrypted = cipher.update(
