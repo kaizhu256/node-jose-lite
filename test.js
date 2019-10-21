@@ -546,7 +546,7 @@ local.testCase_jose_default = async function (opt, onError) {
     let jweHeader;
     let jweKeySymmetric;
     let jwePlaintext;
-    let key;
+    //!! let key;
     jwePlaintext = "Live long and prosper.";
     jweHeader = Buffer.from(
         "{\"alg\":\"A128KW\",\"enc\":\"A128CBC-HS256\"}"
@@ -676,7 +676,7 @@ local.testCase_jose_default = async function (opt, onError) {
     //!! decrypted = decipher.update(encrypted, "base64", "utf8");
     //!! decrypted += decipher.final("utf8");
     //!! console.log(decrypted); // 'hello, world'
-    //!! onError(undefined, opt);
+    onError(undefined, opt);
 };
 
 local.testCase_jose_default(undefined, local.onErrorDefault);
