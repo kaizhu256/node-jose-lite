@@ -505,6 +505,54 @@ local.base64ToBuffer = function (b64, mode) {
     return local.bufferValidateAndCoerce(buf, mode);
 };
 
+local.bufferConcat = function (bufList) {
+/*
+ * this function will emulate in browser, node's Buffer.concat
+ */
+    let byteLength;
+    let ii;
+    let isString;
+    let jj;
+    let result;
+    isString = true;
+    result = [
+        ""
+    ];
+    byteLength = 0;
+    bufList.forEach(function (buf) {
+        if (buf !== 0 && !(buf && buf.length)) {
+            return;
+        }
+        // optimization - concat string
+        if (isString && typeof buf === "string") {
+            result[0] += buf;
+            return;
+        }
+        isString = null;
+        buf = local.bufferValidateAndCoerce(buf);
+        byteLength += buf.byteLength;
+        result.push(buf);
+    });
+    // optimization - return string
+    if (isString) {
+        return result[0];
+    }
+    result[0] = local.bufferValidateAndCoerce(result[0]);
+    byteLength += result[0].byteLength;
+    bufList = result;
+    result = local.bufferValidateAndCoerce(new Uint8Array(byteLength));
+    ii = 0;
+    bufList.forEach(function (buf) {
+        jj = 0;
+        while (jj < buf.byteLength) {
+            result[ii] = buf[jj];
+            ii += 1;
+            jj += 1;
+        }
+    });
+    return result;
+};
+
 local.bufferValidateAndCoerce = function (buf, mode) {
 /*
  * this function will validate and coerce/convert
@@ -583,7 +631,7 @@ local.jweWrapKey = function (opt) {
             while (ii < RR.length) {
                 cnt = (RR.length * jj) + ii + 1;
                 cipher = crypto.createCipheriv("aes128", KK, iv);
-                buf = Buffer.concat([
+                buf = local.bufferConcat([
                     AA, RR[ii]
                 ]);
                 buf = cipher.update(buf);
@@ -593,11 +641,9 @@ local.jweWrapKey = function (opt) {
             }
             jj += 1;
         }
-        return Buffer.concat([
+        return base64FromBuffer(local.bufferConcat([
             AA
-        ].concat(RR)).toString("base64").replace((
-            /\=+/g
-        ), "");
+        ].concat(RR)));
     }
     // 2.2.2 Key Unwrap
     // https://tools.ietf.org/html/rfc3394#section-2.2.2
@@ -610,7 +656,7 @@ local.jweWrapKey = function (opt) {
             while (0 <= ii) {
                 cnt = (RR.length * jj) + ii + 1;
                 buf = local.xor(AA, local.uint64be(cnt));
-                buf = Buffer.concat([
+                buf = local.bufferConcat([
                     buf, RR[ii], iv
                 ]);
                 cipher = crypto.createDecipheriv("aes128", KK, iv);
@@ -621,7 +667,7 @@ local.jweWrapKey = function (opt) {
             }
             jj -= 1;
         }
-        return base64FromBuffer(Buffer.concat(RR));
+        return base64FromBuffer(local.bufferConcat(RR));
     }
 };
 
