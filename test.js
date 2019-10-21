@@ -546,6 +546,7 @@ local.testCase_jose_default = async function (opt, onError) {
     let jweHeader;
     let jweKeySymmetric;
     let jwePlaintext;
+    let key;
     jwePlaintext = "Live long and prosper.";
     jweHeader = Buffer.from(
         "{\"alg\":\"A128KW\",\"enc\":\"A128CBC-HS256\"}"
@@ -567,34 +568,22 @@ local.testCase_jose_default = async function (opt, onError) {
 
 
 
-    // encrypt returns base64-encoded ciphertext
-    const encrypt = function (key, str) {
-        // Hint: the `iv` should be unique (but not necessarily random).
-        // `randomBytes` here are (relatively) slow but convenient for
-        // demonstration.
-        const iv = Buffer.from(local.crypto.randomBytes(16), "utf8");
-        const cipher = local.crypto.createCipheriv("aes-128-gcm", key, iv);
-        // Hint: Larger inputs (it's GCM, after all!)
-        // should use the stream API
-        let enc = cipher.update(str, "utf8", "base64");
-        enc += cipher.final("base64");
-        return [
-            enc, iv, cipher.getAuthTag()
-        ];
-    };
-    // decrypt decodes base64-encoded ciphertext into a utf8-encoded string
-    const decrypt = function (key, enc, iv, authTag) {
-        const decipher = local.crypto.createDecipheriv("aes-128-gcm", key, iv);
-        decipher.setAuthTag(authTag);
-        let str = decipher.update(enc, "base64", "utf8");
-        str += decipher.final("utf8");
-        return str;
-    };
-    const KEY = Buffer.from(jweKeySymmetric.k, "base64");
-    const [
-        encrypted, iv, authTag
-    ] = encrypt(KEY, "hello, world");
-    const decrypted = decrypt(KEY, encrypted, iv, authTag);
+    // encrypt
+    let cipher;
+    let decipher;
+    let decrypted;
+    let encrypted;
+    let iv;
+    key = Buffer.from(jweKeySymmetric.k, "base64");
+    iv = Buffer.from(local.crypto.randomBytes(16), "utf8");
+    cipher = local.crypto.createCipheriv("aes-128-gcm", key, iv);
+    encrypted = cipher.update("hello world", "utf8", "base64");
+    encrypted += cipher.final("base64");
+    // decrypt
+    decipher = local.crypto.createDecipheriv("aes-128-gcm", key, iv);
+    decipher.setAuthTag(cipher.getAuthTag());
+    decrypted = decipher.update(encrypted, "base64", "utf8");
+    decrypted += decipher.final("utf8");
     console.log(encrypted);
     console.log(decrypted); // 'hello, world'
     onError(undefined, opt);
