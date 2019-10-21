@@ -572,133 +572,20 @@ local.testCase_jose_default = async function (opt, onError) {
 
     // wrap 256-bit jweCek
     // with 128-bit jweKeySymmetric "GawgguFyGrWKav7AX4VKUg"
-    //!! const split = function (input, size) {
-        //!! const output = [];
-        //!! let ii = 0;
-        //!! while (input.length > ii) {
-            //!! output.push(input.slice(ii, ii + size));
-            //!! ii += size;
-        //!! }
-        //!! return output;
-    //!! };
-    const uint64be = function (value) {
-        let buf = Buffer.allocUnsafe(8);
-        buf.writeUInt32BE(Math.floor(value / 0x100000000), 0);
-        buf.writeUInt32BE(value | 0, 4);
-        return buf;
-    };
-    const xor = function (a, b) {
-        const len = Math.max(a.length, b.length);
-        const result = Buffer.alloc(len);
-        let ii = 0;
-        while (len > ii) {
-            result[ii] = (a[ii] || 0) ^ (b[ii] || 0);
-            ii += 1;
-        }
-        return result;
-    };
-    const jweWrapKey = function (opt, PP) {
-    /*
-     * https://tools.ietf.org/html/rfc3394#section-2.2.1
-     */
-        let AA;
-        let IV;
-        let RR;
-        let buf;
-        let cipher;
-        let cnt;
-        let crypto;
-        let ii;
-        let iv;
-        let jj;
-        let keySymmetric;
-        crypto = require("crypto");
-        iv = Buffer.alloc(16);
-        keySymmetric = Buffer.from(opt.k, "base64");
-        // init RR
-        RR = [];
-        ii = 0;
-        while (ii < PP.length) {
-            RR.push(PP.slice(ii, ii + 8));
-            ii += 8;
-        }
-        IV = Buffer.alloc(8, "a6", "hex");
-        // 2.2.1 Key Wrap
-        // https://tools.ietf.org/html/rfc3394#section-2.2.1
-        if (opt.mode === "wrap") {
-            AA = IV;
-            jj = 0;
-            while (jj < 6) {
-                ii = 0;
-                while (ii < RR.length) {
-                    cnt = (RR.length * jj) + ii + 1;
-                    cipher = crypto.createCipheriv("aes128", keySymmetric, iv);
-                    buf = Buffer.concat([
-                        AA, RR[ii]
-                    ]);
-                    buf = cipher.update(buf);
-                    AA = xor(buf.slice(0, 8), uint64be(cnt));
-                    RR[ii] = buf.slice(8, 16);
-                    ii += 1;
-                }
-                jj += 1;
-            }
-            return Buffer.concat([
-                AA
-            ].concat(RR)).toString("base64").replace((
-                /\=+/g
-            ), "");
-        // 2.2.2 Key Unwrap
-        // https://tools.ietf.org/html/rfc3394#section-2.2.2
-        }
-        if (opt.mode === "unwrap") {
-            AA = RR[0];
-            RR = RR.slice(1);
-            jj = 5;
-            while (0 <= jj) {
-                ii = RR.length - 1;
-                while (0 <= ii) {
-                    cnt = (RR.length * jj) + ii + 1;
-                    buf = xor(AA, uint64be(cnt));
-                    buf = Buffer.concat([
-                        buf, RR[ii], iv
-                    ]);
-                    cipher = crypto.createDecipheriv(
-                        "aes128",
-                        keySymmetric,
-                        iv
-                    );
-                    buf = cipher.update(buf);
-                    AA = buf.slice(0, 8);
-                    RR[ii] = buf.slice(8, 16);
-                    ii -= 1;
-                }
-                jj -= 1;
-            }
-            return Buffer.concat(RR).toString("base64");
-        }
-    };
     local.assertJsonEqual(
-        jweWrapKey(
-            {
-                mode: "wrap",
-                k: "GawgguFyGrWKav7AX4VKUg"
-            },
-            Buffer.from(jweCek, "base64")
-        ),
+        local.jweWrapKey({
+            cek: jweCek,
+            mode: "wrap",
+            kek: "GawgguFyGrWKav7AX4VKUg"
+        }),
         "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ"
     );
     local.assertJsonEqual(
-        jweWrapKey(
-            {
-                mode: "unwrap",
-                k: "GawgguFyGrWKav7AX4VKUg"
-            },
-            Buffer.from(
-                "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ",
-                "base64"
-            )
-        ),
+        local.jweWrapKey({
+            cek: "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ",
+            mode: "unwrap",
+            kek: "GawgguFyGrWKav7AX4VKUg"
+        }),
         "BNMfxVSd/P4LZJ36P6pqzmt81C1vawnbyLEA8I+cLM8="
     );
 
