@@ -575,16 +575,16 @@ local.testCase_jose_default = async function (opt, onError) {
     let encrypted;
     let iv;
     key = Buffer.from(jweKeySymmetric.k, "base64");
-    iv = Buffer.from(local.crypto.randomBytes(16), "utf8");
+    iv = Buffer.from(local.crypto.randomBytes(16));
     cipher = local.crypto.createCipheriv("aes-128-gcm", key, iv);
     encrypted = cipher.update("hello world", "utf8", "base64");
     encrypted += cipher.final("base64");
+    console.log(encrypted);
     // decrypt
     decipher = local.crypto.createDecipheriv("aes-128-gcm", key, iv);
     decipher.setAuthTag(cipher.getAuthTag());
     decrypted = decipher.update(encrypted, "base64", "utf8");
     decrypted += decipher.final("utf8");
-    console.log(encrypted);
     console.log(decrypted); // 'hello, world'
     onError(undefined, opt);
 };
