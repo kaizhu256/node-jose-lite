@@ -565,12 +565,13 @@ local.testCase_jose_default = async function (opt, onError) {
         "k": "GawgguFyGrWKav7AX4VKUg"
     };
     console.error(jwePlaintext);
-    console.error(Buffer.from(jweCek, "base64").length * 8);
     console.error(Buffer.from(jweKeySymmetric.k, "base64").length * 8);
+    console.error(Buffer.from(jweCek, "base64").length * 8);
 
 
 
-    // wrap-key
+    // wrap 256-bit jweCek
+    // with 128-bit jweKeySymmetric "GawgguFyGrWKav7AX4VKUg"
     const split = function (input, size) {
         const output = [];
         let idx = 0;
@@ -627,9 +628,7 @@ local.testCase_jose_default = async function (opt, onError) {
         R = [
             A
         ].concat(R);
-        return {
-            wrapped: Buffer.concat(R)
-        };
+        return Buffer.concat(R);
     };
 
 
@@ -645,9 +644,13 @@ local.testCase_jose_default = async function (opt, onError) {
     key = Buffer.from(jweKeySymmetric.k, "base64");
     plaintext = jweCek;
 
-    console.log(
-        wrapKey(key, Buffer.from(plaintext))
-    );
+    console.log(Array.from(
+        wrapKey(
+            debugInline(Buffer.from("GawgguFyGrWKav7AX4VKUg", "base64")),
+            //!! key,
+            debugInline(Buffer.from(jweCek, "base64"))
+        )
+    ));
 
     cipher = local.crypto.createCipheriv("aes-128-cbc", key, iv);
     //!! encrypted = cipher.update("hello world", "utf8", "base64");
