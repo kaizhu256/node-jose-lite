@@ -605,13 +605,13 @@ local.testCase_jose_default = async function (opt, onError) {
         let RR;
         let buf;
         let cipher;
+        let cnt;
         let crypto;
         let ii;
         let iv;
         let jj;
         crypto = require("crypto");
         iv = Buffer.alloc(16);
-        //!! RR = split(PP, 8);
         RR = [];
         ii = 0;
         while (ii < PP.length) {
@@ -623,6 +623,7 @@ local.testCase_jose_default = async function (opt, onError) {
         while (jj < 6) {
             ii = 0;
             while (ii < RR.length) {
+                cnt = (RR.length * jj) + ii + 1;
                 cipher = crypto.createCipheriv("aes128", key, iv);
                 buf = Buffer.concat([
                     AA, RR[ii]
@@ -648,10 +649,13 @@ local.testCase_jose_default = async function (opt, onError) {
         let AA;
         let RR;
         let buf;
+        let cipher;
         let cnt;
+        let crypto;
         let ii;
         let iv;
         let jj;
+        crypto = require("crypto");
         iv = Buffer.alloc(16);
         RR = [];
         ii = 0;
@@ -663,22 +667,22 @@ local.testCase_jose_default = async function (opt, onError) {
         RR = RR.slice(1);
         jj = 5;
         while (jj >= 0) {
-            let idx = RR.length - 1;
-            while (idx >= 0) {
-                cnt = (RR.length * jj) + idx + 1;
+            ii = RR.length - 1;
+            while (ii >= 0) {
+                cnt = (RR.length * jj) + ii + 1;
                 buf = xor(AA, uint64be(cnt));
                 buf = Buffer.concat([
-                    buf, RR[idx], iv
+                    buf, RR[ii], iv
                 ]);
-                const cipher = local.crypto.createDecipheriv("aes128", key, iv);
+                cipher = crypto.createDecipheriv("aes128", key, iv);
                 buf = cipher.update(buf);
                 AA = buf.slice(0, 8);
-                RR[idx] = buf.slice(8, 16);
-                idx -= 1;
+                RR[ii] = buf.slice(8, 16);
+                ii -= 1;
             }
             jj -= 1;
         }
-        if (!local.crypto.timingSafeEqual(Buffer.alloc(8, "a6", "hex"), AA)) {
+        if (!crypto.timingSafeEqual(Buffer.alloc(8, "a6", "hex"), AA)) {
             throw new Error("unwrap failed");
         }
         return Buffer.concat(RR).toString("base64");
