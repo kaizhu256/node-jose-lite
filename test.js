@@ -643,25 +643,29 @@ local.testCase_jose_default = async function (opt, onError) {
             /\=+/g
         ), "");
     };
+
     const unwrapKey = function (key, PP) {
-        const key = (
-            keyObject.asInput
-            ? keyObject.asInput()
-            : keyObject
-        );
-        const iv = Buffer.alloc(16);
-        let RR = split(PP, 8);
         let AA;
         let B;
+        let RR;
         let cnt;
-        let jdx;
+        let ii;
+        let iv;
+        let jj;
+        iv = Buffer.alloc(16);
+        RR = [];
+        ii = 0;
+        while (ii < PP.length) {
+            RR.push(PP.slice(ii, ii + 8));
+            ii += 8;
+        }
         AA = RR[0];
         RR = RR.slice(1);
-        jdx = 5;
-        while (jdx >= 0) {
+        jj = 5;
+        while (jj >= 0) {
             let idx = RR.length - 1;
             while (idx >= 0) {
-                cnt = (RR.length * jdx) + idx + 1;
+                cnt = (RR.length * jj) + idx + 1;
                 B = xor(AA, uint64be(cnt));
                 B = Buffer.concat([
                     B, RR[idx], iv
@@ -672,12 +676,12 @@ local.testCase_jose_default = async function (opt, onError) {
                 RR[idx] = B.slice(8, 16);
                 idx -= 1;
             }
-            jdx -= 1;
+            jj -= 1;
         }
-        if (!local.crypto.timingSafeEqual(IV, AA)) {
+        if (!local.crypto.timingSafeEqual(Buffer.alloc(8, "a6", "hex"), AA)) {
             throw new Error("unwrap failed");
         }
-        return Buffer.concat(RR);
+        return Buffer.concat(RR).toString("base64");
     };
 
     local.assertJsonEqual(
@@ -687,48 +691,16 @@ local.testCase_jose_default = async function (opt, onError) {
         ),
         "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ"
     );
-
-
-
-    //!! local.keyWrap2 = function (PP, key) {
-    //!! /*
-     //!! * this function will wrap the key KEK
-     //!! * https://tools.ietf.org/html/rfc3394#section-2.2.1
-     //!! */
-        //!! let RR;
-        //!! let ii;
-        //!! let nn;
-        //!! let tt;
-        //!! /*
-        //!! 1) Initialize variables.
-            //!! Set A0 to an initial value (see 2.2.3)
-            //!! For i = 1 to n
-                //!! RR[0][i] = P[i]
-        //!! */
-        //!! nn = PP.byteLength / 8;
-        //!! RR = [];
-        //!! ii = 0;
-        //!! while (ii < n) {
-            //!! RR[0][ii].push(PP.slice(8 * ii, 8 * ii + 1));
-            //!! ii += 1;
-        //!! }
-        //!! /*
-        //!! 2) Calculate intermediate values.
-
-            //!! For t = 1 to s, where s = 6n
-                //!! AA[t] = MSB(64, AES(K, AA[t-1] | RR[t-1][1])) ^ t
-                //!! For i = 1 to n-1
-                    //!! RR[t][i] = RR[t-1][i+1]
-                //!! RR[t][n] = LSB(64, AES(K, AA[t-1] | RR[t-1][1]))
-        //!! */
-        //!! tt = 1;
-        //!! while (tt < 6 * n) {
-            //!! tt += 1;
-            //!! AA[tt]
-        //!! }
-    //!! };
-
-
+    local.assertJsonEqual(
+        unwrapKey(
+            Buffer.from("GawgguFyGrWKav7AX4VKUg", "base64"),
+            Buffer.from(
+                "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ",
+                "base64"
+            )
+        ),
+        "BNMfxVSd/P4LZJ36P6pqzmt81C1vawnbyLEA8I+cLM8="
+    );
 
     // encrypt
     //!! let cipher;
