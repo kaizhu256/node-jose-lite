@@ -604,18 +604,20 @@ local.testCase_jose_default = async function (opt, onError) {
         let AA;
         let RR;
         let buf;
+        let cipher;
         let crypto;
         let ii;
+        let iv;
         let jj;
         crypto = require("crypto");
-        const iv = Buffer.alloc(16);
+        iv = Buffer.alloc(16);
         RR = split(Buffer.from(cek, "base64"), 8);
         AA = Buffer.alloc(8, "a6", "hex");
         jj = 0;
         while (jj < 6) {
             ii = 0;
-            while (RR.length > ii) {
-                const cipher = crypto.createCipheriv("aes128", key, iv);
+            while (ii < RR.length) {
+                cipher = crypto.createCipheriv("aes128", key, iv);
                 buf = Buffer.concat([
                     AA, RR[ii]
                 ]);
@@ -643,6 +645,46 @@ local.testCase_jose_default = async function (opt, onError) {
         ),
         "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ"
     );
+
+
+
+    //!! local.keyWrap2 = function (PP, key) {
+    //!! /*
+     //!! * this function will wrap the key KEK
+     //!! * https://tools.ietf.org/html/rfc3394#section-2.2.1
+     //!! */
+        //!! let RR;
+        //!! let ii;
+        //!! let nn;
+        //!! let tt;
+        //!! /*
+        //!! 1) Initialize variables.
+            //!! Set A0 to an initial value (see 2.2.3)
+            //!! For i = 1 to n
+                //!! R[0][i] = P[i]
+        //!! */
+        //!! nn = PP.byteLength / 8;
+        //!! RR = [];
+        //!! ii = 0;
+        //!! while (ii < n) {
+            //!! RR[0][ii].push(PP.slice(8 * ii, 8 * ii + 1));
+            //!! ii += 1;
+        //!! }
+        //!! /*
+        //!! 2) Calculate intermediate values.
+
+            //!! For t = 1 to s, where s = 6n
+                //!! A[t] = MSB(64, AES(K, A[t-1] | R[t-1][1])) ^ t
+                //!! For i = 1 to n-1
+                    //!! R[t][i] = R[t-1][i+1]
+                //!! R[t][n] = LSB(64, AES(K, A[t-1] | R[t-1][1]))
+        //!! */
+        //!! tt = 1;
+        //!! while (tt < 6 * n) {
+            //!! tt += 1;
+            //!! AA[tt]
+        //!! }
+    //!! };
 
 
 
