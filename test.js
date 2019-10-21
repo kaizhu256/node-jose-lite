@@ -601,36 +601,34 @@ local.testCase_jose_default = async function (opt, onError) {
     /*
      * https://tools.ietf.org/html/rfc3394#section-2.2.1
      */
-        let A;
-        let B;
-        let R;
-        let cnt;
+        let AA;
+        let RR;
+        let buf;
         let crypto;
         let ii;
         let jj;
         crypto = require("crypto");
         const iv = Buffer.alloc(16);
-        R = split(Buffer.from(cek, "base64"), 8);
-        A = Buffer.alloc(8, "a6", "hex");
+        RR = split(Buffer.from(cek, "base64"), 8);
+        AA = Buffer.alloc(8, "a6", "hex");
         jj = 0;
         while (jj < 6) {
             ii = 0;
-            while (R.length > ii) {
-                cnt = (R.length * jj) + ii + 1;
+            while (RR.length > ii) {
                 const cipher = crypto.createCipheriv("aes128", key, iv);
-                B = Buffer.concat([
-                    A, R[ii]
+                buf = Buffer.concat([
+                    AA, RR[ii]
                 ]);
-                B = cipher.update(B);
-                A = xor(B.slice(0, 8), uint64be(cnt));
-                R[ii] = B.slice(8, 16);
+                buf = cipher.update(buf);
+                AA = xor(buf.slice(0, 8), uint64be((RR.length * jj) + ii + 1));
+                RR[ii] = buf.slice(8, 16);
                 ii += 1;
             }
             jj += 1;
         }
         return Buffer.concat([
-            A
-        ].concat(R)).toString("base64").replace((
+            AA
+        ].concat(RR)).toString("base64").replace((
             /\=+/g
         ), "");
     };
