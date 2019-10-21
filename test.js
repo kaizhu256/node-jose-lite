@@ -597,7 +597,7 @@ local.testCase_jose_default = async function (opt, onError) {
         }
         return result;
     };
-    const wrapKey = function (key, PP) {
+    const wrapKey = function (mode, key, PP) {
     /*
      * https://tools.ietf.org/html/rfc3394#section-2.2.1
      */
@@ -620,84 +620,67 @@ local.testCase_jose_default = async function (opt, onError) {
             ii += 8;
         }
         IV = Buffer.alloc(8, "a6", "hex");
-        AA = IV;
-        jj = 0;
-        while (jj < 6) {
-            ii = 0;
-            while (ii < RR.length) {
-                cnt = (RR.length * jj) + ii + 1;
-                cipher = crypto.createCipheriv("aes128", key, iv);
-                buf = Buffer.concat([
-                    AA, RR[ii]
-                ]);
-                buf = cipher.update(buf);
-                AA = xor(buf.slice(0, 8), uint64be(cnt));
-                RR[ii] = buf.slice(8, 16);
-                ii += 1;
+        if (mode === "wrap") {
+            AA = IV;
+            jj = 0;
+            while (jj < 6) {
+                ii = 0;
+                while (ii < RR.length) {
+                    cnt = (RR.length * jj) + ii + 1;
+                    cipher = crypto.createCipheriv("aes128", key, iv);
+                    buf = Buffer.concat([
+                        AA, RR[ii]
+                    ]);
+                    buf = cipher.update(buf);
+                    AA = xor(buf.slice(0, 8), uint64be(cnt));
+                    RR[ii] = buf.slice(8, 16);
+                    ii += 1;
+                }
+                jj += 1;
             }
-            jj += 1;
+            return Buffer.concat([
+                AA
+            ].concat(RR)).toString("base64").replace((
+                /\=+/g
+            ), "");
         }
-        return Buffer.concat([
-            AA
-        ].concat(RR)).toString("base64").replace((
-            /\=+/g
-        ), "");
-    };
-
-    const unwrapKey = function (key, PP) {
-        let AA;
-        let IV;
-        let RR;
-        let buf;
-        let cipher;
-        let cnt;
-        let crypto;
-        let ii;
-        let iv;
-        let jj;
-        crypto = require("crypto");
-        iv = Buffer.alloc(16);
-        RR = [];
-        ii = 0;
-        while (ii < PP.length) {
-            RR.push(PP.slice(ii, ii + 8));
-            ii += 8;
-        }
-        IV = Buffer.alloc(8, "a6", "hex");
-        AA = RR[0];
-        RR = RR.slice(1);
-        jj = 5;
-        while (0 <= jj) {
-            ii = RR.length - 1;
-            while (0 <= ii) {
-                cnt = (RR.length * jj) + ii + 1;
-                buf = xor(AA, uint64be(cnt));
-                buf = Buffer.concat([
-                    buf, RR[ii], iv
-                ]);
-                cipher = crypto.createDecipheriv("aes128", key, iv);
-                buf = cipher.update(buf);
-                AA = buf.slice(0, 8);
-                RR[ii] = buf.slice(8, 16);
-                ii -= 1;
+        if (mode === "unwrap") {
+            AA = RR[0];
+            RR = RR.slice(1);
+            jj = 5;
+            while (0 <= jj) {
+                ii = RR.length - 1;
+                while (0 <= ii) {
+                    cnt = (RR.length * jj) + ii + 1;
+                    buf = xor(AA, uint64be(cnt));
+                    buf = Buffer.concat([
+                        buf, RR[ii], iv
+                    ]);
+                    cipher = crypto.createDecipheriv("aes128", key, iv);
+                    buf = cipher.update(buf);
+                    AA = buf.slice(0, 8);
+                    RR[ii] = buf.slice(8, 16);
+                    ii -= 1;
+                }
+                jj -= 1;
             }
-            jj -= 1;
+            if (!crypto.timingSafeEqual(IV, AA)) {
+                throw new Error("unwrap failed");
+            }
+            return Buffer.concat(RR).toString("base64");
         }
-        if (!crypto.timingSafeEqual(IV, AA)) {
-            throw new Error("unwrap failed");
-        }
-        return Buffer.concat(RR).toString("base64");
     };
-
     local.assertJsonEqual(
         wrapKey(
+            "wrap",
             Buffer.from("GawgguFyGrWKav7AX4VKUg", "base64"),
             Buffer.from(jweCek, "base64")
         ),
         "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ"
     );
     local.assertJsonEqual(
-        unwrapKey(
+        wrapKey(
+            "unwrap",
             Buffer.from("GawgguFyGrWKav7AX4VKUg", "base64"),
             Buffer.from(
                 "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ",
