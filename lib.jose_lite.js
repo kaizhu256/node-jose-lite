@@ -416,7 +416,7 @@ local.jose_lite = local;
 /* validateLineSortedReset */
 // run shared js-env code - init-before
 (function () {
-if (!local.isBrowser) {
+if (local.isBrowser) {
     return;
 }
 local.jweWrapKey = function (opt) {
@@ -499,6 +499,13 @@ local.jweWrapKey = function (opt) {
     }
 };
 
+local.uint64be = function (value) {
+    let buf = Buffer.allocUnsafe(8);
+    buf.writeUInt32BE(Math.floor(value / 0x100000000), 0);
+    buf.writeUInt32BE(value | 0, 4);
+    return buf;
+};
+
 local.xor = function (a, b) {
     const len = Math.max(a.length, b.length);
     const result = Buffer.alloc(len);
@@ -508,13 +515,6 @@ local.xor = function (a, b) {
         ii += 1;
     }
     return result;
-};
-
-local.uint64be = function (value) {
-    let buf = Buffer.allocUnsafe(8);
-    buf.writeUInt32BE(Math.floor(value / 0x100000000), 0);
-    buf.writeUInt32BE(value | 0, 4);
-    return buf;
 };
 }());
 }());
