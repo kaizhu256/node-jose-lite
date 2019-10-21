@@ -597,7 +597,7 @@ local.testCase_jose_default = async function (opt, onError) {
         }
         return result;
     };
-    const wrapKey = function (mode, key, PP) {
+    const jweWrapKey = function (opt, key, PP) {
     /*
      * https://tools.ietf.org/html/rfc3394#section-2.2.1
      */
@@ -620,7 +620,9 @@ local.testCase_jose_default = async function (opt, onError) {
             ii += 8;
         }
         IV = Buffer.alloc(8, "a6", "hex");
-        if (mode === "wrap") {
+        // 2.2.1 Key Wrap
+        // https://tools.ietf.org/html/rfc3394#section-2.2.1
+        if (opt.mode === "wrap") {
             AA = IV;
             jj = 0;
             while (jj < 6) {
@@ -643,8 +645,10 @@ local.testCase_jose_default = async function (opt, onError) {
             ].concat(RR)).toString("base64").replace((
                 /\=+/g
             ), "");
+        // 2.2.2 Key Unwrap
+        // https://tools.ietf.org/html/rfc3394#section-2.2.2
         }
-        if (mode === "unwrap") {
+        if (opt.mode === "unwrap") {
             AA = RR[0];
             RR = RR.slice(1);
             jj = 5;
@@ -664,23 +668,24 @@ local.testCase_jose_default = async function (opt, onError) {
                 }
                 jj -= 1;
             }
-            if (!crypto.timingSafeEqual(IV, AA)) {
-                throw new Error("unwrap failed");
-            }
             return Buffer.concat(RR).toString("base64");
         }
     };
     local.assertJsonEqual(
-        wrapKey(
-            "wrap",
+        jweWrapKey(
+            {
+                mode: "wrap"
+            },
             Buffer.from("GawgguFyGrWKav7AX4VKUg", "base64"),
             Buffer.from(jweCek, "base64")
         ),
         "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ"
     );
     local.assertJsonEqual(
-        wrapKey(
-            "unwrap",
+        jweWrapKey(
+            {
+                mode: "unwrap"
+            },
             Buffer.from("GawgguFyGrWKav7AX4VKUg", "base64"),
             Buffer.from(
                 "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ",
