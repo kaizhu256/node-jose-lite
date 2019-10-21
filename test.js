@@ -646,8 +646,8 @@ local.testCase_jose_default = async function (opt, onError) {
 
     const unwrapKey = function (key, PP) {
         let AA;
-        let B;
         let RR;
+        let buf;
         let cnt;
         let ii;
         let iv;
@@ -666,14 +666,14 @@ local.testCase_jose_default = async function (opt, onError) {
             let idx = RR.length - 1;
             while (idx >= 0) {
                 cnt = (RR.length * jj) + idx + 1;
-                B = xor(AA, uint64be(cnt));
-                B = Buffer.concat([
-                    B, RR[idx], iv
+                buf = xor(AA, uint64be(cnt));
+                buf = Buffer.concat([
+                    buf, RR[idx], iv
                 ]);
                 const cipher = local.crypto.createDecipheriv("aes128", key, iv);
-                B = cipher.update(B);
-                AA = B.slice(0, 8);
-                RR[idx] = B.slice(8, 16);
+                buf = cipher.update(buf);
+                AA = buf.slice(0, 8);
+                RR[idx] = buf.slice(8, 16);
                 idx -= 1;
             }
             jj -= 1;
