@@ -574,10 +574,10 @@ local.testCase_jose_default = async function (opt, onError) {
     // with 128-bit jweKeySymmetric "GawgguFyGrWKav7AX4VKUg"
     const split = function (input, size) {
         const output = [];
-        let idx = 0;
-        while (input.length > idx) {
-            output.push(input.slice(idx, idx + size));
-            idx += size;
+        let ii = 0;
+        while (input.length > ii) {
+            output.push(input.slice(ii, ii + size));
+            ii += size;
         }
         return output;
     };
@@ -590,40 +590,43 @@ local.testCase_jose_default = async function (opt, onError) {
     const xor = function (a, b) {
         const len = Math.max(a.length, b.length);
         const result = Buffer.alloc(len);
-        let idx = 0;
-        while (len > idx) {
-            result[idx] = (a[idx] || 0) ^ (b[idx] || 0);
-            idx += 1;
+        let ii = 0;
+        while (len > ii) {
+            result[ii] = (a[ii] || 0) ^ (b[ii] || 0);
+            ii += 1;
         }
         return result;
     };
-    const IV = Buffer.alloc(8, "a6", "hex");
-    const wrapKey = function (key, payload) {
-        let crypto;
-        crypto = require("crypto");
-        const iv = Buffer.alloc(16);
-        let R = split(payload, 8);
+    const wrapKey = function (key, cek) {
+    /*
+     * https://tools.ietf.org/html/rfc3394#section-2.2.1
+     */
         let A;
         let B;
-        let count;
-        let idx;
-        let jdx;
-        A = IV;
-        jdx = 0;
-        while (jdx < 6) {
-            idx = 0;
-            while (R.length > idx) {
-                count = (R.length * jdx) + idx + 1;
+        let R;
+        let cnt;
+        let crypto;
+        let ii;
+        let jj;
+        crypto = require("crypto");
+        const iv = Buffer.alloc(16);
+        R = split(Buffer.from(cek, "base64"), 8);
+        A = Buffer.alloc(8, "a6", "hex");
+        jj = 0;
+        while (jj < 6) {
+            ii = 0;
+            while (R.length > ii) {
+                cnt = (R.length * jj) + ii + 1;
                 const cipher = crypto.createCipheriv("aes128", key, iv);
                 B = Buffer.concat([
-                    A, R[idx]
+                    A, R[ii]
                 ]);
                 B = cipher.update(B);
-                A = xor(B.slice(0, 8), uint64be(count));
-                R[idx] = B.slice(8, 16);
-                idx += 1;
+                A = xor(B.slice(0, 8), uint64be(cnt));
+                R[ii] = B.slice(8, 16);
+                ii += 1;
             }
-            jdx += 1;
+            jj += 1;
         }
         return Buffer.concat([
             A
@@ -635,7 +638,7 @@ local.testCase_jose_default = async function (opt, onError) {
     local.assertJsonEqual(
         wrapKey(
             Buffer.from("GawgguFyGrWKav7AX4VKUg", "base64"),
-            Buffer.from(jweCek, "base64")
+            jweCek
         ),
         "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ"
     );
