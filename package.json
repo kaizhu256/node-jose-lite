@@ -1,6 +1,6 @@
 {
     "author": "kai zhu <kaizhu256@gmail.com>",
-    "description": "the greatest app in the world!",
+    "description": "this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens",
     "devDependencies": {
         "utility2": "kaizhu256/node-utility2#alpha"
     },

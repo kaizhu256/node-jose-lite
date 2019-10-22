@@ -1,5 +1,5 @@
 # jose-lite
-the greatest app in the world!
+this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens
 
 # live web demo
 - [https://kaizhu256.github.io/node-jose-lite/build..beta..travis-ci.org/app](https://kaizhu256.github.io/node-jose-lite/build..beta..travis-ci.org/app)
@@ -7,6 +7,8 @@ the greatest app in the world!
 
 
 [![travis-ci.org build-status](https://api.travis-ci.org/kaizhu256/node-jose-lite.svg)](https://travis-ci.org/kaizhu256/node-jose-lite) [![coverage](https://kaizhu256.github.io/node-jose-lite/build/coverage.badge.svg)](https://kaizhu256.github.io/node-jose-lite/build/coverage.html/index.html)
+
+[![NPM](https://nodei.co/npm/jose-lite.png?downloads=true)](https://www.npmjs.com/package/jose-lite)
 
 [![build commit status](https://kaizhu256.github.io/node-jose-lite/build/build.badge.svg)](https://travis-ci.org/kaizhu256/node-jose-lite)
 
@@ -18,6 +20,8 @@ the greatest app in the world!
 | build-artifacts : | [![build-artifacts](https://kaizhu256.github.io/node-jose-lite/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-jose-lite/tree/gh-pages/build..master..travis-ci.org) | [![build-artifacts](https://kaizhu256.github.io/node-jose-lite/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-jose-lite/tree/gh-pages/build..beta..travis-ci.org) | [![build-artifacts](https://kaizhu256.github.io/node-jose-lite/glyphicons_144_folder_open.png)](https://github.com/kaizhu256/node-jose-lite/tree/gh-pages/build..alpha..travis-ci.org)|
 
 [![npmPackageListing](https://kaizhu256.github.io/node-jose-lite/build/screenshot.npmPackageListing.svg)](https://github.com/kaizhu256/node-jose-lite)
+
+![npmPackageDependencyTree](https://kaizhu256.github.io/node-jose-lite/build/screenshot.npmPackageDependencyTree.svg)
 
 
 
@@ -99,7 +103,7 @@ this script will run a web-demo of jose-lite
 instruction
     1. save this script as example.js
     2. run shell-command:
-        $ npm install kaizhu256/node-jose-lite#alpha && \
+        $ npm install jose-lite && \
             PORT=8081 node example.js
     3. open a browser to http://127.0.0.1:8081 and play with web-demo
     4. edit this script to suit your needs
@@ -1109,7 +1113,7 @@ local.http.createServer(function (req, res) {
 ```json
 {
     "author": "kai zhu <kaizhu256@gmail.com>",
-    "description": "the greatest app in the world!",
+    "description": "this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens",
     "devDependencies": {
         "utility2": "kaizhu256/node-utility2#alpha"
     },
@@ -1168,7 +1172,7 @@ shBuildCiAfter () {(set -e
 )}
 
 shBuildCiBefore () {(set -e
-    # shNpmTestPublished
+    shNpmTestPublished
     shReadmeTest example.js
 )}
 

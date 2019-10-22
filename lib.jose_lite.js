@@ -2,7 +2,7 @@
 /*
  * lib.jose_lite.js (2019.10.18)
  * https://github.com/kaizhu256/node-jose-lite
- * the greatest app in the world!
+ * this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens
  *
  */
 
