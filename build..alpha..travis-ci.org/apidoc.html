@@ -109,6 +109,24 @@
 
         <li>
 
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.cryptoKeyUnwrap256">
+            function <span class="apidocSignatureSpan">jose-lite.</span>cryptoKeyUnwrap256
+            <span class="apidocSignatureSpan">(KK, RR)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.cryptoKeyWrap256">
+            function <span class="apidocSignatureSpan">jose-lite.</span>cryptoKeyWrap256
+            <span class="apidocSignatureSpan">(KK, RR, mode)</span>
+            </a>
+
+        </li>
+
+        <li>
+
             <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.cryptoRandomBuffer">
             function <span class="apidocSignatureSpan">jose-lite.</span>cryptoRandomBuffer
             <span class="apidocSignatureSpan">(nn)</span>
@@ -174,15 +192,6 @@
 
             <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.jweEncrypt">
             function <span class="apidocSignatureSpan">jose-lite.</span>jweEncrypt
-            <span class="apidocSignatureSpan">(opt)</span>
-            </a>
-
-        </li>
-
-        <li>
-
-            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.jweWrapKey">
-            function <span class="apidocSignatureSpan">jose-lite.</span>jweWrapKey
             <span class="apidocSignatureSpan">(opt)</span>
             </a>
 
@@ -290,12 +299,12 @@
     throw err;
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
+opt.tag = tmp[4];
 // unwrapKey encrypted_key to cek
-opt.cek = base64urlToBuffer(opt.cek || await local.jweWrapKey({
-    cek: base64urlToBuffer(opt.encrypted_key),
-    kek: opt.kek,
-    mode: &quot;decrypt&quot;
-}));
+opt.cek = base64urlToBuffer(opt.cek || await local.cryptoKeyUnwrap256(
+    opt.kek,
+    base64urlToBuffer(opt.encrypted_key)
+));
 // validate tag
 local.<span class="apidocCodeKeywordSpan">assertOrThrow</span>(tmp.length === 5 &amp;&amp; opt.tag === await sign(
     opt.cek,
@@ -556,6 +565,215 @@ return opt.plaintext;
 
 
     <h2>
+        <a href="#apidoc.elem.jose-lite.cryptoKeyUnwrap256" id="apidoc.elem.jose-lite.cryptoKeyUnwrap256">
+        function <span class="apidocSignatureSpan">jose-lite.</span>cryptoKeyUnwrap256
+        <span class="apidocSignatureSpan">(KK, RR)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (KK, RR) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will aes256 wrapKey/unwrapKey &lt;RR&gt; using &lt;KK&gt;
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
+    2.2.2 Key Unwrap
+    https://tools.ietf.org/html/rfc3394#section-2.2.2
+        Inputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and
+            Key, K (the KEK).
+        Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.
+        1) Initialize variables.
+            Set A = C[0]
+            For i = 1 to n
+                R[i] = C[i]
+        2) Compute intermediate values.
+            For j = 5 to 0
+                For i = n to 1
+                    B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i
+                    A = MSB(64, B)
+                    R[i] = LSB(64, B)
+        3) Output results.
+            For i = 1 to n
+                P[i] = R[i]
+ */
+</span>    return await local.cryptoKeyWrap256(KK, RR, &quot;unwrap&quot;);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+    case &quot;validate&quot;:
+tmp = opt.jweCompact.split(&quot;.&quot;);
+opt.encrypted_key = tmp[1];
+opt.iv = base64urlToBuffer(tmp[2]);
+opt.ciphertext = base64urlToBuffer(tmp[3]);
+opt.tag = tmp[4];
+// unwrapKey encrypted_key to cek
+opt.cek = base64urlToBuffer(opt.cek || await local.<span class="apidocCodeKeywordSpan">cryptoKeyUnwrap256</span>(
+    opt.kek,
+    base64urlToBuffer(opt.encrypted_key)
+));
+// validate tag
+local.assertOrThrow(tmp.length === 5 &amp;&amp; opt.tag === await sign(
+    opt.cek,
+    opt.protected,
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.cryptoKeyWrap256" id="apidoc.elem.jose-lite.cryptoKeyWrap256">
+        function <span class="apidocSignatureSpan">jose-lite.</span>cryptoKeyWrap256
+        <span class="apidocSignatureSpan">(KK, RR, mode)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (KK, RR, mode) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will aes256 wrapKey/unwrapKey &lt;RR&gt; using &lt;KK&gt;
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
+    2.2.1 Key Wrap
+    https://tools.ietf.org/html/rfc3394#section-2.2.1
+        Inputs: Plaintext, n 64-bit values {P1, P2, ..., Pn}, and
+            Key, K (the KEK).
+        Outputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}.
+        1) Initialize variables.
+            Set A = IV, an initial value (see 2.2.3)
+            For i = 1 to n
+                R[i] = P[i]
+        2) Calculate intermediate values.
+            For j = 0 to 5
+                For i = 1 to n
+                    B = AES(K, A | R[i])
+                    A = MSB(64, B) ^ t where t = (n*j)+i
+                    R[i] = LSB(64, B)
+        3) Output the results.
+            Set C[0] = A
+            For i = 1 to n
+                C[i] = R[i]
+*/
+</span>    let AA;
+    let BB;
+    let crypto;
+    let ii;
+    let iv;
+    let jj;
+    let loop;
+    let nn;
+    let tt;
+    // init var
+    AA = new Uint8Array(32);
+    ii = 0;
+    iv = new Uint8Array(16);
+    nn = 4;
+    crypto = (
+        (globalThis.crypto &amp;&amp; globalThis.crypto.subtle)
+        ? globalThis.crypto
+        : require(&quot;crypto&quot;)
+    );
+    // use crypto.subtle
+    if (crypto.subtle) {
+        KK = await crypto.subtle.importKey(&quot;raw&quot;, KK, {
+            name: &quot;AES-KW&quot;
+        }, false, [
+            &quot;unwrapKey&quot;, &quot;wrapKey&quot;
+        ]);
+        if (mode === &quot;unwrap&quot;) {
+            RR = await crypto.subtle.unwrapKey(&quot;raw&quot;, RR, KK, {
+                name: &quot;AES-KW&quot;
+            }, {
+                name: &quot;AES-CBC&quot;
+            }, true, [
+                &quot;decrypt&quot;, &quot;encrypt&quot;
+            ]);
+            RR = await crypto.subtle.exportKey(&quot;raw&quot;, RR);
+        } else {
+            RR = await crypto.subtle.importKey(&quot;raw&quot;, RR, {
+                name: &quot;AES-CBC&quot;
+            }, true, [
+                &quot;decrypt&quot;, &quot;encrypt&quot;
+            ]);
+            RR = await crypto.subtle.wrapKey(&quot;raw&quot;, RR, KK, &quot;AES-KW&quot;);
+        }
+        return new Uint8Array(RR);
+    }
+    crypto = (
+        mode === &quot;unwrap&quot;
+        ? crypto.createDecipheriv
+        : crypto.createCipheriv
+    );
+    // init loop
+    loop = async function () {
+        // AA xor tt
+        if (mode === &quot;unwrap&quot;) {
+            tt = nn * jj + ii;
+            AA[4] ^= ((tt &gt;&gt;&gt; 24) &amp; 0xff);
+            AA[5] ^= ((tt &gt;&gt; 16) &amp; 0xff);
+            AA[6] ^= ((tt &gt;&gt; 8) &amp; 0xff);
+            AA[7] ^= (tt &amp; 0xff);
+        }
+        // init RR
+        AA[8] = RR[8 * ii];
+        AA[9] = RR[8 * ii + 1];
+        AA[10] = RR[8 * ii + 2];
+        AA[11] = RR[8 * ii + 3];
+        AA[12] = RR[8 * ii + 4];
+        AA[13] = RR[8 * ii + 5];
+        AA[14] = RR[8 * ii + 6];
+        AA[15] = RR[8 * ii + 7];
+        // encrypt / decrypt RR
+        BB = crypto(&quot;aes-128-cbc&quot;, KK, iv);
+        BB.setAutoPadding(false);
+        BB = Buffer.concat([
+            BB.update(AA), BB.final()
+        ]);
+        // update RR
+        AA[0] = BB[0];
+        AA[1] = BB[1];
+        AA[2] = BB[2];
+        AA[3] = BB[3];
+        AA[4] = BB[4];
+        AA[5] = BB[5];
+        AA[6] = BB[6];
+        AA[7] = BB[7];
+        RR[8 * ii + 0] = BB[8];
+        RR[8 * ii + 1] = BB[9];
+        RR[8 * ii + 2] = BB[10];
+        RR[8 * ii + 3] = BB[11];
+        RR[8 * ii + 4] = BB[12];
+        RR[8 * ii + 5] = BB[13];
+        RR[8 * ii + 6] = BB[14];
+        RR[8 * ii + 7] = BB[15];
+        // AA xor tt
+        if (mode !== &quot;unwrap&quot;) {
+            tt = nn * jj + ii;
+            AA[4] ^= ((tt &gt;&gt;&gt; 24) &amp; 0xff);
+            AA[5] ^= ((tt &gt;&gt; 16) &amp; 0xff);
+            AA[6] ^= ((tt &gt;&gt; 8) &amp; 0xff);
+            AA[7] ^= (tt &amp; 0xff);
+        }
+    };
+    if (mode === &quot;unwrap&quot;) {
+        AA[0] = RR[0];
+        AA[1] = R...</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+                   B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i
+                   A = MSB(64, B)
+                   R[i] = LSB(64, B)
+       3) Output results.
+           For i = 1 to n
+               P[i] = R[i]
+*/
+   return await local.<span class="apidocCodeKeywordSpan">cryptoKeyWrap256</span>(KK, RR, &quot;unwrap&quot;);
+};
+
+local.cryptoKeyWrap256 = async function (KK, RR, mode) {
+/*
+* this function will aes256 wrapKey/unwrapKey &lt;RR&gt; using &lt;KK&gt;
+* https://tools.ietf.org/html/rfc7516#appendix-A.3.3
+   2.2.1 Key Wrap
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
         <a href="#apidoc.elem.jose-lite.cryptoRandomBuffer" id="apidoc.elem.jose-lite.cryptoRandomBuffer">
         function <span class="apidocSignatureSpan">jose-lite.</span>cryptoRandomBuffer
         <span class="apidocSignatureSpan">(nn)</span>
@@ -587,7 +805,7 @@ default:
     opt.cek = base64urlToBuffer(opt.cek);
     // wrapKey cek to encrypted_key
     opt.encrypted_key = base64urlFromBuffer(
-        opt.encrypted_key
+        opt.encrypted_key || await local.cryptoKeyWrap256(
 ...</pre></li>
     </ul>
 
@@ -802,25 +1020,15 @@ switch (opt.mode) {
 <span class="apidocCodeCommentSpan">/*
  * this function will A128CBC-HS256 encrypt &lt;opt&gt;.plaintext
  * using &lt;opt&gt;.cek, &lt;opt&gt;.iv, &lt;opt&gt;.kek
-    https://tools.ietf.org/html/rfc7516#appendix-A.3
+ * to compact-serialization:
     In the JWE Compact Serialization, a JWE is represented as the concatenation:
         BASE64URL(UTF8(JWE Protected Header)) || &apos;.&apos; ||
         BASE64URL(JWE Encrypted Key) || &apos;.&apos; ||
         BASE64URL(JWE Initialization Vector) || &apos;.&apos; ||
         BASE64URL(JWE Ciphertext) || &apos;.&apos; ||
         BASE64URL(JWE Authentication Tag)
-    https://tools.ietf.org/html/rfc7516#section-3.2
-    In the JWE JSON Serialization, a JWE is represented as a JSON object
-    containing some or all of these eight members:
-        &quot;protected&quot;, with the value BASE64URL(UTF8(JWE Protected Header))
-        &quot;unprotected&quot;, with the value JWE Shared Unprotected Header
-        &quot;header&quot;, with the value JWE Per-Recipient Unprotected Header
-        &quot;encrypted_key&quot;, with the value BASE64URL(JWE Encrypted Key)
-        &quot;iv&quot;, with the value BASE64URL(JWE Initialization Vector)
-        &quot;ciphertext&quot;, with the value BASE64URL(JWE Ciphertext)
-        &quot;tag&quot;, with the value BASE64URL(JWE Authentication Tag)
-        &quot;aad&quot;, with the value BASE64URL(JWE AAD)
- */
+    https://tools.ietf.org/html/rfc7516#appendix-A.3
+*/
 </span>    let base64urlFromBuffer;
     let base64urlToBuffer;
     let sign;
@@ -893,6 +1101,20 @@ switch (opt.mode) {
     // {&quot;alg&quot;:&quot;A128KW&quot;,&quot;enc&quot;:&quot;A128CBC-HS256&quot;}
     opt.protected = &quot;eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0&quot;;
     switch (opt.mode) {
+    /*
+        parse jweCompact to json-serialization:
+        https://tools.ietf.org/html/rfc7516#section-3.2
+        In the JWE JSON Serialization, a JWE is represented as a JSON object
+        containing some or all of these eight members:
+            &quot;protected&quot;, with the value BASE64URL(UTF8(JWE Protected Header))
+            &quot;unprotected&quot;, with the value JWE Shared Unprotected Header
+            &quot;header&quot;, with the value JWE Per-Recipient Unprotected Header
+            &quot;encrypted_key&quot;, with the value BASE64URL(JWE Encrypted Key)
+            &quot;iv&quot;, with the value BASE64URL(JWE Initialization Vector)
+            &quot;ciphertext&quot;, with the value BASE64URL(JWE Ciphertext)
+            &quot;tag&quot;, with the value BASE64URL(JWE Authentication Tag)
+            &quot;aad&quot;, with the value BASE64URL(JWE AAD)
+     */
     case &quot;decrypt&quot;:
     case &quot;validate&quot;:
         tmp = opt.jweCompact.split(&quot;.&quot;);
@@ -900,9 +1122,7 @@ switch (opt.mode) {
         opt.iv = base64urlToBuffer(tmp[2]);
         opt.ciphertext = base64urlToBuffer(tmp[3]);
         opt.tag = tmp[4];
-        // unwrapKey encrypted_key to cek
-        opt.cek = base64urlToBuffer(opt.cek || await local.jweWrapKey({
-            cek: base64urlToBuffer(opt.encrypted_key),...</pre></li>
+        // unwrapKey encrypted_key to cek...</pre></li>
     <li>example usage<pre class="apidocCodePre">...
 
 local.jweDecrypt = async function (opt) {
@@ -918,166 +1138,7 @@ local.jweEncrypt = async function (opt) {
 /*
 * this function will A128CBC-HS256 encrypt &lt;opt&gt;.plaintext
 * using &lt;opt&gt;.cek, &lt;opt&gt;.iv, &lt;opt&gt;.kek
-   https://tools.ietf.org/html/rfc7516#appendix-A.3
-...</pre></li>
-    </ul>
-
-
-
-    <h2>
-        <a href="#apidoc.elem.jose-lite.jweWrapKey" id="apidoc.elem.jose-lite.jweWrapKey">
-        function <span class="apidocSignatureSpan">jose-lite.</span>jweWrapKey
-        <span class="apidocSignatureSpan">(opt)</span>
-        </a>
-    </h2>
-    <ul>
-    <li>description and source-code<pre class="apidocCodePre">async function (opt) {
-<span class="apidocCodeCommentSpan">/*
- * this function will wrap/unwrap &lt;opt&gt;.cek with given symmetric &lt;opt&gt;.kek
- * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
- */
-</span>    let AA;
-    let BB;
-    let KK;
-    let RR;
-    let crypto;
-    let ii;
-    let iv;
-    let jj;
-    let loop;
-    let nn;
-    let tt;
-    // init var
-    AA = new Uint8Array(32);
-    KK = opt.kek;
-    RR = opt.cek;
-    ii = 0;
-    iv = new Uint8Array(16);
-    nn = 4;
-    crypto = (
-        (globalThis.crypto &amp;&amp; globalThis.crypto.subtle)
-        ? globalThis.crypto
-        : require(&quot;crypto&quot;)
-    );
-    // use crypto.subtle
-    if (crypto.subtle) {
-        KK = await crypto.subtle.importKey(&quot;raw&quot;, KK, {
-            name: &quot;AES-KW&quot;
-        }, false, [
-            &quot;unwrapKey&quot;, &quot;wrapKey&quot;
-        ]);
-        if (opt.mode === &quot;decrypt&quot;) {
-            RR = await crypto.subtle.unwrapKey(&quot;raw&quot;, RR, KK, {
-                name: &quot;AES-KW&quot;
-            }, {
-                name: &quot;AES-CBC&quot;
-            }, true, [
-                &quot;decrypt&quot;, &quot;encrypt&quot;
-            ]);
-            RR = await crypto.subtle.exportKey(&quot;raw&quot;, RR);
-        } else {
-            RR = await crypto.subtle.importKey(&quot;raw&quot;, RR, {
-                name: &quot;AES-CBC&quot;
-            }, true, [
-                &quot;decrypt&quot;, &quot;encrypt&quot;
-            ]);
-            RR = await crypto.subtle.wrapKey(&quot;raw&quot;, RR, KK, &quot;AES-KW&quot;);
-        }
-        return new Uint8Array(RR);
-    }
-    crypto = (
-        opt.mode === &quot;decrypt&quot;
-        ? crypto.createDecipheriv
-        : crypto.createCipheriv
-    );
-    // init loop
-    loop = async function () {
-        // AA xor tt
-        if (opt.mode === &quot;decrypt&quot;) {
-            tt = nn * jj + ii;
-            AA[4] ^= ((tt &gt;&gt;&gt; 24) &amp; 0xff);
-            AA[5] ^= ((tt &gt;&gt; 16) &amp; 0xff);
-            AA[6] ^= ((tt &gt;&gt; 8) &amp; 0xff);
-            AA[7] ^= (tt &amp; 0xff);
-        }
-        // init RR
-        AA[8] = RR[8 * ii];
-        AA[9] = RR[8 * ii + 1];
-        AA[10] = RR[8 * ii + 2];
-        AA[11] = RR[8 * ii + 3];
-        AA[12] = RR[8 * ii + 4];
-        AA[13] = RR[8 * ii + 5];
-        AA[14] = RR[8 * ii + 6];
-        AA[15] = RR[8 * ii + 7];
-        // encrypt / decrypt RR
-        BB = crypto(&quot;aes-128-cbc&quot;, KK, iv);
-        BB.setAutoPadding(false);
-        BB = Buffer.concat([
-            BB.update(AA), BB.final()
-        ]);
-        // update RR
-        AA[0] = BB[0];
-        AA[1] = BB[1];
-        AA[2] = BB[2];
-        AA[3] = BB[3];
-        AA[4] = BB[4];
-        AA[5] = BB[5];
-        AA[6] = BB[6];
-        AA[7] = BB[7];
-        RR[8 * ii + 0] = BB[8];
-        RR[8 * ii + 1] = BB[9];
-        RR[8 * ii + 2] = BB[10];
-        RR[8 * ii + 3] = BB[11];
-        RR[8 * ii + 4] = BB[12];
-        RR[8 * ii + 5] = BB[13];
-        RR[8 * ii + 6] = BB[14];
-        RR[8 * ii + 7] = BB[15];
-        // AA xor tt
-        if (opt.mode !== &quot;decrypt&quot;) {
-            tt = nn * jj + ii;
-            AA[4] ^= ((tt &gt;&gt;&gt; 24) &amp; 0xff);
-            AA[5] ^= ((tt &gt;&gt; 16) &amp; 0xff);
-            AA[6] ^= ((tt &gt;&gt; 8) &amp; 0xff);
-            AA[7] ^= (tt &amp; 0xff);
-        }
-    };
-    /*
-        2.2.2 Key Unwrap
-        https://tools.ietf.org/html/rfc3394#section-2.2.2
-        Inputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and
-            Key, K (the KEK).
-        Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.
-        1) Initialize variables.
-            Set A = C[0]
-            For i = 1 to n
-                R[i] = C[i]
-        2) Compute intermediate values.
-            For j = 5 to 0
-                For i = n to 1
-                    B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i
-                    A = MSB(64, B)
-                    R[i] = LSB(64, B)
-        3) Output results.
-            For i = 1 to n
-                P[i] = R[i]
-    */
-    if (opt.mode === &quot;dec...</pre></li>
-    <li>example usage<pre class="apidocCodePre">...
-    case &quot;validate&quot;:
-tmp = opt.jweCompact.split(&quot;.&quot;);
-opt.encrypted_key = tmp[1];
-opt.iv = base64urlToBuffer(tmp[2]);
-opt.ciphertext = base64urlToBuffer(tmp[3]);
-opt.tag = tmp[4];
-// unwrapKey encrypted_key to cek
-opt.cek = base64urlToBuffer(opt.cek || await local.<span class="apidocCodeKeywordSpan">jweWrapKey</span>({
-    cek: base64urlToBuffer(opt.encrypted_key),
-    kek: opt.kek,
-    mode: &quot;decrypt&quot;
-}));
-// validate tag
-local.assertOrThrow(tmp.length === 5 &amp;&amp; opt.tag === await sign(
-    opt.cek,
+* to compact-serialization:
 ...</pre></li>
     </ul>
 

@@ -3,7 +3,7 @@
 <text fill="#7f7" font-family="Courier New" font-size="12" xml:space="preserve">
 <tspan x="10" y="26"></tspan>
 
-<tspan x="10" y="42">\x1b[35m[MODE_BUILD=buildApp]\x1b[0m - 2019-10-24T20:09:09.737Z - npm-testing /home/travis/build\</tspan>
+<tspan x="10" y="42">\x1b[35m[MODE_BUILD=buildApp]\x1b[0m - 2019-10-24T20:42:54.764Z - npm-testing /home/travis/build\</tspan>
 <tspan x="10" y="58">/kaizhu256/node-jose-lite</tspan>
 
 <tspan x="10" y="74"></tspan>
@@ -13,28 +13,28 @@
 <tspan x="10" y="106">buildApp - merged test-report from file /home/travis/build/kaizhu256/node-jose-lite/tmp/build/te\</tspan>
 <tspan x="10" y="122">st-report.json</tspan>
 
-<tspan x="10" y="138">&gt; http-server listening on port 35428</tspan>
+<tspan x="10" y="138">&gt; http-server listening on port 60012</tspan>
 
 <tspan x="10" y="154"></tspan>
 
 <tspan x="10" y="170">buildApp - merged test-report from file /home/travis/build/kaizhu256/node-jose-lite/tmp/build/te\</tspan>
 <tspan x="10" y="186">st-report.json</tspan>
 
-<tspan x="10" y="202">jslint - 349ms /home/travis/build/kaizhu256/node-jose-lite/README.md</tspan>
+<tspan x="10" y="202">jslint - 392ms /home/travis/build/kaizhu256/node-jose-lite/README.md</tspan>
 
-<tspan x="10" y="218">jslint - 174ms /home/travis/build/kaizhu256/node-jose-lite/lib.jose.js</tspan>
+<tspan x="10" y="218">jslint - 154ms /home/travis/build/kaizhu256/node-jose-lite/lib.jose.js</tspan>
 
-<tspan x="10" y="234">jslint - 1ms /home/travis/build/kaizhu256/node-jose-lite/npm_scripts.sh</tspan>
+<tspan x="10" y="234">jslint - 2ms /home/travis/build/kaizhu256/node-jose-lite/npm_scripts.sh</tspan>
 
 <tspan x="10" y="250">jslint - 0ms /home/travis/build/kaizhu256/node-jose-lite/package.json</tspan>
 
-<tspan x="10" y="266">jslint - 42ms /home/travis/build/kaizhu256/node-jose-lite/test.js</tspan>
+<tspan x="10" y="266">jslint - 103ms /home/travis/build/kaizhu256/node-jose-lite/test.js</tspan>
 
-<tspan x="10" y="282">http-server listening on port 32977</tspan>
+<tspan x="10" y="282">http-server listening on port 61205</tspan>
 
-<tspan x="10" y="298">testRunDefault - 11743 ms - testCase pending - testCase_buildApp_default ...</tspan>
+<tspan x="10" y="298">testRunDefault - 10119 ms - testCase pending - testCase_buildApp_default ...</tspan>
 
-<tspan x="10" y="314">testRunDefault - 12900 ms - [node test-case 1 of 1 passed] - testCase_buildApp_default</tspan>
+<tspan x="10" y="314">testRunDefault - 13280 ms - [node test-case 1 of 1 passed] - testCase_buildApp_default</tspan>
 
 <tspan x="10" y="330"></tspan>
 
@@ -45,35 +45,35 @@
 
 <tspan x="10" y="394">-------------------------------------------------------</tspan>
 
-<tspan x="10" y="410">| test-report - buildApidoc - node - linux v13.0.1 - 2019-10-24T20:09:04.402Z</tspan>
+<tspan x="10" y="410">| test-report - buildApidoc - node - linux v13.0.1 - 2019-10-24T20:42:49.101Z</tspan>
 
-<tspan x="10" y="426">|   12902 ms            0 failed        1 passed      |</tspan>
+<tspan x="10" y="426">|   13281 ms            0 failed        1 passed      |</tspan>
 
 <tspan x="10" y="442">-------------------------------------------------------</tspan>
 
 <tspan x="10" y="458">| test-report - npmTest - browser - / - Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTM\</tspan>
-<tspan x="10" y="474">L, like Gecko) HeadlessChrome/78.0.3904.70 Safari/537.36 - 2019-10-24T20:08:58.269Z</tspan>
+<tspan x="10" y="474">L, like Gecko) HeadlessChrome/78.0.3904.70 Safari/537.36 - 2019-10-24T20:42:43.011Z</tspan>
 
-<tspan x="10" y="490">|      32 ms            0 failed        2 passed      |</tspan>
+<tspan x="10" y="490">|      35 ms            0 failed        2 passed      |</tspan>
 
 <tspan x="10" y="506">-------------------------------------------------------</tspan>
 
-<tspan x="10" y="522">| test-report - npmTest - node - linux v13.0.1 - 2019-10-24T20:08:56.904Z</tspan>
+<tspan x="10" y="522">| test-report - npmTest - node - linux v13.0.1 - 2019-10-24T20:42:41.644Z</tspan>
 
-<tspan x="10" y="538">|    5841 ms            0 failed        8 passed      |</tspan>
+<tspan x="10" y="538">|    5827 ms            0 failed        8 passed      |</tspan>
 
 <tspan x="10" y="554">-------------------------------------------------------</tspan>
 
 <tspan x="10" y="570">| test-report - npmTestPublished - browser - / - Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537\</tspan>
-<tspan x="10" y="586">.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.70 Safari/537.36 - 2019-10-24T20:08:19.115Z</tspan>
+<tspan x="10" y="586">.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.70 Safari/537.36 - 2019-10-24T20:42:03.731Z</tspan>
 
-<tspan x="10" y="602">|      13 ms            0 failed        1 passed      |</tspan>
+<tspan x="10" y="602">|      14 ms            0 failed        1 passed      |</tspan>
 
 <tspan x="10" y="618">-------------------------------------------------------</tspan>
 
-<tspan x="10" y="634">| test-report - npmTestPublished - node - linux v13.0.1 - 2019-10-24T20:08:17.607Z</tspan>
+<tspan x="10" y="634">| test-report - npmTestPublished - node - linux v13.0.1 - 2019-10-24T20:42:02.238Z</tspan>
 
-<tspan x="10" y="650">|    5597 ms            0 failed        7 passed      |</tspan>
+<tspan x="10" y="650">|    5614 ms            0 failed        7 passed      |</tspan>
 
 <tspan x="10" y="666">-------------------------------------------------------</tspan>
 
@@ -91,7 +91,7 @@
 
 <tspan x="10" y="778"></tspan>
 
-<tspan x="10" y="794">\x1b[35m[MODE_BUILD=buildApp]\x1b[0m - 2019-10-24T20:09:17.656Z - EXIT_CODE - 0</tspan>
+<tspan x="10" y="794">\x1b[35m[MODE_BUILD=buildApp]\x1b[0m - 2019-10-24T20:43:02.720Z - EXIT_CODE - 0</tspan>
 
 </text>
 </svg>

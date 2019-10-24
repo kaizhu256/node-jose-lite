@@ -69874,6 +69874,212 @@ local.cryptoEncryptAes128cbc = async function (key, iv, data, mode) {\n\
     return data;\n\
 };\n\
 \n\
+local.cryptoKeyUnwrap256 = async function (KK, RR) {\n\
+/*\n\
+ * this function will aes256 wrapKey/unwrapKey <RR> using <KK>\n\
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3\n\
+    2.2.2 Key Unwrap\n\
+    https://tools.ietf.org/html/rfc3394#section-2.2.2\n\
+        Inputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and\n\
+            Key, K (the KEK).\n\
+        Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.\n\
+        1) Initialize variables.\n\
+            Set A = C[0]\n\
+            For i = 1 to n\n\
+                R[i] = C[i]\n\
+        2) Compute intermediate values.\n\
+            For j = 5 to 0\n\
+                For i = n to 1\n\
+                    B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i\n\
+                    A = MSB(64, B)\n\
+                    R[i] = LSB(64, B)\n\
+        3) Output results.\n\
+            For i = 1 to n\n\
+                P[i] = R[i]\n\
+ */\n\
+    return await local.cryptoKeyWrap256(KK, RR, \"unwrap\");\n\
+};\n\
+\n\
+local.cryptoKeyWrap256 = async function (KK, RR, mode) {\n\
+/*\n\
+ * this function will aes256 wrapKey/unwrapKey <RR> using <KK>\n\
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3\n\
+    2.2.1 Key Wrap\n\
+    https://tools.ietf.org/html/rfc3394#section-2.2.1\n\
+        Inputs: Plaintext, n 64-bit values {P1, P2, ..., Pn}, and\n\
+            Key, K (the KEK).\n\
+        Outputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}.\n\
+        1) Initialize variables.\n\
+            Set A = IV, an initial value (see 2.2.3)\n\
+            For i = 1 to n\n\
+                R[i] = P[i]\n\
+        2) Calculate intermediate values.\n\
+            For j = 0 to 5\n\
+                For i = 1 to n\n\
+                    B = AES(K, A | R[i])\n\
+                    A = MSB(64, B) ^ t where t = (n*j)+i\n\
+                    R[i] = LSB(64, B)\n\
+        3) Output the results.\n\
+            Set C[0] = A\n\
+            For i = 1 to n\n\
+                C[i] = R[i]\n\
+*/\n\
+    let AA;\n\
+    let BB;\n\
+    let crypto;\n\
+    let ii;\n\
+    let iv;\n\
+    let jj;\n\
+    let loop;\n\
+    let nn;\n\
+    let tt;\n\
+    // init var\n\
+    AA = new Uint8Array(32);\n\
+    ii = 0;\n\
+    iv = new Uint8Array(16);\n\
+    nn = 4;\n\
+    crypto = (\n\
+        (globalThis.crypto && globalThis.crypto.subtle)\n\
+        ? globalThis.crypto\n\
+        : require(\"crypto\")\n\
+    );\n\
+    // use crypto.subtle\n\
+    if (crypto.subtle) {\n\
+        KK = await crypto.subtle.importKey(\"raw\", KK, {\n\
+            name: \"AES-KW\"\n\
+        }, false, [\n\
+            \"unwrapKey\", \"wrapKey\"\n\
+        ]);\n\
+        if (mode === \"unwrap\") {\n\
+            RR = await crypto.subtle.unwrapKey(\"raw\", RR, KK, {\n\
+                name: \"AES-KW\"\n\
+            }, {\n\
+                name: \"AES-CBC\"\n\
+            }, true, [\n\
+                \"decrypt\", \"encrypt\"\n\
+            ]);\n\
+            RR = await crypto.subtle.exportKey(\"raw\", RR);\n\
+        } else {\n\
+            RR = await crypto.subtle.importKey(\"raw\", RR, {\n\
+                name: \"AES-CBC\"\n\
+            }, true, [\n\
+                \"decrypt\", \"encrypt\"\n\
+            ]);\n\
+            RR = await crypto.subtle.wrapKey(\"raw\", RR, KK, \"AES-KW\");\n\
+        }\n\
+        return new Uint8Array(RR);\n\
+    }\n\
+    crypto = (\n\
+        mode === \"unwrap\"\n\
+        ? crypto.createDecipheriv\n\
+        : crypto.createCipheriv\n\
+    );\n\
+    // init loop\n\
+    loop = async function () {\n\
+        // AA xor tt\n\
+        if (mode === \"unwrap\") {\n\
+            tt = nn * jj + ii;\n\
+            AA[4] ^= ((tt >>> 24) & 0xff);\n\
+            AA[5] ^= ((tt >> 16) & 0xff);\n\
+            AA[6] ^= ((tt >> 8) & 0xff);\n\
+            AA[7] ^= (tt & 0xff);\n\
+        }\n\
+        // init RR\n\
+        AA[8] = RR[8 * ii];\n\
+        AA[9] = RR[8 * ii + 1];\n\
+        AA[10] = RR[8 * ii + 2];\n\
+        AA[11] = RR[8 * ii + 3];\n\
+        AA[12] = RR[8 * ii + 4];\n\
+        AA[13] = RR[8 * ii + 5];\n\
+        AA[14] = RR[8 * ii + 6];\n\
+        AA[15] = RR[8 * ii + 7];\n\
+        // encrypt / decrypt RR\n\
+        BB = crypto(\"aes-128-cbc\", KK, iv);\n\
+        BB.setAutoPadding(false);\n\
+        BB = Buffer.concat([\n\
+            BB.update(AA), BB.final()\n\
+        ]);\n\
+        // update RR\n\
+        AA[0] = BB[0];\n\
+        AA[1] = BB[1];\n\
+        AA[2] = BB[2];\n\
+        AA[3] = BB[3];\n\
+        AA[4] = BB[4];\n\
+        AA[5] = BB[5];\n\
+        AA[6] = BB[6];\n\
+        AA[7] = BB[7];\n\
+        RR[8 * ii + 0] = BB[8];\n\
+        RR[8 * ii + 1] = BB[9];\n\
+        RR[8 * ii + 2] = BB[10];\n\
+        RR[8 * ii + 3] = BB[11];\n\
+        RR[8 * ii + 4] = BB[12];\n\
+        RR[8 * ii + 5] = BB[13];\n\
+        RR[8 * ii + 6] = BB[14];\n\
+        RR[8 * ii + 7] = BB[15];\n\
+        // AA xor tt\n\
+        if (mode !== \"unwrap\") {\n\
+            tt = nn * jj + ii;\n\
+            AA[4] ^= ((tt >>> 24) & 0xff);\n\
+            AA[5] ^= ((tt >> 16) & 0xff);\n\
+            AA[6] ^= ((tt >> 8) & 0xff);\n\
+            AA[7] ^= (tt & 0xff);\n\
+        }\n\
+    };\n\
+    if (mode === \"unwrap\") {\n\
+        AA[0] = RR[0];\n\
+        AA[1] = RR[1];\n\
+        AA[2] = RR[2];\n\
+        AA[3] = RR[3];\n\
+        AA[4] = RR[4];\n\
+        AA[5] = RR[5];\n\
+        AA[6] = RR[6];\n\
+        AA[7] = RR[7];\n\
+        jj = 5;\n\
+        while (0 <= jj) {\n\
+            ii = nn;\n\
+            while (1 <= ii) {\n\
+                await loop();\n\
+                ii -= 1;\n\
+            }\n\
+            jj -= 1;\n\
+        }\n\
+        return RR.slice(8);\n\
+    }\n\
+    BB = RR;\n\
+    RR = new Uint8Array(BB.length + 8);\n\
+    ii = 0;\n\
+    while (ii < BB.length) {\n\
+        RR[ii + 8] = BB[ii];\n\
+        ii += 1;\n\
+    }\n\
+    AA[0] = 0xa6;\n\
+    AA[1] = 0xa6;\n\
+    AA[2] = 0xa6;\n\
+    AA[3] = 0xa6;\n\
+    AA[4] = 0xa6;\n\
+    AA[5] = 0xa6;\n\
+    AA[6] = 0xa6;\n\
+    AA[7] = 0xa6;\n\
+    jj = 0;\n\
+    while (jj <= 5) {\n\
+        ii = 1;\n\
+        while (ii <= nn) {\n\
+            await loop();\n\
+            ii += 1;\n\
+        }\n\
+        jj += 1;\n\
+    }\n\
+    RR[0] = AA[0];\n\
+    RR[1] = AA[1];\n\
+    RR[2] = AA[2];\n\
+    RR[3] = AA[3];\n\
+    RR[4] = AA[4];\n\
+    RR[5] = AA[5];\n\
+    RR[6] = AA[6];\n\
+    RR[7] = AA[7];\n\
+    return RR;\n\
+};\n\
+\n\
 local.cryptoRandomBuffer = function (nn) {\n\
 /*\n\
  * this function will return random buf with length <nn>\n\
@@ -69924,25 +70130,15 @@ local.jweEncrypt = async function (opt) {\n\
 /*\n\
  * this function will A128CBC-HS256 encrypt <opt>.plaintext\n\
  * using <opt>.cek, <opt>.iv, <opt>.kek\n\
-    https://tools.ietf.org/html/rfc7516#appendix-A.3\n\
+ * to compact-serialization:\n\
     In the JWE Compact Serialization, a JWE is represented as the concatenation:\n\
         BASE64URL(UTF8(JWE Protected Header)) || '.' ||\n\
         BASE64URL(JWE Encrypted Key) || '.' ||\n\
         BASE64URL(JWE Initialization Vector) || '.' ||\n\
         BASE64URL(JWE Ciphertext) || '.' ||\n\
         BASE64URL(JWE Authentication Tag)\n\
-    https://tools.ietf.org/html/rfc7516#section-3.2\n\
-    In the JWE JSON Serialization, a JWE is represented as a JSON object\n\
-    containing some or all of these eight members:\n\
-        \"protected\", with the value BASE64URL(UTF8(JWE Protected Header))\n\
-        \"unprotected\", with the value JWE Shared Unprotected Header\n\
-        \"header\", with the value JWE Per-Recipient Unprotected Header\n\
-        \"encrypted_key\", with the value BASE64URL(JWE Encrypted Key)\n\
-        \"iv\", with the value BASE64URL(JWE Initialization Vector)\n\
-        \"ciphertext\", with the value BASE64URL(JWE Ciphertext)\n\
-        \"tag\", with the value BASE64URL(JWE Authentication Tag)\n\
-        \"aad\", with the value BASE64URL(JWE AAD)\n\
- */\n\
+    https://tools.ietf.org/html/rfc7516#appendix-A.3\n\
+*/\n\
     let base64urlFromBuffer;\n\
     let base64urlToBuffer;\n\
     let sign;\n\
@@ -70015,6 +70211,20 @@ local.jweEncrypt = async function (opt) {\n\
     // {\"alg\":\"A128KW\",\"enc\":\"A128CBC-HS256\"}\n\
     opt.protected = \"eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0\";\n\
     switch (opt.mode) {\n\
+    /*\n\
+        parse jweCompact to json-serialization:\n\
+        https://tools.ietf.org/html/rfc7516#section-3.2\n\
+        In the JWE JSON Serialization, a JWE is represented as a JSON object\n\
+        containing some or all of these eight members:\n\
+            \"protected\", with the value BASE64URL(UTF8(JWE Protected Header))\n\
+            \"unprotected\", with the value JWE Shared Unprotected Header\n\
+            \"header\", with the value JWE Per-Recipient Unprotected Header\n\
+            \"encrypted_key\", with the value BASE64URL(JWE Encrypted Key)\n\
+            \"iv\", with the value BASE64URL(JWE Initialization Vector)\n\
+            \"ciphertext\", with the value BASE64URL(JWE Ciphertext)\n\
+            \"tag\", with the value BASE64URL(JWE Authentication Tag)\n\
+            \"aad\", with the value BASE64URL(JWE AAD)\n\
+     */\n\
     case \"decrypt\":\n\
     case \"validate\":\n\
         tmp = opt.jweCompact.split(\".\");\n\
@@ -70023,11 +70233,10 @@ local.jweEncrypt = async function (opt) {\n\
         opt.ciphertext = base64urlToBuffer(tmp[3]);\n\
         opt.tag = tmp[4];\n\
         // unwrapKey encrypted_key to cek\n\
-        opt.cek = base64urlToBuffer(opt.cek || await local.jweWrapKey({\n\
-            cek: base64urlToBuffer(opt.encrypted_key),\n\
-            kek: opt.kek,\n\
-            mode: \"decrypt\"\n\
-        }));\n\
+        opt.cek = base64urlToBuffer(opt.cek || await local.cryptoKeyUnwrap256(\n\
+            opt.kek,\n\
+            base64urlToBuffer(opt.encrypted_key)\n\
+        ));\n\
         // validate tag\n\
         local.assertOrThrow(tmp.length === 5 && opt.tag === await sign(\n\
             opt.cek,\n\
@@ -70058,11 +70267,10 @@ local.jweEncrypt = async function (opt) {\n\
         opt.cek = base64urlToBuffer(opt.cek);\n\
         // wrapKey cek to encrypted_key\n\
         opt.encrypted_key = base64urlFromBuffer(\n\
-            opt.encrypted_key\n\
-            || await local.jweWrapKey({\n\
-                cek: opt.cek,\n\
-                kek: opt.kek\n\
-            })\n\
+            opt.encrypted_key || await local.cryptoKeyWrap256(\n\
+                opt.kek,\n\
+                opt.cek\n\
+            )\n\
         );\n\
         // init iv\n\
         opt.iv = base64urlToBuffer(\n\
@@ -70090,212 +70298,6 @@ local.jweEncrypt = async function (opt) {\n\
         );\n\
         return opt.jweCompact;\n\
     }\n\
-};\n\
-\n\
-local.jweWrapKey = async function (opt) {\n\
-/*\n\
- * this function will wrap/unwrap <opt>.cek with given symmetric <opt>.kek\n\
- * https://tools.ietf.org/html/rfc7516#appendix-A.3.3\n\
- */\n\
-    let AA;\n\
-    let BB;\n\
-    let KK;\n\
-    let RR;\n\
-    let crypto;\n\
-    let ii;\n\
-    let iv;\n\
-    let jj;\n\
-    let loop;\n\
-    let nn;\n\
-    let tt;\n\
-    // init var\n\
-    AA = new Uint8Array(32);\n\
-    KK = opt.kek;\n\
-    RR = opt.cek;\n\
-    ii = 0;\n\
-    iv = new Uint8Array(16);\n\
-    nn = 4;\n\
-    crypto = (\n\
-        (globalThis.crypto && globalThis.crypto.subtle)\n\
-        ? globalThis.crypto\n\
-        : require(\"crypto\")\n\
-    );\n\
-    // use crypto.subtle\n\
-    if (crypto.subtle) {\n\
-        KK = await crypto.subtle.importKey(\"raw\", KK, {\n\
-            name: \"AES-KW\"\n\
-        }, false, [\n\
-            \"unwrapKey\", \"wrapKey\"\n\
-        ]);\n\
-        if (opt.mode === \"decrypt\") {\n\
-            RR = await crypto.subtle.unwrapKey(\"raw\", RR, KK, {\n\
-                name: \"AES-KW\"\n\
-            }, {\n\
-                name: \"AES-CBC\"\n\
-            }, true, [\n\
-                \"decrypt\", \"encrypt\"\n\
-            ]);\n\
-            RR = await crypto.subtle.exportKey(\"raw\", RR);\n\
-        } else {\n\
-            RR = await crypto.subtle.importKey(\"raw\", RR, {\n\
-                name: \"AES-CBC\"\n\
-            }, true, [\n\
-                \"decrypt\", \"encrypt\"\n\
-            ]);\n\
-            RR = await crypto.subtle.wrapKey(\"raw\", RR, KK, \"AES-KW\");\n\
-        }\n\
-        return new Uint8Array(RR);\n\
-    }\n\
-    crypto = (\n\
-        opt.mode === \"decrypt\"\n\
-        ? crypto.createDecipheriv\n\
-        : crypto.createCipheriv\n\
-    );\n\
-    // init loop\n\
-    loop = async function () {\n\
-        // AA xor tt\n\
-        if (opt.mode === \"decrypt\") {\n\
-            tt = nn * jj + ii;\n\
-            AA[4] ^= ((tt >>> 24) & 0xff);\n\
-            AA[5] ^= ((tt >> 16) & 0xff);\n\
-            AA[6] ^= ((tt >> 8) & 0xff);\n\
-            AA[7] ^= (tt & 0xff);\n\
-        }\n\
-        // init RR\n\
-        AA[8] = RR[8 * ii];\n\
-        AA[9] = RR[8 * ii + 1];\n\
-        AA[10] = RR[8 * ii + 2];\n\
-        AA[11] = RR[8 * ii + 3];\n\
-        AA[12] = RR[8 * ii + 4];\n\
-        AA[13] = RR[8 * ii + 5];\n\
-        AA[14] = RR[8 * ii + 6];\n\
-        AA[15] = RR[8 * ii + 7];\n\
-        // encrypt / decrypt RR\n\
-        BB = crypto(\"aes-128-cbc\", KK, iv);\n\
-        BB.setAutoPadding(false);\n\
-        BB = Buffer.concat([\n\
-            BB.update(AA), BB.final()\n\
-        ]);\n\
-        // update RR\n\
-        AA[0] = BB[0];\n\
-        AA[1] = BB[1];\n\
-        AA[2] = BB[2];\n\
-        AA[3] = BB[3];\n\
-        AA[4] = BB[4];\n\
-        AA[5] = BB[5];\n\
-        AA[6] = BB[6];\n\
-        AA[7] = BB[7];\n\
-        RR[8 * ii + 0] = BB[8];\n\
-        RR[8 * ii + 1] = BB[9];\n\
-        RR[8 * ii + 2] = BB[10];\n\
-        RR[8 * ii + 3] = BB[11];\n\
-        RR[8 * ii + 4] = BB[12];\n\
-        RR[8 * ii + 5] = BB[13];\n\
-        RR[8 * ii + 6] = BB[14];\n\
-        RR[8 * ii + 7] = BB[15];\n\
-        // AA xor tt\n\
-        if (opt.mode !== \"decrypt\") {\n\
-            tt = nn * jj + ii;\n\
-            AA[4] ^= ((tt >>> 24) & 0xff);\n\
-            AA[5] ^= ((tt >> 16) & 0xff);\n\
-            AA[6] ^= ((tt >> 8) & 0xff);\n\
-            AA[7] ^= (tt & 0xff);\n\
-        }\n\
-    };\n\
-    /*\n\
-        2.2.2 Key Unwrap\n\
-        https://tools.ietf.org/html/rfc3394#section-2.2.2\n\
-        Inputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and\n\
-            Key, K (the KEK).\n\
-        Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.\n\
-        1) Initialize variables.\n\
-            Set A = C[0]\n\
-            For i = 1 to n\n\
-                R[i] = C[i]\n\
-        2) Compute intermediate values.\n\
-            For j = 5 to 0\n\
-                For i = n to 1\n\
-                    B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i\n\
-                    A = MSB(64, B)\n\
-                    R[i] = LSB(64, B)\n\
-        3) Output results.\n\
-            For i = 1 to n\n\
-                P[i] = R[i]\n\
-    */\n\
-    if (opt.mode === \"decrypt\") {\n\
-        AA[0] = RR[0];\n\
-        AA[1] = RR[1];\n\
-        AA[2] = RR[2];\n\
-        AA[3] = RR[3];\n\
-        AA[4] = RR[4];\n\
-        AA[5] = RR[5];\n\
-        AA[6] = RR[6];\n\
-        AA[7] = RR[7];\n\
-        jj = 5;\n\
-        while (0 <= jj) {\n\
-            ii = nn;\n\
-            while (1 <= ii) {\n\
-                await loop();\n\
-                ii -= 1;\n\
-            }\n\
-            jj -= 1;\n\
-        }\n\
-        return RR.slice(8);\n\
-    }\n\
-    /*\n\
-        2.2.1 Key Wrap\n\
-        https://tools.ietf.org/html/rfc3394#section-2.2.1\n\
-        Inputs: Plaintext, n 64-bit values {P1, P2, ..., Pn}, and\n\
-            Key, K (the KEK).\n\
-        Outputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}.\n\
-        1) Initialize variables.\n\
-            Set A = IV, an initial value (see 2.2.3)\n\
-            For i = 1 to n\n\
-                R[i] = P[i]\n\
-        2) Calculate intermediate values.\n\
-            For j = 0 to 5\n\
-                For i = 1 to n\n\
-                    B = AES(K, A | R[i])\n\
-                    A = MSB(64, B) ^ t where t = (n*j)+i\n\
-                    R[i] = LSB(64, B)\n\
-        3) Output the results.\n\
-            Set C[0] = A\n\
-            For i = 1 to n\n\
-                C[i] = R[i]\n\
-    */\n\
-    BB = RR;\n\
-    RR = new Uint8Array(BB.length + 8);\n\
-    ii = 0;\n\
-    while (ii < BB.length) {\n\
-        RR[ii + 8] = BB[ii];\n\
-        ii += 1;\n\
-    }\n\
-    AA[0] = 0xa6;\n\
-    AA[1] = 0xa6;\n\
-    AA[2] = 0xa6;\n\
-    AA[3] = 0xa6;\n\
-    AA[4] = 0xa6;\n\
-    AA[5] = 0xa6;\n\
-    AA[6] = 0xa6;\n\
-    AA[7] = 0xa6;\n\
-    jj = 0;\n\
-    while (jj <= 5) {\n\
-        ii = 1;\n\
-        while (ii <= nn) {\n\
-            await loop();\n\
-            ii += 1;\n\
-        }\n\
-        jj += 1;\n\
-    }\n\
-    RR[0] = AA[0];\n\
-    RR[1] = AA[1];\n\
-    RR[2] = AA[2];\n\
-    RR[3] = AA[3];\n\
-    RR[4] = AA[4];\n\
-    RR[5] = AA[5];\n\
-    RR[6] = AA[6];\n\
-    RR[7] = AA[7];\n\
-    return RR;\n\
 };\n\
 }());\n\
 }());\n\
@@ -70863,6 +70865,212 @@ local.cryptoEncryptAes128cbc = async function (key, iv, data, mode) {
     return data;
 };
 
+local.cryptoKeyUnwrap256 = async function (KK, RR) {
+/*
+ * this function will aes256 wrapKey/unwrapKey <RR> using <KK>
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
+    2.2.2 Key Unwrap
+    https://tools.ietf.org/html/rfc3394#section-2.2.2
+        Inputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and
+            Key, K (the KEK).
+        Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.
+        1) Initialize variables.
+            Set A = C[0]
+            For i = 1 to n
+                R[i] = C[i]
+        2) Compute intermediate values.
+            For j = 5 to 0
+                For i = n to 1
+                    B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i
+                    A = MSB(64, B)
+                    R[i] = LSB(64, B)
+        3) Output results.
+            For i = 1 to n
+                P[i] = R[i]
+ */
+    return await local.cryptoKeyWrap256(KK, RR, "unwrap");
+};
+
+local.cryptoKeyWrap256 = async function (KK, RR, mode) {
+/*
+ * this function will aes256 wrapKey/unwrapKey <RR> using <KK>
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
+    2.2.1 Key Wrap
+    https://tools.ietf.org/html/rfc3394#section-2.2.1
+        Inputs: Plaintext, n 64-bit values {P1, P2, ..., Pn}, and
+            Key, K (the KEK).
+        Outputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}.
+        1) Initialize variables.
+            Set A = IV, an initial value (see 2.2.3)
+            For i = 1 to n
+                R[i] = P[i]
+        2) Calculate intermediate values.
+            For j = 0 to 5
+                For i = 1 to n
+                    B = AES(K, A | R[i])
+                    A = MSB(64, B) ^ t where t = (n*j)+i
+                    R[i] = LSB(64, B)
+        3) Output the results.
+            Set C[0] = A
+            For i = 1 to n
+                C[i] = R[i]
+*/
+    let AA;
+    let BB;
+    let crypto;
+    let ii;
+    let iv;
+    let jj;
+    let loop;
+    let nn;
+    let tt;
+    // init var
+    AA = new Uint8Array(32);
+    ii = 0;
+    iv = new Uint8Array(16);
+    nn = 4;
+    crypto = (
+        (globalThis.crypto && globalThis.crypto.subtle)
+        ? globalThis.crypto
+        : require("crypto")
+    );
+    // use crypto.subtle
+    if (crypto.subtle) {
+        KK = await crypto.subtle.importKey("raw", KK, {
+            name: "AES-KW"
+        }, false, [
+            "unwrapKey", "wrapKey"
+        ]);
+        if (mode === "unwrap") {
+            RR = await crypto.subtle.unwrapKey("raw", RR, KK, {
+                name: "AES-KW"
+            }, {
+                name: "AES-CBC"
+            }, true, [
+                "decrypt", "encrypt"
+            ]);
+            RR = await crypto.subtle.exportKey("raw", RR);
+        } else {
+            RR = await crypto.subtle.importKey("raw", RR, {
+                name: "AES-CBC"
+            }, true, [
+                "decrypt", "encrypt"
+            ]);
+            RR = await crypto.subtle.wrapKey("raw", RR, KK, "AES-KW");
+        }
+        return new Uint8Array(RR);
+    }
+    crypto = (
+        mode === "unwrap"
+        ? crypto.createDecipheriv
+        : crypto.createCipheriv
+    );
+    // init loop
+    loop = async function () {
+        // AA xor tt
+        if (mode === "unwrap") {
+            tt = nn * jj + ii;
+            AA[4] ^= ((tt >>> 24) & 0xff);
+            AA[5] ^= ((tt >> 16) & 0xff);
+            AA[6] ^= ((tt >> 8) & 0xff);
+            AA[7] ^= (tt & 0xff);
+        }
+        // init RR
+        AA[8] = RR[8 * ii];
+        AA[9] = RR[8 * ii + 1];
+        AA[10] = RR[8 * ii + 2];
+        AA[11] = RR[8 * ii + 3];
+        AA[12] = RR[8 * ii + 4];
+        AA[13] = RR[8 * ii + 5];
+        AA[14] = RR[8 * ii + 6];
+        AA[15] = RR[8 * ii + 7];
+        // encrypt / decrypt RR
+        BB = crypto("aes-128-cbc", KK, iv);
+        BB.setAutoPadding(false);
+        BB = Buffer.concat([
+            BB.update(AA), BB.final()
+        ]);
+        // update RR
+        AA[0] = BB[0];
+        AA[1] = BB[1];
+        AA[2] = BB[2];
+        AA[3] = BB[3];
+        AA[4] = BB[4];
+        AA[5] = BB[5];
+        AA[6] = BB[6];
+        AA[7] = BB[7];
+        RR[8 * ii + 0] = BB[8];
+        RR[8 * ii + 1] = BB[9];
+        RR[8 * ii + 2] = BB[10];
+        RR[8 * ii + 3] = BB[11];
+        RR[8 * ii + 4] = BB[12];
+        RR[8 * ii + 5] = BB[13];
+        RR[8 * ii + 6] = BB[14];
+        RR[8 * ii + 7] = BB[15];
+        // AA xor tt
+        if (mode !== "unwrap") {
+            tt = nn * jj + ii;
+            AA[4] ^= ((tt >>> 24) & 0xff);
+            AA[5] ^= ((tt >> 16) & 0xff);
+            AA[6] ^= ((tt >> 8) & 0xff);
+            AA[7] ^= (tt & 0xff);
+        }
+    };
+    if (mode === "unwrap") {
+        AA[0] = RR[0];
+        AA[1] = RR[1];
+        AA[2] = RR[2];
+        AA[3] = RR[3];
+        AA[4] = RR[4];
+        AA[5] = RR[5];
+        AA[6] = RR[6];
+        AA[7] = RR[7];
+        jj = 5;
+        while (0 <= jj) {
+            ii = nn;
+            while (1 <= ii) {
+                await loop();
+                ii -= 1;
+            }
+            jj -= 1;
+        }
+        return RR.slice(8);
+    }
+    BB = RR;
+    RR = new Uint8Array(BB.length + 8);
+    ii = 0;
+    while (ii < BB.length) {
+        RR[ii + 8] = BB[ii];
+        ii += 1;
+    }
+    AA[0] = 0xa6;
+    AA[1] = 0xa6;
+    AA[2] = 0xa6;
+    AA[3] = 0xa6;
+    AA[4] = 0xa6;
+    AA[5] = 0xa6;
+    AA[6] = 0xa6;
+    AA[7] = 0xa6;
+    jj = 0;
+    while (jj <= 5) {
+        ii = 1;
+        while (ii <= nn) {
+            await loop();
+            ii += 1;
+        }
+        jj += 1;
+    }
+    RR[0] = AA[0];
+    RR[1] = AA[1];
+    RR[2] = AA[2];
+    RR[3] = AA[3];
+    RR[4] = AA[4];
+    RR[5] = AA[5];
+    RR[6] = AA[6];
+    RR[7] = AA[7];
+    return RR;
+};
+
 local.cryptoRandomBuffer = function (nn) {
 /*
  * this function will return random buf with length <nn>
@@ -70913,25 +71121,15 @@ local.jweEncrypt = async function (opt) {
 /*
  * this function will A128CBC-HS256 encrypt <opt>.plaintext
  * using <opt>.cek, <opt>.iv, <opt>.kek
-    https://tools.ietf.org/html/rfc7516#appendix-A.3
+ * to compact-serialization:
     In the JWE Compact Serialization, a JWE is represented as the concatenation:
         BASE64URL(UTF8(JWE Protected Header)) || '.' ||
         BASE64URL(JWE Encrypted Key) || '.' ||
         BASE64URL(JWE Initialization Vector) || '.' ||
         BASE64URL(JWE Ciphertext) || '.' ||
         BASE64URL(JWE Authentication Tag)
-    https://tools.ietf.org/html/rfc7516#section-3.2
-    In the JWE JSON Serialization, a JWE is represented as a JSON object
-    containing some or all of these eight members:
-        "protected", with the value BASE64URL(UTF8(JWE Protected Header))
-        "unprotected", with the value JWE Shared Unprotected Header
-        "header", with the value JWE Per-Recipient Unprotected Header
-        "encrypted_key", with the value BASE64URL(JWE Encrypted Key)
-        "iv", with the value BASE64URL(JWE Initialization Vector)
-        "ciphertext", with the value BASE64URL(JWE Ciphertext)
-        "tag", with the value BASE64URL(JWE Authentication Tag)
-        "aad", with the value BASE64URL(JWE AAD)
- */
+    https://tools.ietf.org/html/rfc7516#appendix-A.3
+*/
     let base64urlFromBuffer;
     let base64urlToBuffer;
     let sign;
@@ -71004,6 +71202,20 @@ local.jweEncrypt = async function (opt) {
     // {"alg":"A128KW","enc":"A128CBC-HS256"}
     opt.protected = "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0";
     switch (opt.mode) {
+    /*
+        parse jweCompact to json-serialization:
+        https://tools.ietf.org/html/rfc7516#section-3.2
+        In the JWE JSON Serialization, a JWE is represented as a JSON object
+        containing some or all of these eight members:
+            "protected", with the value BASE64URL(UTF8(JWE Protected Header))
+            "unprotected", with the value JWE Shared Unprotected Header
+            "header", with the value JWE Per-Recipient Unprotected Header
+            "encrypted_key", with the value BASE64URL(JWE Encrypted Key)
+            "iv", with the value BASE64URL(JWE Initialization Vector)
+            "ciphertext", with the value BASE64URL(JWE Ciphertext)
+            "tag", with the value BASE64URL(JWE Authentication Tag)
+            "aad", with the value BASE64URL(JWE AAD)
+     */
     case "decrypt":
     case "validate":
         tmp = opt.jweCompact.split(".");
@@ -71012,11 +71224,10 @@ local.jweEncrypt = async function (opt) {
         opt.ciphertext = base64urlToBuffer(tmp[3]);
         opt.tag = tmp[4];
         // unwrapKey encrypted_key to cek
-        opt.cek = base64urlToBuffer(opt.cek || await local.jweWrapKey({
-            cek: base64urlToBuffer(opt.encrypted_key),
-            kek: opt.kek,
-            mode: "decrypt"
-        }));
+        opt.cek = base64urlToBuffer(opt.cek || await local.cryptoKeyUnwrap256(
+            opt.kek,
+            base64urlToBuffer(opt.encrypted_key)
+        ));
         // validate tag
         local.assertOrThrow(tmp.length === 5 && opt.tag === await sign(
             opt.cek,
@@ -71047,11 +71258,10 @@ local.jweEncrypt = async function (opt) {
         opt.cek = base64urlToBuffer(opt.cek);
         // wrapKey cek to encrypted_key
         opt.encrypted_key = base64urlFromBuffer(
-            opt.encrypted_key
-            || await local.jweWrapKey({
-                cek: opt.cek,
-                kek: opt.kek
-            })
+            opt.encrypted_key || await local.cryptoKeyWrap256(
+                opt.kek,
+                opt.cek
+            )
         );
         // init iv
         opt.iv = base64urlToBuffer(
@@ -71079,212 +71289,6 @@ local.jweEncrypt = async function (opt) {
         );
         return opt.jweCompact;
     }
-};
-
-local.jweWrapKey = async function (opt) {
-/*
- * this function will wrap/unwrap <opt>.cek with given symmetric <opt>.kek
- * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
- */
-    let AA;
-    let BB;
-    let KK;
-    let RR;
-    let crypto;
-    let ii;
-    let iv;
-    let jj;
-    let loop;
-    let nn;
-    let tt;
-    // init var
-    AA = new Uint8Array(32);
-    KK = opt.kek;
-    RR = opt.cek;
-    ii = 0;
-    iv = new Uint8Array(16);
-    nn = 4;
-    crypto = (
-        (globalThis.crypto && globalThis.crypto.subtle)
-        ? globalThis.crypto
-        : require("crypto")
-    );
-    // use crypto.subtle
-    if (crypto.subtle) {
-        KK = await crypto.subtle.importKey("raw", KK, {
-            name: "AES-KW"
-        }, false, [
-            "unwrapKey", "wrapKey"
-        ]);
-        if (opt.mode === "decrypt") {
-            RR = await crypto.subtle.unwrapKey("raw", RR, KK, {
-                name: "AES-KW"
-            }, {
-                name: "AES-CBC"
-            }, true, [
-                "decrypt", "encrypt"
-            ]);
-            RR = await crypto.subtle.exportKey("raw", RR);
-        } else {
-            RR = await crypto.subtle.importKey("raw", RR, {
-                name: "AES-CBC"
-            }, true, [
-                "decrypt", "encrypt"
-            ]);
-            RR = await crypto.subtle.wrapKey("raw", RR, KK, "AES-KW");
-        }
-        return new Uint8Array(RR);
-    }
-    crypto = (
-        opt.mode === "decrypt"
-        ? crypto.createDecipheriv
-        : crypto.createCipheriv
-    );
-    // init loop
-    loop = async function () {
-        // AA xor tt
-        if (opt.mode === "decrypt") {
-            tt = nn * jj + ii;
-            AA[4] ^= ((tt >>> 24) & 0xff);
-            AA[5] ^= ((tt >> 16) & 0xff);
-            AA[6] ^= ((tt >> 8) & 0xff);
-            AA[7] ^= (tt & 0xff);
-        }
-        // init RR
-        AA[8] = RR[8 * ii];
-        AA[9] = RR[8 * ii + 1];
-        AA[10] = RR[8 * ii + 2];
-        AA[11] = RR[8 * ii + 3];
-        AA[12] = RR[8 * ii + 4];
-        AA[13] = RR[8 * ii + 5];
-        AA[14] = RR[8 * ii + 6];
-        AA[15] = RR[8 * ii + 7];
-        // encrypt / decrypt RR
-        BB = crypto("aes-128-cbc", KK, iv);
-        BB.setAutoPadding(false);
-        BB = Buffer.concat([
-            BB.update(AA), BB.final()
-        ]);
-        // update RR
-        AA[0] = BB[0];
-        AA[1] = BB[1];
-        AA[2] = BB[2];
-        AA[3] = BB[3];
-        AA[4] = BB[4];
-        AA[5] = BB[5];
-        AA[6] = BB[6];
-        AA[7] = BB[7];
-        RR[8 * ii + 0] = BB[8];
-        RR[8 * ii + 1] = BB[9];
-        RR[8 * ii + 2] = BB[10];
-        RR[8 * ii + 3] = BB[11];
-        RR[8 * ii + 4] = BB[12];
-        RR[8 * ii + 5] = BB[13];
-        RR[8 * ii + 6] = BB[14];
-        RR[8 * ii + 7] = BB[15];
-        // AA xor tt
-        if (opt.mode !== "decrypt") {
-            tt = nn * jj + ii;
-            AA[4] ^= ((tt >>> 24) & 0xff);
-            AA[5] ^= ((tt >> 16) & 0xff);
-            AA[6] ^= ((tt >> 8) & 0xff);
-            AA[7] ^= (tt & 0xff);
-        }
-    };
-    /*
-        2.2.2 Key Unwrap
-        https://tools.ietf.org/html/rfc3394#section-2.2.2
-        Inputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and
-            Key, K (the KEK).
-        Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.
-        1) Initialize variables.
-            Set A = C[0]
-            For i = 1 to n
-                R[i] = C[i]
-        2) Compute intermediate values.
-            For j = 5 to 0
-                For i = n to 1
-                    B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i
-                    A = MSB(64, B)
-                    R[i] = LSB(64, B)
-        3) Output results.
-            For i = 1 to n
-                P[i] = R[i]
-    */
-    if (opt.mode === "decrypt") {
-        AA[0] = RR[0];
-        AA[1] = RR[1];
-        AA[2] = RR[2];
-        AA[3] = RR[3];
-        AA[4] = RR[4];
-        AA[5] = RR[5];
-        AA[6] = RR[6];
-        AA[7] = RR[7];
-        jj = 5;
-        while (0 <= jj) {
-            ii = nn;
-            while (1 <= ii) {
-                await loop();
-                ii -= 1;
-            }
-            jj -= 1;
-        }
-        return RR.slice(8);
-    }
-    /*
-        2.2.1 Key Wrap
-        https://tools.ietf.org/html/rfc3394#section-2.2.1
-        Inputs: Plaintext, n 64-bit values {P1, P2, ..., Pn}, and
-            Key, K (the KEK).
-        Outputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}.
-        1) Initialize variables.
-            Set A = IV, an initial value (see 2.2.3)
-            For i = 1 to n
-                R[i] = P[i]
-        2) Calculate intermediate values.
-            For j = 0 to 5
-                For i = 1 to n
-                    B = AES(K, A | R[i])
-                    A = MSB(64, B) ^ t where t = (n*j)+i
-                    R[i] = LSB(64, B)
-        3) Output the results.
-            Set C[0] = A
-            For i = 1 to n
-                C[i] = R[i]
-    */
-    BB = RR;
-    RR = new Uint8Array(BB.length + 8);
-    ii = 0;
-    while (ii < BB.length) {
-        RR[ii + 8] = BB[ii];
-        ii += 1;
-    }
-    AA[0] = 0xa6;
-    AA[1] = 0xa6;
-    AA[2] = 0xa6;
-    AA[3] = 0xa6;
-    AA[4] = 0xa6;
-    AA[5] = 0xa6;
-    AA[6] = 0xa6;
-    AA[7] = 0xa6;
-    jj = 0;
-    while (jj <= 5) {
-        ii = 1;
-        while (ii <= nn) {
-            await loop();
-            ii += 1;
-        }
-        jj += 1;
-    }
-    RR[0] = AA[0];
-    RR[1] = AA[1];
-    RR[2] = AA[2];
-    RR[3] = AA[3];
-    RR[4] = AA[4];
-    RR[5] = AA[5];
-    RR[6] = AA[6];
-    RR[7] = AA[7];
-    return RR;
 };
 }());
 }());
