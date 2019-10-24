@@ -712,7 +712,7 @@ local.jweEncrypt = async function (opt) {
             mode: "decrypt"
         }));
         // validate tag
-        local.assertOrThrow(opt.tag === await sign(
+        local.assertOrThrow(tmp.length === 5 && opt.tag === await sign(
             opt.cek,
             opt.protected,
             opt.iv,

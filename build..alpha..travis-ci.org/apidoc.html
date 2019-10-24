@@ -297,7 +297,7 @@ opt.cek = base64urlToBuffer(opt.cek || await local.jweWrapKey({
     mode: &quot;decrypt&quot;
 }));
 // validate tag
-local.<span class="apidocCodeKeywordSpan">assertOrThrow</span>(opt.tag === await sign(
+local.<span class="apidocCodeKeywordSpan">assertOrThrow</span>(tmp.length === 5 &amp;&amp; opt.tag === await sign(
     opt.cek,
     opt.protected,
     opt.iv,
@@ -1076,7 +1076,7 @@ opt.cek = base64urlToBuffer(opt.cek || await local.<span class="apidocCodeKeywor
     mode: &quot;decrypt&quot;
 }));
 // validate tag
-local.assertOrThrow(opt.tag === await sign(
+local.assertOrThrow(tmp.length === 5 &amp;&amp; opt.tag === await sign(
     opt.cek,
 ...</pre></li>
     </ul>
