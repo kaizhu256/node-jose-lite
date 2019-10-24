@@ -514,6 +514,17 @@ local.base64ToBuffer = function (str) {
     return buf.subarray(0, jj);
 };
 
+local.base64urlFromBuffer = function (str) {
+/*
+ * this function will convert base64url <str> to Uint8Array
+ */
+    return local.base64FromBuffer(str).replace((
+        /\+/g
+    ), "-").replace((
+        /\//g
+    ), "_");
+};
+
 local.cryptoEncryptAes128cbc = async function (key, iv, data, mode) {
 /*
  * this function will encrypt/decrypt <data> using <key>, <iv>, <mode>
@@ -802,8 +813,8 @@ local.cryptoSignHmacSha256 = async function (key, data) {
 
 local.jweDecrypt = async function (opt) {
 /*
- * this function will A128CBC-HS256 decrypt <opt>.jweCompact
- * using <opt>.kek
+ * this function will A128CBC-HS256 decrypt <opt>.jweCompact using <opt>.kek
+ * to jwe compact-serialization:
  */
     opt.mode = "decrypt";
     return local.jweEncrypt(opt);
@@ -813,14 +824,13 @@ local.jweEncrypt = async function (opt) {
 /*
  * this function will A128CBC-HS256 encrypt <opt>.plaintext
  * using <opt>.cek, <opt>.iv, <opt>.kek
- * to compact-serialization:
-    In the JWE Compact Serialization, a JWE is represented as the concatenation:
-        BASE64URL(UTF8(JWE Protected Header)) || '.' ||
-        BASE64URL(JWE Encrypted Key) || '.' ||
-        BASE64URL(JWE Initialization Vector) || '.' ||
-        BASE64URL(JWE Ciphertext) || '.' ||
-        BASE64URL(JWE Authentication Tag)
-    https://tools.ietf.org/html/rfc7516#appendix-A.3
+ * to jwe-compact-serialization
+ * from https://tools.ietf.org/html/rfc7516#appendix-A.3
+    BASE64URL(UTF8(JWE Protected Header)) || '.' ||
+    BASE64URL(JWE Encrypted Key) || '.' ||
+    BASE64URL(JWE Initialization Vector) || '.' ||
+    BASE64URL(JWE Ciphertext) || '.' ||
+    BASE64URL(JWE Authentication Tag)
 */
     let base64urlFromBuffer;
     let base64urlToBuffer;
@@ -833,11 +843,7 @@ local.jweEncrypt = async function (opt) {
         return (
             typeof buf === "string"
             ? buf
-            : local.base64FromBuffer(buf).replace((
-                /\//g
-            ), "_").replace((
-                /\=/g
-            ), "")
+            : local.base64urlFromBuffer(buf)
         );
     };
     base64urlToBuffer = function (str) {
@@ -853,7 +859,7 @@ local.jweEncrypt = async function (opt) {
     sign = async function (cek, aad, iv, ciphertext) {
     /*
      * this function will hmac-sha-256 sign <opt>.ciphertext
-     * using <opt>.cek, <opt>.iv, <opt>.protected
+     * using <opt>.cek, <opt>.iv, <opt>.protectedHeader
      * https://tools.ietf.org/html/rfc7516#appendix-B.5
      */
         let data;
@@ -892,21 +898,19 @@ local.jweEncrypt = async function (opt) {
     // init kek
     opt.kek = base64urlToBuffer(opt.kek);
     // {"alg":"A128KW","enc":"A128CBC-HS256"}
-    opt.protected = "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0";
+    opt.protectedHeader = "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0";
     switch (opt.mode) {
     /*
-        parse jweCompact to json-serialization:
-        https://tools.ietf.org/html/rfc7516#section-3.2
-        In the JWE JSON Serialization, a JWE is represented as a JSON object
-        containing some or all of these eight members:
-            "protected", with the value BASE64URL(UTF8(JWE Protected Header))
-            "unprotected", with the value JWE Shared Unprotected Header
-            "header", with the value JWE Per-Recipient Unprotected Header
-            "encrypted_key", with the value BASE64URL(JWE Encrypted Key)
-            "iv", with the value BASE64URL(JWE Initialization Vector)
-            "ciphertext", with the value BASE64URL(JWE Ciphertext)
-            "tag", with the value BASE64URL(JWE Authentication Tag)
-            "aad", with the value BASE64URL(JWE AAD)
+     * parse jweCompact to jwe-json-serialization
+     * from https://tools.ietf.org/html/rfc7516#section-3.2
+        "protected", with the value BASE64URL(UTF8(JWE Protected Header))
+        "unprotected", with the value JWE Shared Unprotected Header
+        "header", with the value JWE Per-Recipient Unprotected Header
+        "encrypted_key", with the value BASE64URL(JWE Encrypted Key)
+        "iv", with the value BASE64URL(JWE Initialization Vector)
+        "ciphertext", with the value BASE64URL(JWE Ciphertext)
+        "tag", with the value BASE64URL(JWE Authentication Tag)
+        "aad", with the value BASE64URL(JWE AAD)
      */
     case "decrypt":
     case "validate":
@@ -923,7 +927,7 @@ local.jweEncrypt = async function (opt) {
         // validate tag
         local.assertOrThrow(tmp.length === 5 && opt.tag === await sign(
             opt.cek,
-            opt.protected,
+            opt.protectedHeader,
             opt.iv,
             opt.ciphertext
         ), "invalid signature");
@@ -968,18 +972,60 @@ local.jweEncrypt = async function (opt) {
         // init tag
         opt.tag = await sign(
             opt.cek,
-            opt.protected,
+            opt.protectedHeader,
             opt.iv,
             opt.ciphertext
         );
         opt.jweCompact = (
-            opt.protected + "."
+            opt.protectedHeader + "."
             + opt.encrypted_key + "."
             + base64urlFromBuffer(opt.iv) + "."
             + base64urlFromBuffer(opt.ciphertext) + "."
             + opt.tag
         );
         return opt.jweCompact;
+    }
+};
+
+local.jwsDecode = async function (key, jwsCompact) {
+/*
+ * this function will HS256 decode <jwsCompact> using <key>
+ */
+    return await local.jwsEncode(key, jwsCompact, "decode");
+};
+
+local.jwsEncode = async function (key, payload, mode) {
+/*
+ * this function will HS256 encode <payload> using <key>
+ * to jws-compact-serialization
+ * from https://tools.ietf.org/html/rfc7515#section-3.1
+    BASE64URL(UTF8(JWS Protected Header)) || '.' ||
+    BASE64URL(JWS Payload) || '.' ||
+    BASE64URL(JWS Signature)
+ */
+    let sign;
+    sign = async function (key, data) {
+        return local.base64urlFromBuffer(await local.cryptoSignHmacSha256(
+            local.base64ToBuffer(key),
+            new TextEncoder().encode(data)
+        ));
+    };
+    switch (mode) {
+    case "decode":
+    case "validate":
+        payload = payload.split(".");
+        local.assertOrThrow((
+            payload.length === 3
+            && payload[2] === (await sign(key, payload.slice(0, 2).join(".")))
+        ), "invalid signature");
+        return new TextDecoder().decode(local.base64ToBuffer(payload[1]));
+    // encode
+    default:
+        payload = (
+            "eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9."
+            + local.base64urlFromBuffer(payload)
+        );
+        return payload + "." + (await sign(key, payload));
     }
 };
 }());

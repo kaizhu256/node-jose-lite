@@ -3,7 +3,7 @@
 <text fill="#7f7" font-family="Courier New" font-size="12" xml:space="preserve">
 <tspan x="10" y="26"></tspan>
 
-<tspan x="10" y="42">\x1b[35m[MODE_BUILD=npmTestPublished]\x1b[0m - 2019-10-24T20:42:02.038Z - npm-testing /tmp/npmTe\</tspan>
+<tspan x="10" y="42">\x1b[35m[MODE_BUILD=npmTestPublished]\x1b[0m - 2019-10-24T22:34:38.895Z - npm-testing /tmp/npmTe\</tspan>
 <tspan x="10" y="58">stPublished/node_modules/jose-lite</tspan>
 
 <tspan x="10" y="74"></tspan>
@@ -13,58 +13,58 @@
 <tspan x="10" y="106">covering $ /home/travis/.nvm/versions/node/v13.0.1/bin/node /tmp/npmTestPublished/node_modules/j\</tspan>
 <tspan x="10" y="122">ose-lite/test.js</tspan>
 
-<tspan x="10" y="138">&gt; http-server listening on port 62509</tspan>
+<tspan x="10" y="138">&gt; http-server listening on port 48547</tspan>
 
-<tspan x="10" y="154">testRunDefault - 7 ms - [node test-case 1 of 7 passed] - testCase_buildApidoc_default</tspan>
+<tspan x="10" y="154">testRunDefault - 6 ms - [node test-case 1 of 7 passed] - testCase_buildApidoc_default</tspan>
 
-<tspan x="10" y="170">testRunDefault - 85 ms - [node test-case 2 of 7 passed] - testCase_buildLib_default</tspan>
+<tspan x="10" y="170">testRunDefault - 71 ms - [node test-case 2 of 7 passed] - testCase_buildLib_default</tspan>
 
-<tspan x="10" y="186">testRunDefault - 102 ms - [node test-case 3 of 7 passed] - testCase_buildReadme_default</tspan>
+<tspan x="10" y="186">testRunDefault - 87 ms - [node test-case 3 of 7 passed] - testCase_buildReadme_default</tspan>
 
-<tspan x="10" y="202">testRunDefault - 108 ms - [node test-case 4 of 7 passed] - testCase_buildTest_default</tspan>
+<tspan x="10" y="202">testRunDefault - 89 ms - [node test-case 4 of 7 passed] - testCase_buildTest_default</tspan>
 
-<tspan x="10" y="218">testRunDefault - 113 ms - [node test-case 5 of 7 passed] - testCase_nop_default</tspan>
+<tspan x="10" y="218">testRunDefault - 90 ms - [node test-case 5 of 7 passed] - testCase_nop_default</tspan>
 
-<tspan x="10" y="234">jslint - 361ms /tmp/npmTestPublished/node_modules/jose-lite/README.md</tspan>
+<tspan x="10" y="234">jslint - 404ms /tmp/npmTestPublished/node_modules/jose-lite/README.md</tspan>
 
-<tspan x="10" y="250">jslint - 60ms /tmp/npmTestPublished/node_modules/jose-lite/lib.jose_lite.js</tspan>
+<tspan x="10" y="250">jslint - 58ms /tmp/npmTestPublished/node_modules/jose-lite/lib.jose_lite.js</tspan>
 
 <tspan x="10" y="266">jslint - 1ms /tmp/npmTestPublished/node_modules/jose-lite/npm_scripts.sh</tspan>
 
-<tspan x="10" y="282">jslint - 0ms /tmp/npmTestPublished/node_modules/jose-lite/package.json</tspan>
+<tspan x="10" y="282">jslint - 1ms /tmp/npmTestPublished/node_modules/jose-lite/package.json</tspan>
 
-<tspan x="10" y="298">jslint - 44ms /tmp/npmTestPublished/node_modules/jose-lite/test.js</tspan>
+<tspan x="10" y="298">jslint - 48ms /tmp/npmTestPublished/node_modules/jose-lite/test.js</tspan>
 
 <tspan x="10" y="314"></tspan>
 
-<tspan x="10" y="330">DevTools listening on ws://127.0.0.1:41789/devtools/browser/5e6ef1ca-e04e-42b1-8001-a7dfc8c17c69</tspan>
+<tspan x="10" y="330">DevTools listening on ws://127.0.0.1:40261/devtools/browser/04587111-304d-4d25-a8ed-7fd659f41233</tspan>
 
-<tspan x="10" y="346">http-server listening on port 38511</tspan>
+<tspan x="10" y="346">http-server listening on port 58523</tspan>
 
-<tspan x="10" y="362">[1024/204203.453272:ERROR:command_buffer_proxy_impl.cc(124)] ContextResult::kTransientFailure: F\</tspan>
+<tspan x="10" y="362">[1024/223440.299171:ERROR:command_buffer_proxy_impl.cc(124)] ContextResult::kTransientFailure: F\</tspan>
 <tspan x="10" y="378">ailed to send GpuChannelMsg_CreateCommandBuffer.</tspan>
 
-<tspan x="10" y="394">[1024/204203.454443:ERROR:command_buffer_proxy_impl.cc(124)] ContextResult::kTransientFailure: F\</tspan>
-<tspan x="10" y="410">ailed to send GpuChannelMsg_CreateCommandBuffer.</tspan>
+<tspan x="10" y="394">[1024/223440.299016:WARNING:ipc_message_attachment_set.cc(49)] MessageAttachmentSet destroyed wi\</tspan>
+<tspan x="10" y="410">th unconsumed attachments: 0/1</tspan>
 
-<tspan x="10" y="426">[1024/204203.453221:WARNING:ipc_message_attachment_set.cc(49)] MessageAttachmentSet destroyed wi\</tspan>
-<tspan x="10" y="442">th unconsumed attachments: 0/1</tspan>
+<tspan x="10" y="426">[1024/223440.317624:ERROR:command_buffer_proxy_impl.cc(124)] ContextResult::kTransientFailure: F\</tspan>
+<tspan x="10" y="442">ailed to send GpuChannelMsg_CreateCommandBuffer.</tspan>
 
-<tspan x="10" y="458">[1024/204203.454415:WARNING:ipc_message_attachment_set.cc(49)] MessageAttachmentSet destroyed wi\</tspan>
+<tspan x="10" y="458">[1024/223440.340465:WARNING:ipc_message_attachment_set.cc(49)] MessageAttachmentSet destroyed wi\</tspan>
 <tspan x="10" y="474">th unconsumed attachments: 0/1</tspan>
 
-<tspan x="10" y="490">[1024/204203.807496:INFO:CONSOLE(546)] "Uncaught TypeError: local.testRunBrowser is not a functi\</tspan>
-<tspan x="10" y="506">on", source: http://127.0.0.1:62509/assets.example.js (546)</tspan>
+<tspan x="10" y="490">[1024/223440.654841:INFO:CONSOLE(546)] "Uncaught TypeError: local.testRunBrowser is not a functi\</tspan>
+<tspan x="10" y="506">on", source: http://127.0.0.1:48547/assets.example.js (546)</tspan>
 
-<tspan x="10" y="522">[1024/204203.824661:INFO:CONSOLE(526)] "testRunDefault - 6 ms - [browser test-case 1 of 1 passed\</tspan>
-<tspan x="10" y="538">] - testCase_nop_default", source: http://127.0.0.1:62509/assets.example.js (526)</tspan>
+<tspan x="10" y="522">[1024/223440.672144:INFO:CONSOLE(526)] "testRunDefault - 5 ms - [browser test-case 1 of 1 passed\</tspan>
+<tspan x="10" y="538">] - testCase_nop_default", source: http://127.0.0.1:48547/assets.example.js (526)</tspan>
 
-<tspan x="10" y="554">[1024/204203.916921:INFO:CONSOLE(526)] "domOnEventWindowOnloadTimeElapsed = 277", source: http:/\</tspan>
-<tspan x="10" y="570">/127.0.0.1:62509/assets.example.js (526)</tspan>
+<tspan x="10" y="554">[1024/223440.765998:INFO:CONSOLE(526)] "domOnEventWindowOnloadTimeElapsed = 259", source: http:/\</tspan>
+<tspan x="10" y="570">/127.0.0.1:48547/assets.example.js (526)</tspan>
 
-<tspan x="10" y="586">testRunDefault - 1411 ms - [node test-case 6 of 7 passed] - testCase_webpage_default</tspan>
+<tspan x="10" y="586">testRunDefault - 1413 ms - [node test-case 6 of 7 passed] - testCase_webpage_default</tspan>
 
-<tspan x="10" y="602">testRunDefault - 5614 ms - [node test-case 7 of 7 passed] - testCase_buildApp_default</tspan>
+<tspan x="10" y="602">testRunDefault - 5612 ms - [node test-case 7 of 7 passed] - testCase_buildApp_default</tspan>
 
 <tspan x="10" y="618">-----------------------|-----------|-----------|-----------|-----------|</tspan>
 
@@ -94,15 +94,15 @@
 <tspan x="10" y="826">-------------------------------------------------------</tspan>
 
 <tspan x="10" y="842">| test-report - npmTestPublished - browser - / - Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537\</tspan>
-<tspan x="10" y="858">.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.70 Safari/537.36 - 2019-10-24T20:42:03.731Z</tspan>
+<tspan x="10" y="858">.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.70 Safari/537.36 - 2019-10-24T22:34:40.596Z</tspan>
 
-<tspan x="10" y="874">|      14 ms            0 failed        1 passed      |</tspan>
+<tspan x="10" y="874">|      17 ms            0 failed        1 passed      |</tspan>
 
 <tspan x="10" y="890">-------------------------------------------------------</tspan>
 
-<tspan x="10" y="906">| test-report - npmTestPublished - node - linux v13.0.1 - 2019-10-24T20:42:02.238Z</tspan>
+<tspan x="10" y="906">| test-report - npmTestPublished - node - linux v13.0.1 - 2019-10-24T22:34:39.094Z</tspan>
 
-<tspan x="10" y="922">|    5614 ms            0 failed        7 passed      |</tspan>
+<tspan x="10" y="922">|    5613 ms            0 failed        7 passed      |</tspan>
 
 <tspan x="10" y="938">-------------------------------------------------------</tspan>
 
@@ -120,7 +120,7 @@
 
 <tspan x="10" y="1050"></tspan>
 
-<tspan x="10" y="1066">\x1b[35m[MODE_BUILD=npmTestPublished]\x1b[0m - 2019-10-24T20:42:08.448Z - EXIT_CODE - 0</tspan>
+<tspan x="10" y="1066">\x1b[35m[MODE_BUILD=npmTestPublished]\x1b[0m - 2019-10-24T22:34:45.286Z - EXIT_CODE - 0</tspan>
 
 </text>
 </svg>

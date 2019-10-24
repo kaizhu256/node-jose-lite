@@ -5,7 +5,7 @@
 
 <tspan x="10" y="42"></tspan>
 
-<tspan x="10" y="58">0.    2019-10-24 15:40:49 -0500     88311 bytes .</tspan>
+<tspan x="10" y="58">0.    2019-10-24 17:33:05 -0500     90723 bytes .</tspan>
 
 <tspan x="10" y="74">1.    2019-10-18 15:41:45 +0000       103 bytes .gitignore</tspan>
 
@@ -15,13 +15,13 @@
 
 <tspan x="10" y="122">4.    2019-10-24 09:30:04 -0500     41423 bytes README.md</tspan>
 
-<tspan x="10" y="138">5.    2019-10-24 15:40:49 -0500     28174 bytes lib.jose.js</tspan>
+<tspan x="10" y="138">5.    2019-10-24 17:33:05 -0500     29431 bytes lib.jose.js</tspan>
 
 <tspan x="10" y="154">6.    2019-10-18 15:50:33 +0000      2002 bytes npm_scripts.sh</tspan>
 
 <tspan x="10" y="170">7.    2019-10-24 09:38:26 -0500      1067 bytes package.json</tspan>
 
-<tspan x="10" y="186">8.    2019-10-24 12:50:33 -0500     12913 bytes test.js</tspan>
+<tspan x="10" y="186">8.    2019-10-24 17:33:05 -0500     14068 bytes test.js</tspan>
 
 </text>
 </svg>
