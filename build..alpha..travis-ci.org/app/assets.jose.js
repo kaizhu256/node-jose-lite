@@ -814,7 +814,6 @@ local.cryptoSignHmacSha256 = async function (key, data) {
 local.jweDecrypt = async function (opt) {
 /*
  * this function will A128CBC-HS256 decrypt <opt>.jweCompact using <opt>.kek
- * to jwe compact-serialization:
  */
     opt.mode = "decrypt";
     return local.jweEncrypt(opt);
@@ -987,6 +986,14 @@ local.jweEncrypt = async function (opt) {
     }
 };
 
+local.jweValidate = async function (opt) {
+/*
+ * this function will A128CBC-HS256 validate <opt>.jweCompact using <opt>.kek
+ */
+    opt.mode = "validate";
+    return local.jweEncrypt(opt);
+};
+
 local.jwsDecode = async function (key, jwsCompact) {
 /*
  * this function will HS256 decode <jwsCompact> using <key>
@@ -1018,6 +1025,9 @@ local.jwsEncode = async function (key, payload, mode) {
             payload.length === 3
             && payload[2] === (await sign(key, payload.slice(0, 2).join(".")))
         ), "invalid signature");
+        if (mode === "validate") {
+            return;
+        }
         return new TextDecoder().decode(local.base64ToBuffer(payload[1]));
     // encode
     default:
@@ -1027,6 +1037,13 @@ local.jwsEncode = async function (key, payload, mode) {
         );
         return payload + "." + (await sign(key, payload));
     }
+};
+
+local.jwsValidate = async function (key, jwsCompact) {
+/*
+ * this function will HS256 validate <jwsCompact> using <key>
+ */
+    return await local.jwsEncode(key, jwsCompact, "validate");
 };
 }());
 }());

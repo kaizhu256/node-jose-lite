@@ -208,6 +208,15 @@
 
         <li>
 
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.jweValidate">
+            function <span class="apidocSignatureSpan">jose-lite.</span>jweValidate
+            <span class="apidocSignatureSpan">(opt)</span>
+            </a>
+
+        </li>
+
+        <li>
+
             <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.jwsDecode">
             function <span class="apidocSignatureSpan">jose-lite.</span>jwsDecode
             <span class="apidocSignatureSpan">(key, jwsCompact)</span>
@@ -220,6 +229,15 @@
             <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.jwsEncode">
             function <span class="apidocSignatureSpan">jose-lite.</span>jwsEncode
             <span class="apidocSignatureSpan">(key, payload, mode)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.jwsValidate">
+            function <span class="apidocSignatureSpan">jose-lite.</span>jwsValidate
+            <span class="apidocSignatureSpan">(key, jwsCompact)</span>
             </a>
 
         </li>
@@ -1049,7 +1067,6 @@ switch (opt.mode) {
     <li>description and source-code<pre class="apidocCodePre">async function (opt) {
 <span class="apidocCodeCommentSpan">/*
  * this function will A128CBC-HS256 decrypt &lt;opt&gt;.jweCompact using &lt;opt&gt;.kek
- * to jwe compact-serialization:
  */
 </span>    opt.mode = &quot;decrypt&quot;;
     return local.jweEncrypt(opt);
@@ -1067,6 +1084,7 @@ switch (opt.mode) {
         kek: &quot;GawgguFyGrWKav7AX4VKUg&quot;
     });
     local.assertJsonEqual(opt.jweDecrypted, &quot;Live long and prosper.&quot;);
+    //!! await local.jweValidate(opt);
     onError(undefined, opt);
 };
 ...</pre></li>
@@ -1192,11 +1210,11 @@ switch (opt.mode) {
             opt.iv,
             opt.ciph...</pre></li>
     <li>example usage<pre class="apidocCodePre">...
+};
 
 local.jweDecrypt = async function (opt) {
 /*
 * this function will A128CBC-HS256 decrypt &lt;opt&gt;.jweCompact using &lt;opt&gt;.kek
-* to jwe compact-serialization:
 */
    opt.mode = &quot;decrypt&quot;;
    return local.<span class="apidocCodeKeywordSpan">jweEncrypt</span>(opt);
@@ -1207,6 +1225,41 @@ local.jweEncrypt = async function (opt) {
 * this function will A128CBC-HS256 encrypt &lt;opt&gt;.plaintext
 * using &lt;opt&gt;.cek, &lt;opt&gt;.iv, &lt;opt&gt;.kek
 * to jwe-compact-serialization
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.jweValidate" id="apidoc.elem.jose-lite.jweValidate">
+        function <span class="apidocSignatureSpan">jose-lite.</span>jweValidate
+        <span class="apidocSignatureSpan">(opt)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (opt) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will A128CBC-HS256 validate &lt;opt&gt;.jweCompact using &lt;opt&gt;.kek
+ */
+</span>    opt.mode = &quot;validate&quot;;
+    return local.jweEncrypt(opt);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+       + &quot;U0m_YmjN04DJvceFICbCVQ&quot;
+   ));
+   opt.jweDecrypted = await local.jweDecrypt({
+       jweCompact: opt.jweCompact,
+       kek: &quot;GawgguFyGrWKav7AX4VKUg&quot;
+   });
+   local.assertJsonEqual(opt.jweDecrypted, &quot;Live long and prosper.&quot;);
+   //!! await local.<span class="apidocCodeKeywordSpan">jweValidate</span>(opt);
+   onError(undefined, opt);
+};
+
+local.testCase_jwsXxx_default = async function (opt, onError) {
+/*
+* this function will test jweXxx&apos;s default handling-behavior
+*/
 ...</pre></li>
     </ul>
 
@@ -1236,11 +1289,11 @@ local.jweEncrypt = async function (opt) {
         await local.<span class="apidocCodeKeywordSpan">jwsDecode</span>(opt.key, opt.jwsCompact),
         opt.payload
     );
+    await local.jwsValidate(opt.key, opt.jwsCompact);
     onError(undefined, opt);
 };
 
 local.testCase_jweXxx_default(undefined, local.onErrorDefault);
-local.testCase_jwsXxx_default(undefined, local.onErrorDefault);
 ...</pre></li>
     </ul>
 
@@ -1277,6 +1330,9 @@ local.testCase_jwsXxx_default(undefined, local.onErrorDefault);
             payload.length === 3
             &amp;&amp; payload[2] === (await sign(key, payload.slice(0, 2).join(&quot;.&quot;)))
         ), &quot;invalid signature&quot;);
+        if (mode === &quot;validate&quot;) {
+            return;
+        }
         return new TextDecoder().decode(local.base64ToBuffer(payload[1]));
     // encode
     default:
@@ -1288,7 +1344,7 @@ local.testCase_jwsXxx_default(undefined, local.onErrorDefault);
     }
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
-   }
+   return local.jweEncrypt(opt);
 };
 
 local.jwsDecode = async function (key, jwsCompact) {
@@ -1303,6 +1359,40 @@ local.jwsEncode = async function (key, payload, mode) {
 * this function will HS256 encode &lt;payload&gt; using &lt;key&gt;
 * to jws-compact-serialization
 * from https://tools.ietf.org/html/rfc7515#section-3.1
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.jwsValidate" id="apidoc.elem.jose-lite.jwsValidate">
+        function <span class="apidocSignatureSpan">jose-lite.</span>jwsValidate
+        <span class="apidocSignatureSpan">(key, jwsCompact)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (key, jwsCompact) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will HS256 validate &lt;jwsCompact&gt; using &lt;key&gt;
+ */
+</span>    return await local.jwsEncode(key, jwsCompact, &quot;validate&quot;);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+        // signature
+        + &quot;dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk&quot;
+    ));
+    local.assertJsonEqual(
+        await local.jwsDecode(opt.key, opt.jwsCompact),
+        opt.payload
+    );
+    await local.<span class="apidocCodeKeywordSpan">jwsValidate</span>(opt.key, opt.jwsCompact);
+    onError(undefined, opt);
+};
+
+local.testCase_jweXxx_default(undefined, local.onErrorDefault);
+local.testCase_jwsXxx_default(undefined, local.onErrorDefault);
+}());
+}());
 ...</pre></li>
     </ul>
 
