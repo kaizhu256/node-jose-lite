@@ -55,8 +55,9 @@ this zero-dependency package will provide a standalone solution to encrypt/decry
 #### todo
 - none
 
-#### changelog 2019.10.18
-- npm publish 2019.10.18
+#### changelog 2019.10.22
+- npm publish 2019.10.22
+- add function jweDecrypt, jweEncrypt, jweSign, jweWrapKey
 - update build
 - none
 
@@ -540,11 +541,6 @@ if (!local.isBrowser) {
 });
 local.objectAssignDefault(local, globalThis.domOnEventDelegateDict);
 globalThis.domOnEventDelegateDict = local;
-if ((
-    /\bmodeTest=1\b/
-).test(location.search)) {
-    local.testRunBrowser();
-}
 }());
 
 
@@ -1146,7 +1142,7 @@ local.http.createServer(function (req, res) {
         "test": "./npm_scripts.sh",
         "utility2": "./npm_scripts.sh"
     },
-    "version": "2019.10.18"
+    "version": "2019.10.22"
 }
 ```
 

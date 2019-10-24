@@ -397,6 +397,41 @@ local.testRunDefault(local);
 
 // run shared js-env code - function
 (function () {
-return;
+local.testCase_jose_default = async function (opt, onError) {
+/*
+ * this function will test jose's default handling-behavior
+ */
+    // test example from
+    // https://tools.ietf.org/html/rfc7516#appendix-A.3
+    opt = {};
+    opt.jweEncrypted = await local.jweEncrypt({
+        aad: (
+            "ZXlKaGJHY2lPaUpCTVRJNFMxY2lMQ0ps"
+            + "Ym1NaU9pSkJNVEk0UTBKRExVaFRNalUySW4w"
+        ),
+        cek: "BNMfxVSd_P4LZJ36P6pqzmt81C1vawnbyLEA8I-cLM8",
+        dataDecrypted: "Live long and prosper.",
+        iv: "AxY8DCtDaGlsbGljb3RoZQ",
+        kek: "GawgguFyGrWKav7AX4VKUg"
+    });
+    local.assertJsonEqual(opt.jweEncrypted, (
+        // header
+        "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0."
+        // cek
+        + "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ."
+        // iv
+        + "AxY8DCtDaGlsbGljb3RoZQ."
+        // data
+        + "KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY."
+        // sig
+        + "U0m_YmjN04DJvceFICbCVQ"
+    ));
+    opt.jweDecrypted = await local.jweDecrypt({
+        jweEncrypted: opt.jweEncrypted,
+        kek: "GawgguFyGrWKav7AX4VKUg"
+    });
+    local.assertJsonEqual(opt.jweDecrypted, "Live long and prosper.");
+    onError(undefined, opt);
+};
 }());
 }());
