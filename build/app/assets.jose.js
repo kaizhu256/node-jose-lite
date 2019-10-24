@@ -654,26 +654,23 @@ local.jweEncrypt = async function (opt) {
             : local.base64ToBuffer(str)
         );
     };
-    sign = async function (opt) {
+    sign = async function (cek, aad, iv, ciphertext) {
     /*
      * this function will hmac-sha-256 sign <opt>.ciphertext
      * using <opt>.cek, <opt>.iv, <opt>.protected
      * https://tools.ietf.org/html/rfc7516#appendix-B.5
      */
-        let aad;
         let data;
         let ii;
         let jj;
         // init aad
-        aad = new TextEncoder().encode(opt.protected);
+        aad = new TextEncoder().encode(aad);
         // init data
-        data = new Uint8Array(
-            aad.length + opt.iv.length + opt.ciphertext.length + 8
-        );
+        data = new Uint8Array(aad.length + iv.length + ciphertext.length + 8);
         // concat data
         ii = 0;
         [
-            aad, opt.iv, opt.ciphertext, [
+            aad, iv, ciphertext, [
                 // 64-bit length of aad
                 0,
                 0,
@@ -693,7 +690,7 @@ local.jweEncrypt = async function (opt) {
             }
         });
         return base64urlFromBuffer((
-            await local.cryptoSignHmacSha256(opt.cek.slice(0, 16), data)
+            await local.cryptoSignHmacSha256(cek.slice(0, 16), data)
         ).slice(0, 16));
     };
     // init kek
@@ -715,12 +712,12 @@ local.jweEncrypt = async function (opt) {
             mode: "decrypt"
         }));
         // validate tag
-        local.assertOrThrow(opt.tag === await sign({
-            cek: opt.cek,
-            ciphertext: opt.ciphertext,
-            iv: opt.iv,
-            protected: opt.protected
-        }), "invalid signature");
+        local.assertOrThrow(opt.tag === await sign(
+            opt.cek,
+            opt.protected,
+            opt.iv,
+            opt.ciphertext
+        ), "invalid signature");
         if (opt.mode === "validate") {
             return;
         }
@@ -761,12 +758,12 @@ local.jweEncrypt = async function (opt) {
             opt.plaintext
         );
         // init tag
-        opt.tag = await sign({
-            cek: opt.cek,
-            ciphertext: opt.ciphertext,
-            iv: opt.iv,
-            protected: opt.protected
-        });
+        opt.tag = await sign(
+            opt.cek,
+            opt.protected,
+            opt.iv,
+            opt.ciphertext
+        );
         opt.jweCompact = (
             opt.protected + "."
             + opt.encrypted_key + "."

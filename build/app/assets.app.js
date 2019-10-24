@@ -69971,26 +69971,23 @@ local.jweEncrypt = async function (opt) {\n\
             : local.base64ToBuffer(str)\n\
         );\n\
     };\n\
-    sign = async function (opt) {\n\
+    sign = async function (cek, aad, iv, ciphertext) {\n\
     /*\n\
      * this function will hmac-sha-256 sign <opt>.ciphertext\n\
      * using <opt>.cek, <opt>.iv, <opt>.protected\n\
      * https://tools.ietf.org/html/rfc7516#appendix-B.5\n\
      */\n\
-        let aad;\n\
         let data;\n\
         let ii;\n\
         let jj;\n\
         // init aad\n\
-        aad = new TextEncoder().encode(opt.protected);\n\
+        aad = new TextEncoder().encode(aad);\n\
         // init data\n\
-        data = new Uint8Array(\n\
-            aad.length + opt.iv.length + opt.ciphertext.length + 8\n\
-        );\n\
+        data = new Uint8Array(aad.length + iv.length + ciphertext.length + 8);\n\
         // concat data\n\
         ii = 0;\n\
         [\n\
-            aad, opt.iv, opt.ciphertext, [\n\
+            aad, iv, ciphertext, [\n\
                 // 64-bit length of aad\n\
                 0,\n\
                 0,\n\
@@ -70010,7 +70007,7 @@ local.jweEncrypt = async function (opt) {\n\
             }\n\
         });\n\
         return base64urlFromBuffer((\n\
-            await local.cryptoSignHmacSha256(opt.cek.slice(0, 16), data)\n\
+            await local.cryptoSignHmacSha256(cek.slice(0, 16), data)\n\
         ).slice(0, 16));\n\
     };\n\
     // init kek\n\
@@ -70032,12 +70029,12 @@ local.jweEncrypt = async function (opt) {\n\
             mode: \"decrypt\"\n\
         }));\n\
         // validate tag\n\
-        local.assertOrThrow(opt.tag === await sign({\n\
-            cek: opt.cek,\n\
-            ciphertext: opt.ciphertext,\n\
-            iv: opt.iv,\n\
-            protected: opt.protected\n\
-        }), \"invalid signature\");\n\
+        local.assertOrThrow(opt.tag === await sign(\n\
+            opt.cek,\n\
+            opt.protected,\n\
+            opt.iv,\n\
+            opt.ciphertext\n\
+        ), \"invalid signature\");\n\
         if (opt.mode === \"validate\") {\n\
             return;\n\
         }\n\
@@ -70078,12 +70075,12 @@ local.jweEncrypt = async function (opt) {\n\
             opt.plaintext\n\
         );\n\
         // init tag\n\
-        opt.tag = await sign({\n\
-            cek: opt.cek,\n\
-            ciphertext: opt.ciphertext,\n\
-            iv: opt.iv,\n\
-            protected: opt.protected\n\
-        });\n\
+        opt.tag = await sign(\n\
+            opt.cek,\n\
+            opt.protected,\n\
+            opt.iv,\n\
+            opt.ciphertext\n\
+        );\n\
         opt.jweCompact = (\n\
             opt.protected + \".\"\n\
             + opt.encrypted_key + \".\"\n\
@@ -70963,26 +70960,23 @@ local.jweEncrypt = async function (opt) {
             : local.base64ToBuffer(str)
         );
     };
-    sign = async function (opt) {
+    sign = async function (cek, aad, iv, ciphertext) {
     /*
      * this function will hmac-sha-256 sign <opt>.ciphertext
      * using <opt>.cek, <opt>.iv, <opt>.protected
      * https://tools.ietf.org/html/rfc7516#appendix-B.5
      */
-        let aad;
         let data;
         let ii;
         let jj;
         // init aad
-        aad = new TextEncoder().encode(opt.protected);
+        aad = new TextEncoder().encode(aad);
         // init data
-        data = new Uint8Array(
-            aad.length + opt.iv.length + opt.ciphertext.length + 8
-        );
+        data = new Uint8Array(aad.length + iv.length + ciphertext.length + 8);
         // concat data
         ii = 0;
         [
-            aad, opt.iv, opt.ciphertext, [
+            aad, iv, ciphertext, [
                 // 64-bit length of aad
                 0,
                 0,
@@ -71002,7 +70996,7 @@ local.jweEncrypt = async function (opt) {
             }
         });
         return base64urlFromBuffer((
-            await local.cryptoSignHmacSha256(opt.cek.slice(0, 16), data)
+            await local.cryptoSignHmacSha256(cek.slice(0, 16), data)
         ).slice(0, 16));
     };
     // init kek
@@ -71024,12 +71018,12 @@ local.jweEncrypt = async function (opt) {
             mode: "decrypt"
         }));
         // validate tag
-        local.assertOrThrow(opt.tag === await sign({
-            cek: opt.cek,
-            ciphertext: opt.ciphertext,
-            iv: opt.iv,
-            protected: opt.protected
-        }), "invalid signature");
+        local.assertOrThrow(opt.tag === await sign(
+            opt.cek,
+            opt.protected,
+            opt.iv,
+            opt.ciphertext
+        ), "invalid signature");
         if (opt.mode === "validate") {
             return;
         }
@@ -71070,12 +71064,12 @@ local.jweEncrypt = async function (opt) {
             opt.plaintext
         );
         // init tag
-        opt.tag = await sign({
-            cek: opt.cek,
-            ciphertext: opt.ciphertext,
-            iv: opt.iv,
-            protected: opt.protected
-        });
+        opt.tag = await sign(
+            opt.cek,
+            opt.protected,
+            opt.iv,
+            opt.ciphertext
+        );
         opt.jweCompact = (
             opt.protected + "."
             + opt.encrypted_key + "."

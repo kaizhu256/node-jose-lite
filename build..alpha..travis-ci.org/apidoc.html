@@ -297,12 +297,12 @@ opt.cek = base64urlToBuffer(opt.cek || await local.jweWrapKey({
     mode: &quot;decrypt&quot;
 }));
 // validate tag
-local.<span class="apidocCodeKeywordSpan">assertOrThrow</span>(opt.tag === await sign({
-    cek: opt.cek,
-    ciphertext: opt.ciphertext,
-    iv: opt.iv,
-    protected: opt.protected
-}), &quot;invalid signature&quot;);
+local.<span class="apidocCodeKeywordSpan">assertOrThrow</span>(opt.tag === await sign(
+    opt.cek,
+    opt.protected,
+    opt.iv,
+    opt.ciphertext
+), &quot;invalid signature&quot;);
 if (opt.mode === &quot;validate&quot;) {
     return;
 ...</pre></li>
@@ -447,7 +447,7 @@ base64urlToBuffer = function (str) {
         : local.<span class="apidocCodeKeywordSpan">base64ToBuffer</span>(str)
     );
 };
-sign = async function (opt) {
+sign = async function (cek, aad, iv, ciphertext) {
 /*
  * this function will hmac-sha-256 sign &lt;opt&gt;.ciphertext
  * using &lt;opt&gt;.cek, &lt;opt&gt;.iv, &lt;opt&gt;.protected
@@ -535,9 +535,9 @@ sign = async function (opt) {
     return data;
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
-    iv: opt.iv,
-    protected: opt.protected
-}), &quot;invalid signature&quot;);
+    opt.iv,
+    opt.ciphertext
+), &quot;invalid signature&quot;);
 if (opt.mode === &quot;validate&quot;) {
     return;
 }
@@ -633,7 +633,7 @@ default:
         }
     });
     return base64urlFromBuffer((
-        await local.<span class="apidocCodeKeywordSpan">cryptoSignHmacSha256</span>(opt.cek.slice(0, 16), data)
+        await local.<span class="apidocCodeKeywordSpan">cryptoSignHmacSha256</span>(cek.slice(0, 16), data)
     ).slice(0, 16));
 };
 // init kek
@@ -849,26 +849,23 @@ switch (opt.mode) {
             : local.base64ToBuffer(str)
         );
     };
-    sign = async function (opt) {
+    sign = async function (cek, aad, iv, ciphertext) {
     /*
      * this function will hmac-sha-256 sign &lt;opt&gt;.ciphertext
      * using &lt;opt&gt;.cek, &lt;opt&gt;.iv, &lt;opt&gt;.protected
      * https://tools.ietf.org/html/rfc7516#appendix-B.5
      */
-        let aad;
         let data;
         let ii;
         let jj;
         // init aad
-        aad = new TextEncoder().encode(opt.protected);
+        aad = new TextEncoder().encode(aad);
         // init data
-        data = new Uint8Array(
-            aad.length + opt.iv.length + opt.ciphertext.length + 8
-        );
+        data = new Uint8Array(aad.length + iv.length + ciphertext.length + 8);
         // concat data
         ii = 0;
         [
-            aad, opt.iv, opt.ciphertext, [
+            aad, iv, ciphertext, [
                 // 64-bit length of aad
                 0,
                 0,
@@ -888,7 +885,7 @@ switch (opt.mode) {
             }
         });
         return base64urlFromBuffer((
-            await local.cryptoSignHmacSha256(opt.cek.slice(0, 16), data)
+            await local.cryptoSignHmacSha256(cek.slice(0, 16), data)
         ).slice(0, 16));
     };
     // init kek
@@ -905,7 +902,7 @@ switch (opt.mode) {
         opt.tag = tmp[4];
         // unwrapKey encrypted_key to cek
         opt.cek = base64urlToBuffer(opt.cek || await local.jweWrapKey({
-            ce...</pre></li>
+            cek: base64urlToBuffer(opt.encrypted_key),...</pre></li>
     <li>example usage<pre class="apidocCodePre">...
 
 local.jweDecrypt = async function (opt) {
@@ -1079,8 +1076,8 @@ opt.cek = base64urlToBuffer(opt.cek || await local.<span class="apidocCodeKeywor
     mode: &quot;decrypt&quot;
 }));
 // validate tag
-local.assertOrThrow(opt.tag === await sign({
-    cek: opt.cek,
+local.assertOrThrow(opt.tag === await sign(
+    opt.cek,
 ...</pre></li>
     </ul>
 
