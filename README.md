@@ -1,5 +1,5 @@
 # jose-lite
-this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens
+this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens in both browser/node
 
 # live web demo
 - [https://kaizhu256.github.io/node-jose-lite/build..beta..travis-ci.org/app](https://kaizhu256.github.io/node-jose-lite/build..beta..travis-ci.org/app)
@@ -39,7 +39,7 @@ this zero-dependency package will provide a standalone solution to encrypt/decry
 
 
 # cdn download
-- [https://kaizhu256.github.io/node-jose-lite/build..beta..travis-ci.org/app/assets.jose_lite.js](https://kaizhu256.github.io/node-jose-lite/build..beta..travis-ci.org/app/assets.jose_lite.js)
+- [https://kaizhu256.github.io/node-jose-lite/build..beta..travis-ci.org/app/assets.jose.js](https://kaizhu256.github.io/node-jose-lite/build..beta..travis-ci.org/app/assets.jose.js)
 
 
 
@@ -55,9 +55,10 @@ this zero-dependency package will provide a standalone solution to encrypt/decry
 #### todo
 - none
 
-#### changelog 2019.10.22
-- npm publish 2019.10.22
-- add function jweDecrypt, jweEncrypt, jweSign, jweWrapKey
+#### changelog 2019.10.25
+- npm publish 2019.10.25
+- rename lib jose_lite to jose
+- add and test function jweDecrypt, jweEncrypt, jweValidate, jwsDecode, jwsEncode, jwsValidate
 - update build
 - none
 
@@ -500,7 +501,7 @@ instruction
 // init local
 local = (
     globalThis.utility2_rollup
-    || globalThis.utility2_jose_lite
+    || globalThis.utility2_jose
     || require("jose-lite")
 );
 // init exports
@@ -979,7 +980,7 @@ utility2-comment -->\n\
 <script>window.utility2_onReadyBefore.counter += 1;</script>\n\
 <script src="jsonp.utility2.stateInit?callback=window.utility2.stateInit"></script>\n\
 utility2-comment -->\n\
-<script src="assets.jose_lite.js"></script>\n\
+<script src="assets.jose.js"></script>\n\
 <script src="assets.example.js"></script>\n\
 <script src="assets.test.js"></script>\n\
 <script>\n\
@@ -1002,10 +1003,10 @@ utility2-comment -->\n\
 </html>\n\
 ';
 /* jslint ignore:end */
-local.assetsDict["/assets.jose_lite.js"] = (
-    local.assetsDict["/assets.jose_lite.js"]
+local.assetsDict["/assets.jose.js"] = (
+    local.assetsDict["/assets.jose.js"]
     || local.fs.readFileSync(
-        local.__dirname + "/lib.jose_lite.js",
+        local.__dirname + "/lib.jose.js",
         "utf8"
     ).replace((
         /^#!\//
@@ -1023,7 +1024,7 @@ local.assetsDict["/"] = local.assetsDict[
     case "npm_package_name":
         return "jose-lite";
     case "npm_package_nameLib":
-        return "jose_lite";
+        return "jose";
     case "npm_package_version":
         return "0.0.1";
     default:
@@ -1109,7 +1110,7 @@ local.http.createServer(function (req, res) {
 ```json
 {
     "author": "kai zhu <kaizhu256@gmail.com>",
-    "description": "this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens",
+    "description": "this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens in both browser/node",
     "devDependencies": {
         "utility2": "kaizhu256/node-utility2#alpha"
     },
@@ -1117,12 +1118,16 @@ local.http.createServer(function (req, res) {
         "node": ">=10.0"
     },
     "homepage": "https://github.com/kaizhu256/node-jose-lite",
-    "keywords": [],
+    "keywords": [
+        "jwe",
+        "jws",
+        "jwt"
+    ],
     "license": "MIT",
-    "main": "lib.jose_lite.js",
+    "main": "lib.jose.js",
     "name": "jose-lite",
     "nameAliasPublish": "",
-    "nameLib": "jose_lite",
+    "nameLib": "jose",
     "nameOriginal": "jose-lite",
     "os": [
         "darwin",
@@ -1142,7 +1147,7 @@ local.http.createServer(function (req, res) {
         "test": "./npm_scripts.sh",
         "utility2": "./npm_scripts.sh"
     },
-    "version": "2019.10.22"
+    "version": "2019.10.25"
 }
 ```
 

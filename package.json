@@ -1,6 +1,6 @@
 {
     "author": "kai zhu <kaizhu256@gmail.com>",
-    "description": "this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens",
+    "description": "this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens in both browser/node",
     "devDependencies": {
         "utility2": "kaizhu256/node-utility2#alpha"
     },
@@ -8,12 +8,16 @@
         "node": ">=10.0"
     },
     "homepage": "https://github.com/kaizhu256/node-jose-lite",
-    "keywords": [],
+    "keywords": [
+        "jwe",
+        "jws",
+        "jwt"
+    ],
     "license": "MIT",
-    "main": "lib.jose_lite.js",
+    "main": "lib.jose.js",
     "name": "jose-lite",
     "nameAliasPublish": "",
-    "nameLib": "jose_lite",
+    "nameLib": "jose",
     "nameOriginal": "jose-lite",
     "os": [
         "darwin",
@@ -33,5 +37,5 @@
         "test": "./npm_scripts.sh",
         "utility2": "./npm_scripts.sh"
     },
-    "version": "2019.10.22"
+    "version": "2019.10.25"
 }

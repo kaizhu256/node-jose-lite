@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /*
- * lib.jose_lite.js (2019.10.22)
+ * lib.jose.js (2019.10.25)
  * https://github.com/kaizhu256/node-jose-lite
- * this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens
+ * this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens in both browser/node
  *
  */
 
 
 
-/* istanbul instrument in package jose_lite */
+/* istanbul instrument in package jose */
 // assets.utility2.header.js - start
 /* istanbul ignore next */
 /* jslint utility2:true */
@@ -403,17 +403,22 @@ local = (
 );
 // init exports
 if (local.isBrowser) {
-    globalThis.utility2_jose_lite = local;
+    globalThis.utility2_jose = local;
 } else {
     module.exports = local;
     module.exports.__dirname = __dirname;
 }
 // init lib main
-local.jose_lite = local;
+local.jose = local;
 
 
 
 /* validateLineSortedReset */
+return;
+}());
+
+
+
 // run shared js-env code - function
 (function () {
 local.base64FromBuffer = function (buf) {
@@ -509,350 +514,112 @@ local.base64ToBuffer = function (str) {
     return buf.subarray(0, jj);
 };
 
-local.bufferConcat = function (bufList) {
+local.base64urlFromBuffer = function (str) {
 /*
- * this function will emulate in browser, node's Buffer.concat
+ * this function will convert base64url <str> to Uint8Array
  */
-    let byteLength;
-    let ii;
-    let isString;
-    let jj;
-    let result;
-    isString = true;
-    result = [
-        ""
-    ];
-    byteLength = 0;
-    bufList.forEach(function (buf) {
-        if (buf !== 0 && !(buf && buf.length)) {
-            return;
-        }
-        // optimization - concat string
-        if (isString && typeof buf === "string") {
-            result[0] += buf;
-            return;
-        }
-        isString = null;
-        buf = local.bufferValidateAndCoerce(buf);
-        byteLength += buf.byteLength;
-        result.push(buf);
-    });
-    // optimization - return string
-    if (isString) {
-        return result[0];
-    }
-    result[0] = local.bufferValidateAndCoerce(result[0]);
-    byteLength += result[0].byteLength;
-    bufList = result;
-    result = local.bufferValidateAndCoerce(new Uint8Array(byteLength));
-    ii = 0;
-    bufList.forEach(function (buf) {
-        jj = 0;
-        while (jj < buf.byteLength) {
-            result[ii] = buf[jj];
-            ii += 1;
-            jj += 1;
-        }
-    });
-    return result;
+    return local.base64FromBuffer(str).replace((
+        /\+/g
+    ), "-").replace((
+        /\//g
+    ), "_");
 };
 
-local.bufferValidateAndCoerce = function (buf, mode) {
+local.cryptoEncryptAes128cbc = async function (key, iv, data, mode) {
 /*
- * this function will validate and coerce/convert
- * <buf> to Buffer/Uint8Array, or String if <mode> = "string"
- */
-    // validate not 0
-    if (buf !== 0) {
-        buf = buf || "";
-    }
-    if (typeof buf === "string" && mode === "string") {
-        return buf;
-    }
-    // convert utf8 to Uint8Array
-    if (typeof buf === "string") {
-        buf = new TextEncoder().encode(buf);
-    // validate instanceof Uint8Array
-    } else if (Object.prototype.toString.call(buf) !== "[object Uint8Array]") {
-        throw new Error(
-            "bufferValidateAndCoerce - value is not instanceof "
-            + "ArrayBuffer, String, or Uint8Array"
-        );
-    }
-    // convert Uint8Array to utf8
-    if (mode === "string") {
-        return new TextDecoder().decode(buf);
-    }
-    // coerce Uint8Array to Buffer
-    if (globalThis.Buffer && Buffer.isBuffer && !Buffer.isBuffer(buf)) {
-        Object.setPrototypeOf(buf, Buffer.prototype);
-    }
-    return buf;
-};
-
-local.cryptoEncryptAes128cbc = async function (opt) {
-/*
- * this function will encrypt / decrypt <opt>.dataDecrypted,
- * using aes-128-cbc
+ * this function will encrypt/decrypt <data> using <key>, <iv>, <mode>
  */
     let crypto;
-    let tmp;
     // encode data
-    if (typeof opt.data === "string") {
-        opt.data = new TextEncoder().encode(opt.data);
+    if (typeof data === "string") {
+        data = new TextEncoder().encode(data);
     }
     crypto = (
         (globalThis.crypto && globalThis.crypto.subtle)
         ? globalThis.crypto
         : require("crypto")
     );
-    tmp = (
-        (crypto.subtle && opt.mode === "decrypt")
+    mode = (
+        (crypto.subtle && mode === "decrypt")
         ? crypto.subtle.decrypt.bind(crypto.subtle)
         : crypto.subtle
         ? crypto.subtle.encrypt.bind(crypto.subtle)
-        : opt.mode === "decrypt"
+        : mode === "decrypt"
         ? crypto.createDecipheriv
         : crypto.createCipheriv
     );
     if (crypto.subtle) {
-        opt.key = await crypto.subtle.importKey("raw", opt.key, {
+        key = await crypto.subtle.importKey("raw", key, {
             name: "AES-CBC"
         }, false, [
             "decrypt", "encrypt"
         ]);
-        tmp = await tmp({
-            iv: opt.iv,
+        mode = await mode({
+            iv,
             name: "AES-CBC"
-        }, opt.key, opt.data);
-        tmp = new Uint8Array(tmp);
+        }, key, data);
+        data = new Uint8Array(mode);
     } else {
-        tmp = tmp("aes-128-cbc", opt.key, opt.iv);
-        tmp = Buffer.concat([
-            tmp.update(opt.data), tmp.final()
+        mode = mode("aes-128-cbc", key, iv);
+        data = Buffer.concat([
+            mode.update(data), mode.final()
         ]);
     }
-    return tmp;
+    return data;
 };
 
-local.cryptoRandomBuffer = function (nn) {
+local.cryptoKeyUnwrap256 = async function (KK, RR) {
 /*
- * this function will return random buf with length <nn>
- */
-    return (
-        (globalThis.crypto && globalThis.crypto.subtle)
-        ? globalThis.crypto.getRandomValues(new Uint8Array(nn))
-        : require("crypto").randomBytes(nn)
-    );
-};
-
-local.jweDecrypt = async function (opt) {
-/*
- * this function will jwe-decrypt <opt>.jweEncrypted,
- * using aes-key-wrap and aes_128_cbc_hmac_sha_256
- */
-    opt.mode = "decrypt";
-    return local.jweEncrypt(opt);
-};
-
-local.jweEncrypt = async function (opt) {
-/*
- * this function will jwe-encrypt <opt>.dataDecrypted,
- * using aes-key-wrap and aes_128_cbc_hmac_sha_256
- */
-    let base64urlFromBuffer;
-    let base64urlToBuffer;
-    let tmp;
-    base64urlFromBuffer = function (buf) {
-    /*
-     * this function will convert Uint8Array <buf> to base64url str
-     */
-        return (
-            typeof buf === "string"
-            ? buf
-            : local.base64FromBuffer(buf).replace((
-                /\//g
-            ), "_").replace((
-                /\=/g
-            ), "")
-        );
-    };
-    base64urlToBuffer = function (str) {
-    /*
-     * this function will convert base64url <str> to Uint8Array
-     */
-        return (
-            (
-                typeof str.byteLength === "number"
-                || str.constructor.name === "CryptoKey"
-            )
-            ? str
-            : local.base64ToBuffer(str)
-        );
-    };
-    opt.kek = base64urlToBuffer(opt.kek || local.cryptoRandomBuffer(16));
-    opt.kek = await local.jweImportKeyRaw(opt.kek, {
-        name: "AES-KW"
-    }, false, [
-        "unwrapKey", "wrapKey"
-    ]);
-    // {"alg":"A128KW","enc":"A128CBC-HS256"}
-    opt.header = "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0";
-    switch (opt.mode) {
-    case "decrypt":
-    case "validate":
-        tmp = opt.jweEncrypted.split(".");
-        opt.cekWrapped = tmp[1];
-        opt.iv = base64urlToBuffer(tmp[2]);
-        opt.dataEncrypted = base64urlToBuffer(tmp[3]);
-        opt.sig = tmp[4];
-        // unwrap cekWrapped
-        opt.cek = base64urlToBuffer(
-            opt.cek
-            || await local.jweWrapKey({
-                cek: base64urlToBuffer(opt.cekWrapped),
-                kek: opt.kek,
-                mode: "decrypt"
-            })
-        );
-        // validate sig
-        tmp = await local.jweSign({
-            cek: opt.cek,
-            data: opt.dataEncrypted,
-            header: opt.header,
-            iv: opt.iv
-        });
-        tmp = base64urlFromBuffer(tmp);
-        local.assertOrThrow(tmp === opt.sig, "invalid signature");
-        if (opt.mode === "validate") {
-            return;
-        }
-        // decrypt dataEncrypted
-        opt.dataDecrypted = await local.cryptoEncryptAes128cbc({
-            data: opt.dataEncrypted,
-            iv: opt.iv,
-            key: opt.cek.slice(16),
-            mode: "decrypt"
-        });
-        opt.dataDecrypted = new TextDecoder().decode(opt.dataDecrypted);
-        return opt.dataDecrypted;
-    // encrypt
-    default:
-        opt.cek = base64urlToBuffer(opt.cek || local.cryptoRandomBuffer(32));
-        opt.iv = base64urlToBuffer(opt.iv || local.cryptoRandomBuffer(16));
-        // wrap cek
-        opt.cekWrapped = base64urlFromBuffer(
-            opt.cekWrapped
-            || await local.jweWrapKey({
-                cek: opt.cek,
-                kek: opt.kek
-            })
-        );
-        // encrypt dataDecrypted
-        opt.dataEncrypted = await local.cryptoEncryptAes128cbc({
-            data: opt.dataDecrypted,
-            iv: opt.iv,
-            key: opt.cek.slice(16)
-        });
-        // init sig
-        opt.sig = await local.jweSign({
-            cek: opt.cek,
-            data: opt.dataEncrypted,
-            header: opt.header,
-            iv: opt.iv
-        });
-        opt.sig = base64urlFromBuffer(opt.sig);
-        opt.jweEncrypted = (
-            opt.header + "."
-            + opt.cekWrapped + "."
-            + base64urlFromBuffer(opt.iv) + "."
-            + base64urlFromBuffer(opt.dataEncrypted) + "."
-            + opt.sig
-        );
-        return opt.jweEncrypted;
-    }
-};
-
-local.jweImportKeyRaw = async function (key, alg, ext, key_ops) {
-/*
- * this function will import raw <key>
- */
-    let subtle;
-    subtle = globalThis.crypto && globalThis.crypto.subtle;
-    if (subtle && key.constructor.name !== "CryptoKey") {
-        return await subtle.importKey("raw", key, alg, ext, key_ops);
-    }
-    return key;
-};
-
-local.jweSign = async function (opt) {
-/*
- * this function will jwe-sign <opt>.jweEncrypted,
- * using aes_128_cbc_hmac_sha_256
- */
-    let crypto;
-    let data;
-    let ii;
-    let jj;
-    let tmp;
-    // init data
-    tmp = new TextEncoder().encode(opt.header);
-    data = new Uint8Array(
-        tmp.length + opt.iv.length + opt.data.length + 8
-    );
-    ii = 0;
-    [
-        tmp, opt.iv, opt.data, [
-            0,
-            0,
-            0,
-            0,
-            (tmp.length >>> 21) & 0xff,
-            (tmp.length >> 13) & 0xff,
-            (tmp.length >> 5) & 0xff,
-            (8 * tmp.length) & 0xff
-        ]
-    ].forEach(function (elem) {
-        jj = 0;
-        while (jj < elem.length) {
-            data[ii] = elem[jj];
-            ii += 1;
-            jj += 1;
-        }
-    });
-    crypto = (
-        (globalThis.crypto && globalThis.crypto.subtle)
-        ? globalThis.crypto
-        : require("crypto")
-    );
-    if (crypto.subtle) {
-        tmp = await crypto.subtle.importKey("raw", opt.cek.slice(0, 16), {
-            hash: "SHA-256",
-            name: "HMAC"
-        }, false, [
-            "sign"
-        ]);
-        tmp = new Uint8Array(await crypto.subtle.sign({
-            name: "HMAC"
-        }, tmp, data));
-    } else {
-        tmp = crypto.createHmac(
-            "sha256",
-            opt.cek.slice(0, 16)
-        ).update(data).digest();
-    }
-    return tmp.slice(0, 16);
-};
-
-local.jweWrapKey = async function (opt) {
-/*
- * this function will wrap/unwrap <opt>.cek with given symmetric <opt>.kek
+ * this function will aes256 wrapKey/unwrapKey <RR> using <KK>
  * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
+    2.2.2 Key Unwrap
+    https://tools.ietf.org/html/rfc3394#section-2.2.2
+        Inputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and
+            Key, K (the KEK).
+        Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.
+        1) Initialize variables.
+            Set A = C[0]
+            For i = 1 to n
+                R[i] = C[i]
+        2) Compute intermediate values.
+            For j = 5 to 0
+                For i = n to 1
+                    B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i
+                    A = MSB(64, B)
+                    R[i] = LSB(64, B)
+        3) Output results.
+            For i = 1 to n
+                P[i] = R[i]
  */
+    return await local.cryptoKeyWrap256(KK, RR, "unwrap");
+};
+
+local.cryptoKeyWrap256 = async function (KK, RR, mode) {
+/*
+ * this function will aes256 wrapKey/unwrapKey <RR> using <KK>
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
+    2.2.1 Key Wrap
+    https://tools.ietf.org/html/rfc3394#section-2.2.1
+        Inputs: Plaintext, n 64-bit values {P1, P2, ..., Pn}, and
+            Key, K (the KEK).
+        Outputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}.
+        1) Initialize variables.
+            Set A = IV, an initial value (see 2.2.3)
+            For i = 1 to n
+                R[i] = P[i]
+        2) Calculate intermediate values.
+            For j = 0 to 5
+                For i = 1 to n
+                    B = AES(K, A | R[i])
+                    A = MSB(64, B) ^ t where t = (n*j)+i
+                    R[i] = LSB(64, B)
+        3) Output the results.
+            Set C[0] = A
+            For i = 1 to n
+                C[i] = R[i]
+*/
     let AA;
     let BB;
-    let KK;
-    let RR;
     let crypto;
     let ii;
     let iv;
@@ -862,8 +629,6 @@ local.jweWrapKey = async function (opt) {
     let tt;
     // init var
     AA = new Uint8Array(32);
-    KK = opt.kek;
-    RR = opt.cek;
     ii = 0;
     iv = new Uint8Array(16);
     nn = 4;
@@ -874,7 +639,12 @@ local.jweWrapKey = async function (opt) {
     );
     // use crypto.subtle
     if (crypto.subtle) {
-        if (opt.mode === "decrypt") {
+        KK = await crypto.subtle.importKey("raw", KK, {
+            name: "AES-KW"
+        }, false, [
+            "unwrapKey", "wrapKey"
+        ]);
+        if (mode === "unwrap") {
             RR = await crypto.subtle.unwrapKey("raw", RR, KK, {
                 name: "AES-KW"
             }, {
@@ -894,14 +664,14 @@ local.jweWrapKey = async function (opt) {
         return new Uint8Array(RR);
     }
     crypto = (
-        opt.mode === "decrypt"
+        mode === "unwrap"
         ? crypto.createDecipheriv
         : crypto.createCipheriv
     );
     // init loop
     loop = async function () {
         // AA xor tt
-        if (opt.mode === "decrypt") {
+        if (mode === "unwrap") {
             tt = nn * jj + ii;
             AA[4] ^= ((tt >>> 24) & 0xff);
             AA[5] ^= ((tt >> 16) & 0xff);
@@ -941,7 +711,7 @@ local.jweWrapKey = async function (opt) {
         RR[8 * ii + 6] = BB[14];
         RR[8 * ii + 7] = BB[15];
         // AA xor tt
-        if (opt.mode !== "decrypt") {
+        if (mode !== "unwrap") {
             tt = nn * jj + ii;
             AA[4] ^= ((tt >>> 24) & 0xff);
             AA[5] ^= ((tt >> 16) & 0xff);
@@ -949,27 +719,7 @@ local.jweWrapKey = async function (opt) {
             AA[7] ^= (tt & 0xff);
         }
     };
-    /*
-        2.2.2 Key Unwrap
-        https://tools.ietf.org/html/rfc3394#section-2.2.2
-        Inputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and
-            Key, K (the KEK).
-        Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.
-        1) Initialize variables.
-            Set A = C[0]
-            For i = 1 to n
-                R[i] = C[i]
-        2) Compute intermediate values.
-            For j = 5 to 0
-                For i = n to 1
-                    B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i
-                    A = MSB(64, B)
-                    R[i] = LSB(64, B)
-        3) Output results.
-            For i = 1 to n
-                P[i] = R[i]
-    */
-    if (opt.mode === "decrypt") {
+    if (mode === "unwrap") {
         AA[0] = RR[0];
         AA[1] = RR[1];
         AA[2] = RR[2];
@@ -989,27 +739,6 @@ local.jweWrapKey = async function (opt) {
         }
         return RR.slice(8);
     }
-    /*
-        2.2.1 Key Wrap
-        https://tools.ietf.org/html/rfc3394#section-2.2.1
-        Inputs: Plaintext, n 64-bit values {P1, P2, ..., Pn}, and
-            Key, K (the KEK).
-        Outputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}.
-        1) Initialize variables.
-            Set A = IV, an initial value (see 2.2.3)
-            For i = 1 to n
-                R[i] = P[i]
-        2) Calculate intermediate values.
-            For j = 0 to 5
-                For i = 1 to n
-                    B = AES(K, A | R[i])
-                    A = MSB(64, B) ^ t where t = (n*j)+i
-                    R[i] = LSB(64, B)
-        3) Output the results.
-            Set C[0] = A
-            For i = 1 to n
-                C[i] = R[i]
-    */
     BB = RR;
     RR = new Uint8Array(BB.length + 8);
     ii = 0;
@@ -1044,6 +773,277 @@ local.jweWrapKey = async function (opt) {
     RR[7] = AA[7];
     return RR;
 };
-}());
+
+local.cryptoRandomBuffer = function (nn) {
+/*
+ * this function will return random buf with length <nn>
+ */
+    return (
+        (globalThis.crypto && globalThis.crypto.subtle)
+        ? globalThis.crypto.getRandomValues(new Uint8Array(nn))
+        : require("crypto").randomBytes(nn)
+    );
+};
+
+local.cryptoSignHmacSha256 = async function (key, data) {
+/*
+ * this function will crypto-hmac-sha256 sign <data> using <key>
+ */
+    let crypto;
+    crypto = (
+        (globalThis.crypto && globalThis.crypto.subtle)
+        ? globalThis.crypto
+        : require("crypto")
+    );
+    if (crypto.subtle) {
+        key = await crypto.subtle.importKey("raw", key, {
+            hash: "SHA-256",
+            name: "HMAC"
+        }, false, [
+            "sign"
+        ]);
+        data = new Uint8Array(await crypto.subtle.sign({
+            name: "HMAC"
+        }, key, data));
+    } else {
+        data = crypto.createHmac("sha256", key).update(data).digest();
+    }
+    return data;
+};
+
+local.jweDecrypt = async function (opt) {
+/*
+ * this function will A128CBC-HS256 decrypt <opt>.jweCompact using <opt>.kek
+ */
+    opt.mode = "decrypt";
+    return local.jweEncrypt(opt);
+};
+
+local.jweEncrypt = async function (opt) {
+/*
+ * this function will A128CBC-HS256 encrypt <opt>.plaintext
+ * using <opt>.cek, <opt>.iv, <opt>.kek
+ * to jwe-compact-serialization
+ * from https://tools.ietf.org/html/rfc7516#appendix-A.3
+    BASE64URL(UTF8(JWE Protected Header)) || '.' ||
+    BASE64URL(JWE Encrypted Key) || '.' ||
+    BASE64URL(JWE Initialization Vector) || '.' ||
+    BASE64URL(JWE Ciphertext) || '.' ||
+    BASE64URL(JWE Authentication Tag)
+*/
+    let base64urlFromBuffer;
+    let base64urlToBuffer;
+    let sign;
+    let tmp;
+    base64urlFromBuffer = function (buf) {
+    /*
+     * this function will convert Uint8Array <buf> to base64url str
+     */
+        return (
+            typeof buf === "string"
+            ? buf
+            : local.base64urlFromBuffer(buf)
+        );
+    };
+    base64urlToBuffer = function (str) {
+    /*
+     * this function will convert base64url <str> to Uint8Array
+     */
+        return (
+            typeof str.byteLength === "number"
+            ? str
+            : local.base64ToBuffer(str)
+        );
+    };
+    sign = async function (cek, aad, iv, ciphertext) {
+    /*
+     * this function will hmac-sha-256 sign <opt>.ciphertext
+     * using <opt>.cek, <opt>.iv, <opt>.protectedHeader
+     * https://tools.ietf.org/html/rfc7516#appendix-B.5
+     */
+        let data;
+        let ii;
+        let jj;
+        // init aad
+        aad = new TextEncoder().encode(aad);
+        // init data
+        data = new Uint8Array(aad.length + iv.length + ciphertext.length + 8);
+        // concat data
+        ii = 0;
+        [
+            aad, iv, ciphertext, [
+                // 64-bit length of aad
+                0,
+                0,
+                0,
+                0,
+                (aad.length >>> 21) & 0xff,
+                (aad.length >> 13) & 0xff,
+                (aad.length >> 5) & 0xff,
+                (8 * aad.length) & 0xff
+            ]
+        ].forEach(function (elem) {
+            jj = 0;
+            while (jj < elem.length) {
+                data[ii] = elem[jj];
+                ii += 1;
+                jj += 1;
+            }
+        });
+        return base64urlFromBuffer((
+            await local.cryptoSignHmacSha256(cek.slice(0, 16), data)
+        ).slice(0, 16));
+    };
+    // init kek
+    opt.kek = base64urlToBuffer(opt.kek);
+    // {"alg":"A128KW","enc":"A128CBC-HS256"}
+    opt.protectedHeader = "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0";
+    switch (opt.mode) {
+    /*
+     * parse jweCompact to jwe-json-serialization
+     * from https://tools.ietf.org/html/rfc7516#section-3.2
+        "protected", with the value BASE64URL(UTF8(JWE Protected Header))
+        "unprotected", with the value JWE Shared Unprotected Header
+        "header", with the value JWE Per-Recipient Unprotected Header
+        "encrypted_key", with the value BASE64URL(JWE Encrypted Key)
+        "iv", with the value BASE64URL(JWE Initialization Vector)
+        "ciphertext", with the value BASE64URL(JWE Ciphertext)
+        "tag", with the value BASE64URL(JWE Authentication Tag)
+        "aad", with the value BASE64URL(JWE AAD)
+     */
+    case "decrypt":
+    case "validate":
+        tmp = opt.jweCompact.split(".");
+        opt.encrypted_key = tmp[1];
+        opt.iv = base64urlToBuffer(tmp[2]);
+        opt.ciphertext = base64urlToBuffer(tmp[3]);
+        opt.tag = tmp[4];
+        // unwrapKey encrypted_key to cek
+        opt.cek = base64urlToBuffer(opt.cek || await local.cryptoKeyUnwrap256(
+            opt.kek,
+            base64urlToBuffer(opt.encrypted_key)
+        ));
+        // validate tag
+        local.assertOrThrow(tmp.length === 5 && opt.tag === await sign(
+            opt.cek,
+            opt.protectedHeader,
+            opt.iv,
+            opt.ciphertext
+        ), "invalid signature");
+        if (opt.mode === "validate") {
+            return;
+        }
+        // decrypt ciphertext to plaintext
+        opt.plaintext = await local.cryptoEncryptAes128cbc(
+            opt.cek.slice(16),
+            opt.iv,
+            opt.ciphertext,
+            "decrypt"
+        );
+        opt.plaintext = new TextDecoder().decode(opt.plaintext);
+        return opt.plaintext;
+    // encrypt
+    default:
+        // init cek
+        if (!opt.cek) {
+            opt.cek = local.cryptoRandomBuffer(32);
+            delete opt.encrypted_key;
+            delete opt.iv;
+        }
+        opt.cek = base64urlToBuffer(opt.cek);
+        // wrapKey cek to encrypted_key
+        opt.encrypted_key = base64urlFromBuffer(
+            opt.encrypted_key || await local.cryptoKeyWrap256(
+                opt.kek,
+                opt.cek
+            )
+        );
+        // init iv
+        opt.iv = base64urlToBuffer(
+            opt.ivOverride || local.cryptoRandomBuffer(16)
+        );
+        // encrypt plaintext to ciphertext
+        opt.ciphertext = await local.cryptoEncryptAes128cbc(
+            opt.cek.slice(16),
+            opt.iv,
+            opt.plaintext
+        );
+        // init tag
+        opt.tag = await sign(
+            opt.cek,
+            opt.protectedHeader,
+            opt.iv,
+            opt.ciphertext
+        );
+        opt.jweCompact = (
+            opt.protectedHeader + "."
+            + opt.encrypted_key + "."
+            + base64urlFromBuffer(opt.iv) + "."
+            + base64urlFromBuffer(opt.ciphertext) + "."
+            + opt.tag
+        );
+        return opt.jweCompact;
+    }
+};
+
+local.jweValidate = async function (opt) {
+/*
+ * this function will A128CBC-HS256 validate <opt>.jweCompact using <opt>.kek
+ */
+    opt.mode = "validate";
+    return local.jweEncrypt(opt);
+};
+
+local.jwsDecode = async function (key, jwsCompact) {
+/*
+ * this function will HS256 decode <jwsCompact> using <key>
+ */
+    return await local.jwsEncode(key, jwsCompact, "decode");
+};
+
+local.jwsEncode = async function (key, payload, mode) {
+/*
+ * this function will HS256 encode <payload> using <key>
+ * to jws-compact-serialization
+ * from https://tools.ietf.org/html/rfc7515#section-3.1
+    BASE64URL(UTF8(JWS Protected Header)) || '.' ||
+    BASE64URL(JWS Payload) || '.' ||
+    BASE64URL(JWS Signature)
+ */
+    let sign;
+    sign = async function (key, data) {
+        return local.base64urlFromBuffer(await local.cryptoSignHmacSha256(
+            local.base64ToBuffer(key),
+            new TextEncoder().encode(data)
+        ));
+    };
+    switch (mode) {
+    case "decode":
+    case "validate":
+        payload = payload.split(".");
+        local.assertOrThrow((
+            payload.length === 3
+            && payload[2] === (await sign(key, payload.slice(0, 2).join(".")))
+        ), "invalid signature");
+        if (mode === "validate") {
+            return;
+        }
+        return new TextDecoder().decode(local.base64ToBuffer(payload[1]));
+    // encode
+    default:
+        payload = (
+            "eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9."
+            + local.base64urlFromBuffer(payload)
+        );
+        return payload + "." + (await sign(key, payload));
+    }
+};
+
+local.jwsValidate = async function (key, jwsCompact) {
+/*
+ * this function will HS256 validate <jwsCompact> using <key>
+ */
+    return await local.jwsEncode(key, jwsCompact, "validate");
+};
 }());
 }());
