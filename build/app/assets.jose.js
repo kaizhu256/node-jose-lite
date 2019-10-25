@@ -2,7 +2,7 @@
 /*
  * lib.jose.js (2019.10.25)
  * https://github.com/kaizhu256/node-jose-lite
- * this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens
+ * this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens in both browser/node
  *
  */
 
