@@ -427,7 +427,10 @@ local.testCase_jweXxx_default = async function (opt, onError) {
         kek: "GawgguFyGrWKav7AX4VKUg"
     });
     local.assertJsonEqual(opt.jweDecrypted, "Live long and prosper.");
-    //!! await local.jweValidate(opt);
+    await local.jweValidate({
+        jweCompact: opt.jweCompact,
+        kek: "GawgguFyGrWKav7AX4VKUg"
+    });
     onError(undefined, opt);
 };
 

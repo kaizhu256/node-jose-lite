@@ -1072,21 +1072,21 @@ switch (opt.mode) {
     return local.jweEncrypt(opt);
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
-        // iv
-        + &quot;AxY8DCtDaGlsbGljb3RoZQ.&quot;
-        // data
-        + &quot;KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY.&quot;
-        // tag
-        + &quot;U0m_YmjN04DJvceFICbCVQ&quot;
-    ));
-    opt.jweDecrypted = await local.<span class="apidocCodeKeywordSpan">jweDecrypt</span>({
-        jweCompact: opt.jweCompact,
-        kek: &quot;GawgguFyGrWKav7AX4VKUg&quot;
-    });
-    local.assertJsonEqual(opt.jweDecrypted, &quot;Live long and prosper.&quot;);
-    //!! await local.jweValidate(opt);
-    onError(undefined, opt);
-};
+    // iv
+    + &quot;AxY8DCtDaGlsbGljb3RoZQ.&quot;
+    // data
+    + &quot;KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY.&quot;
+    // tag
+    + &quot;U0m_YmjN04DJvceFICbCVQ&quot;
+));
+opt.jweDecrypted = await local.<span class="apidocCodeKeywordSpan">jweDecrypt</span>({
+    jweCompact: opt.jweCompact,
+    kek: &quot;GawgguFyGrWKav7AX4VKUg&quot;
+});
+local.assertJsonEqual(opt.jweDecrypted, &quot;Live long and prosper.&quot;);
+await local.jweValidate({
+    jweCompact: opt.jweCompact,
+    kek: &quot;GawgguFyGrWKav7AX4VKUg&quot;
 ...</pre></li>
     </ul>
 
@@ -1245,21 +1245,21 @@ local.jweEncrypt = async function (opt) {
     return local.jweEncrypt(opt);
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
-       + &quot;U0m_YmjN04DJvceFICbCVQ&quot;
-   ));
-   opt.jweDecrypted = await local.jweDecrypt({
-       jweCompact: opt.jweCompact,
-       kek: &quot;GawgguFyGrWKav7AX4VKUg&quot;
-   });
-   local.assertJsonEqual(opt.jweDecrypted, &quot;Live long and prosper.&quot;);
-   //!! await local.<span class="apidocCodeKeywordSpan">jweValidate</span>(opt);
-   onError(undefined, opt);
+        + &quot;U0m_YmjN04DJvceFICbCVQ&quot;
+    ));
+    opt.jweDecrypted = await local.jweDecrypt({
+        jweCompact: opt.jweCompact,
+        kek: &quot;GawgguFyGrWKav7AX4VKUg&quot;
+    });
+    local.assertJsonEqual(opt.jweDecrypted, &quot;Live long and prosper.&quot;);
+    await local.<span class="apidocCodeKeywordSpan">jweValidate</span>({
+        jweCompact: opt.jweCompact,
+        kek: &quot;GawgguFyGrWKav7AX4VKUg&quot;
+    });
+    onError(undefined, opt);
 };
 
 local.testCase_jwsXxx_default = async function (opt, onError) {
-/*
-* this function will test jweXxx&apos;s default handling-behavior
-*/
 ...</pre></li>
     </ul>
 
