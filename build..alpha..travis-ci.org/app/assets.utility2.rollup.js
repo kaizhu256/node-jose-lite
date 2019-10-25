@@ -51804,6 +51804,17 @@ local.base64ToUtf8 = function (str) {
     return local.bufferValidateAndCoerce(local.base64ToBuffer(str), "string");
 };
 
+local.base64urlFromBuffer = function (str) {
+/*
+ * this function will convert base64url <str> to Uint8Array
+ */
+    return local.base64FromBuffer(str).replace((
+        /\+/g
+    ), "-").replace((
+        /\//g
+    ), "_");
+};
+
 local.blobRead = function (blob, onError) {
 /*
  * this function will read from <blob>
