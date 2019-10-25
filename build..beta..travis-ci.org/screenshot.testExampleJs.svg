@@ -1,9 +1,9 @@
-<svg height="302" width="720" xmlns="http://www.w3.org/2000/svg">
-<rect height="302" fill="#555" width="720"></rect>
+<svg height="334" width="720" xmlns="http://www.w3.org/2000/svg">
+<rect height="334" fill="#555" width="720"></rect>
 <text fill="#7f7" font-family="Courier New" font-size="12" xml:space="preserve">
 <tspan x="10" y="26"></tspan>
 
-<tspan x="10" y="42">&gt; jose-lite@2019.10.18 postinstall /tmp/app/node_modules/jose-lite</tspan>
+<tspan x="10" y="42">&gt; jose-lite@2019.10.25 postinstall /tmp/app/node_modules/jose-lite</tspan>
 
 <tspan x="10" y="58">&gt; ./npm_scripts.sh</tspan>
 
@@ -29,11 +29,15 @@
 
 <tspan x="10" y="234"></tspan>
 
-<tspan x="10" y="250">+ jose-lite@2019.10.18</tspan>
+<tspan x="10" y="250">+ jose-lite@2019.10.25</tspan>
 
-<tspan x="10" y="266">added 1 package from 1 contributor in 10.205s</tspan>
+<tspan x="10" y="266">added 1 package from 1 contributor and audited 1 package in 0.355s</tspan>
 
-<tspan x="10" y="282">http-server listening on port 8081</tspan>
+<tspan x="10" y="282">found 0 vulnerabilities</tspan>
+
+<tspan x="10" y="298"></tspan>
+
+<tspan x="10" y="314">http-server listening on port 8081</tspan>
 
 </text>
 </svg>

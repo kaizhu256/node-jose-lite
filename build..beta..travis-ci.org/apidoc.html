@@ -52,9 +52,9 @@
 
         href="https://github.com/kaizhu256/node-jose-lite"
 
-    >jose-lite (2019.10.18)</a>
+    >jose-lite (2019.10.25)</a>
 </h1>
-<h4>this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens</h4>
+<h4>this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens in both browser/node</h4>
 <div class="apidocSectionDiv"><a
     href="#apidoc.tableOfContents"
     id="apidoc.tableOfContents"
@@ -73,9 +73,81 @@
 
         <li>
 
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.base64FromBuffer">
+            function <span class="apidocSignatureSpan">jose-lite.</span>base64FromBuffer
+            <span class="apidocSignatureSpan">(buf)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.base64ToBuffer">
+            function <span class="apidocSignatureSpan">jose-lite.</span>base64ToBuffer
+            <span class="apidocSignatureSpan">(str)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.base64urlFromBuffer">
+            function <span class="apidocSignatureSpan">jose-lite.</span>base64urlFromBuffer
+            <span class="apidocSignatureSpan">(str)</span>
+            </a>
+
+        </li>
+
+        <li>
+
             <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.coalesce">
             function <span class="apidocSignatureSpan">jose-lite.</span>coalesce
             <span class="apidocSignatureSpan">(...argList)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.cryptoEncryptAes128cbc">
+            function <span class="apidocSignatureSpan">jose-lite.</span>cryptoEncryptAes128cbc
+            <span class="apidocSignatureSpan">(key, iv, data, mode)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.cryptoKeyUnwrap256">
+            function <span class="apidocSignatureSpan">jose-lite.</span>cryptoKeyUnwrap256
+            <span class="apidocSignatureSpan">(KK, RR)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.cryptoKeyWrap256">
+            function <span class="apidocSignatureSpan">jose-lite.</span>cryptoKeyWrap256
+            <span class="apidocSignatureSpan">(KK, RR, mode)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.cryptoRandomBuffer">
+            function <span class="apidocSignatureSpan">jose-lite.</span>cryptoRandomBuffer
+            <span class="apidocSignatureSpan">(nn)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.cryptoSignHmacSha256">
+            function <span class="apidocSignatureSpan">jose-lite.</span>cryptoSignHmacSha256
+            <span class="apidocSignatureSpan">(key, data)</span>
             </a>
 
         </li>
@@ -112,6 +184,60 @@
             <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.identity">
             function <span class="apidocSignatureSpan">jose-lite.</span>identity
             <span class="apidocSignatureSpan">(val)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.jweDecrypt">
+            function <span class="apidocSignatureSpan">jose-lite.</span>jweDecrypt
+            <span class="apidocSignatureSpan">(opt)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.jweEncrypt">
+            function <span class="apidocSignatureSpan">jose-lite.</span>jweEncrypt
+            <span class="apidocSignatureSpan">(opt)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.jweValidate">
+            function <span class="apidocSignatureSpan">jose-lite.</span>jweValidate
+            <span class="apidocSignatureSpan">(opt)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.jwsDecode">
+            function <span class="apidocSignatureSpan">jose-lite.</span>jwsDecode
+            <span class="apidocSignatureSpan">(key, jwsCompact)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.jwsEncode">
+            function <span class="apidocSignatureSpan">jose-lite.</span>jwsEncode
+            <span class="apidocSignatureSpan">(key, payload, mode)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.elem.jose-lite.jwsValidate">
+            function <span class="apidocSignatureSpan">jose-lite.</span>jwsValidate
+            <span class="apidocSignatureSpan">(key, jwsCompact)</span>
             </a>
 
         </li>
@@ -160,7 +286,7 @@
 
         <li>
 
-            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">jose-lite.</span>jose_lite</span>
+            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">jose-lite.</span>jose</span>
 
         </li>
 
@@ -217,7 +343,208 @@
     );
     throw err;
 }</pre></li>
-    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+opt.tag = tmp[4];
+// unwrapKey encrypted_key to cek
+opt.cek = base64urlToBuffer(opt.cek || await local.cryptoKeyUnwrap256(
+    opt.kek,
+    base64urlToBuffer(opt.encrypted_key)
+));
+// validate tag
+local.<span class="apidocCodeKeywordSpan">assertOrThrow</span>(tmp.length === 5 &amp;&amp; opt.tag === await sign(
+    opt.cek,
+    opt.protectedHeader,
+    opt.iv,
+    opt.ciphertext
+), &quot;invalid signature&quot;);
+if (opt.mode === &quot;validate&quot;) {
+    return;
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.base64FromBuffer" id="apidoc.elem.jose-lite.base64FromBuffer">
+        function <span class="apidocSignatureSpan">jose-lite.</span>base64FromBuffer
+        <span class="apidocSignatureSpan">(buf)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">base64FromBuffer = function (buf) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will convert Uint8Array &lt;buf&gt; to base64 str
+ */
+</span>    let ii;
+    let mod3;
+    let str;
+    let uint24;
+    let uint6ToB64;
+    // convert utf8 to Uint8Array
+    if (typeof buf === &quot;string&quot;) {
+        buf = new TextEncoder().encode(buf);
+    }
+    buf = buf || [];
+    str = &quot;&quot;;
+    uint24 = 0;
+    uint6ToB64 = function (uint6) {
+        return (
+            uint6 &lt; 26
+            ? uint6 + 65
+            : uint6 &lt; 52
+            ? uint6 + 71
+            : uint6 &lt; 62
+            ? uint6 - 4
+            : uint6 === 62
+            ? 43
+            : 47
+        );
+    };
+    ii = 0;
+    while (ii &lt; buf.length) {
+        mod3 = ii % 3;
+        uint24 |= buf[ii] &lt;&lt; (16 &gt;&gt;&gt; mod3 &amp; 24);
+        if (mod3 === 2 || buf.length - ii === 1) {
+            str += String.fromCharCode(
+                uint6ToB64(uint24 &gt;&gt;&gt; 18 &amp; 63),
+                uint6ToB64(uint24 &gt;&gt;&gt; 12 &amp; 63),
+                uint6ToB64(uint24 &gt;&gt;&gt; 6 &amp; 63),
+                uint6ToB64(uint24 &amp; 63)
+            );
+            uint24 = 0;
+        }
+        ii += 1;
+    }
+    return str.replace((
+        /A(?=A$|$)/gm
+    ), &quot;&quot;);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+    return buf.subarray(0, jj);
+};
+
+local.base64urlFromBuffer = function (str) {
+/*
+ * this function will convert base64url &lt;str&gt; to Uint8Array
+ */
+    return local.<span class="apidocCodeKeywordSpan">base64FromBuffer</span>(str).replace((
+        /\+/g
+    ), &quot;-&quot;).replace((
+        /\//g
+    ), &quot;_&quot;);
+};
+
+local.cryptoEncryptAes128cbc = async function (key, iv, data, mode) {
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.base64ToBuffer" id="apidoc.elem.jose-lite.base64ToBuffer">
+        function <span class="apidocSignatureSpan">jose-lite.</span>base64ToBuffer
+        <span class="apidocSignatureSpan">(str)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">base64ToBuffer = function (str) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will convert base64 &lt;str&gt; to Uint8Array
+ * https://gist.github.com/wang-bin/7332335
+ */
+</span>    let buf;
+    let byte;
+    let chr;
+    let ii;
+    let jj;
+    let map64;
+    let mod4;
+    str = str || &quot;&quot;;
+    buf = new Uint8Array(str.length); // 3/4
+    byte = 0;
+    jj = 0;
+    map64 = (
+        !(str.indexOf(&quot;-&quot;) === -1 &amp;&amp; str.indexOf(&quot;_&quot;) === -1)
+        // base64url
+        ? &quot;ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_&quot;
+        // base64
+        : &quot;ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/&quot;
+    );
+    mod4 = 0;
+    ii = 0;
+    while (ii &lt; str.length) {
+        chr = map64.indexOf(str[ii]);
+        if (chr !== -1) {
+            mod4 %= 4;
+            if (mod4 === 0) {
+                byte = chr;
+            } else {
+                byte = byte * 64 + chr;
+                buf[jj] = 255 &amp; (byte &gt;&gt; ((-2 * (mod4 + 1)) &amp; 6));
+                jj += 1;
+            }
+            mod4 += 1;
+        }
+        ii += 1;
+    }
+    // optimization - create resized-view of buf
+    return buf.subarray(0, jj);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+base64urlToBuffer = function (str) {
+/*
+ * this function will convert base64url &lt;str&gt; to Uint8Array
+ */
+    return (
+        typeof str.byteLength === &quot;number&quot;
+        ? str
+        : local.<span class="apidocCodeKeywordSpan">base64ToBuffer</span>(str)
+    );
+};
+sign = async function (cek, aad, iv, ciphertext) {
+/*
+ * this function will hmac-sha-256 sign &lt;opt&gt;.ciphertext
+ * using &lt;opt&gt;.cek, &lt;opt&gt;.iv, &lt;opt&gt;.protectedHeader
+ * https://tools.ietf.org/html/rfc7516#appendix-B.5
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.base64urlFromBuffer" id="apidoc.elem.jose-lite.base64urlFromBuffer">
+        function <span class="apidocSignatureSpan">jose-lite.</span>base64urlFromBuffer
+        <span class="apidocSignatureSpan">(str)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">base64urlFromBuffer = function (str) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will convert base64url &lt;str&gt; to Uint8Array
+ */
+</span>    return local.base64FromBuffer(str).replace((
+        /\+/g
+    ), &quot;-&quot;).replace((
+        /\//g
+    ), &quot;_&quot;);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+base64urlFromBuffer = function (buf) {
+/*
+ * this function will convert Uint8Array &lt;buf&gt; to base64url str
+ */
+    return (
+        typeof buf === &quot;string&quot;
+        ? buf
+        : local.<span class="apidocCodeKeywordSpan">base64urlFromBuffer</span>(buf)
+    );
+};
+base64urlToBuffer = function (str) {
+/*
+ * this function will convert base64url &lt;str&gt; to Uint8Array
+ */
+    return (
+...</pre></li>
     </ul>
 
 
@@ -246,6 +573,376 @@
     return arg;
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.cryptoEncryptAes128cbc" id="apidoc.elem.jose-lite.cryptoEncryptAes128cbc">
+        function <span class="apidocSignatureSpan">jose-lite.</span>cryptoEncryptAes128cbc
+        <span class="apidocSignatureSpan">(key, iv, data, mode)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (key, iv, data, mode) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will encrypt/decrypt &lt;data&gt; using &lt;key&gt;, &lt;iv&gt;, &lt;mode&gt;
+ */
+</span>    let crypto;
+    // encode data
+    if (typeof data === &quot;string&quot;) {
+        data = new TextEncoder().encode(data);
+    }
+    crypto = (
+        (globalThis.crypto &amp;&amp; globalThis.crypto.subtle)
+        ? globalThis.crypto
+        : require(&quot;crypto&quot;)
+    );
+    mode = (
+        (crypto.subtle &amp;&amp; mode === &quot;decrypt&quot;)
+        ? crypto.subtle.decrypt.bind(crypto.subtle)
+        : crypto.subtle
+        ? crypto.subtle.encrypt.bind(crypto.subtle)
+        : mode === &quot;decrypt&quot;
+        ? crypto.createDecipheriv
+        : crypto.createCipheriv
+    );
+    if (crypto.subtle) {
+        key = await crypto.subtle.importKey(&quot;raw&quot;, key, {
+            name: &quot;AES-CBC&quot;
+        }, false, [
+            &quot;decrypt&quot;, &quot;encrypt&quot;
+        ]);
+        mode = await mode({
+            iv,
+            name: &quot;AES-CBC&quot;
+        }, key, data);
+        data = new Uint8Array(mode);
+    } else {
+        mode = mode(&quot;aes-128-cbc&quot;, key, iv);
+        data = Buffer.concat([
+            mode.update(data), mode.final()
+        ]);
+    }
+    return data;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+    opt.iv,
+    opt.ciphertext
+), &quot;invalid signature&quot;);
+if (opt.mode === &quot;validate&quot;) {
+    return;
+}
+// decrypt ciphertext to plaintext
+opt.plaintext = await local.<span class="apidocCodeKeywordSpan">cryptoEncryptAes128cbc</span>(
+    opt.cek.slice(16),
+    opt.iv,
+    opt.ciphertext,
+    &quot;decrypt&quot;
+);
+opt.plaintext = new TextDecoder().decode(opt.plaintext);
+return opt.plaintext;
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.cryptoKeyUnwrap256" id="apidoc.elem.jose-lite.cryptoKeyUnwrap256">
+        function <span class="apidocSignatureSpan">jose-lite.</span>cryptoKeyUnwrap256
+        <span class="apidocSignatureSpan">(KK, RR)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (KK, RR) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will aes256 wrapKey/unwrapKey &lt;RR&gt; using &lt;KK&gt;
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
+    2.2.2 Key Unwrap
+    https://tools.ietf.org/html/rfc3394#section-2.2.2
+        Inputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and
+            Key, K (the KEK).
+        Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.
+        1) Initialize variables.
+            Set A = C[0]
+            For i = 1 to n
+                R[i] = C[i]
+        2) Compute intermediate values.
+            For j = 5 to 0
+                For i = n to 1
+                    B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i
+                    A = MSB(64, B)
+                    R[i] = LSB(64, B)
+        3) Output results.
+            For i = 1 to n
+                P[i] = R[i]
+ */
+</span>    return await local.cryptoKeyWrap256(KK, RR, &quot;unwrap&quot;);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+    case &quot;validate&quot;:
+tmp = opt.jweCompact.split(&quot;.&quot;);
+opt.encrypted_key = tmp[1];
+opt.iv = base64urlToBuffer(tmp[2]);
+opt.ciphertext = base64urlToBuffer(tmp[3]);
+opt.tag = tmp[4];
+// unwrapKey encrypted_key to cek
+opt.cek = base64urlToBuffer(opt.cek || await local.<span class="apidocCodeKeywordSpan">cryptoKeyUnwrap256</span>(
+    opt.kek,
+    base64urlToBuffer(opt.encrypted_key)
+));
+// validate tag
+local.assertOrThrow(tmp.length === 5 &amp;&amp; opt.tag === await sign(
+    opt.cek,
+    opt.protectedHeader,
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.cryptoKeyWrap256" id="apidoc.elem.jose-lite.cryptoKeyWrap256">
+        function <span class="apidocSignatureSpan">jose-lite.</span>cryptoKeyWrap256
+        <span class="apidocSignatureSpan">(KK, RR, mode)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (KK, RR, mode) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will aes256 wrapKey/unwrapKey &lt;RR&gt; using &lt;KK&gt;
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
+    2.2.1 Key Wrap
+    https://tools.ietf.org/html/rfc3394#section-2.2.1
+        Inputs: Plaintext, n 64-bit values {P1, P2, ..., Pn}, and
+            Key, K (the KEK).
+        Outputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}.
+        1) Initialize variables.
+            Set A = IV, an initial value (see 2.2.3)
+            For i = 1 to n
+                R[i] = P[i]
+        2) Calculate intermediate values.
+            For j = 0 to 5
+                For i = 1 to n
+                    B = AES(K, A | R[i])
+                    A = MSB(64, B) ^ t where t = (n*j)+i
+                    R[i] = LSB(64, B)
+        3) Output the results.
+            Set C[0] = A
+            For i = 1 to n
+                C[i] = R[i]
+*/
+</span>    let AA;
+    let BB;
+    let crypto;
+    let ii;
+    let iv;
+    let jj;
+    let loop;
+    let nn;
+    let tt;
+    // init var
+    AA = new Uint8Array(32);
+    ii = 0;
+    iv = new Uint8Array(16);
+    nn = 4;
+    crypto = (
+        (globalThis.crypto &amp;&amp; globalThis.crypto.subtle)
+        ? globalThis.crypto
+        : require(&quot;crypto&quot;)
+    );
+    // use crypto.subtle
+    if (crypto.subtle) {
+        KK = await crypto.subtle.importKey(&quot;raw&quot;, KK, {
+            name: &quot;AES-KW&quot;
+        }, false, [
+            &quot;unwrapKey&quot;, &quot;wrapKey&quot;
+        ]);
+        if (mode === &quot;unwrap&quot;) {
+            RR = await crypto.subtle.unwrapKey(&quot;raw&quot;, RR, KK, {
+                name: &quot;AES-KW&quot;
+            }, {
+                name: &quot;AES-CBC&quot;
+            }, true, [
+                &quot;decrypt&quot;, &quot;encrypt&quot;
+            ]);
+            RR = await crypto.subtle.exportKey(&quot;raw&quot;, RR);
+        } else {
+            RR = await crypto.subtle.importKey(&quot;raw&quot;, RR, {
+                name: &quot;AES-CBC&quot;
+            }, true, [
+                &quot;decrypt&quot;, &quot;encrypt&quot;
+            ]);
+            RR = await crypto.subtle.wrapKey(&quot;raw&quot;, RR, KK, &quot;AES-KW&quot;);
+        }
+        return new Uint8Array(RR);
+    }
+    crypto = (
+        mode === &quot;unwrap&quot;
+        ? crypto.createDecipheriv
+        : crypto.createCipheriv
+    );
+    // init loop
+    loop = async function () {
+        // AA xor tt
+        if (mode === &quot;unwrap&quot;) {
+            tt = nn * jj + ii;
+            AA[4] ^= ((tt &gt;&gt;&gt; 24) &amp; 0xff);
+            AA[5] ^= ((tt &gt;&gt; 16) &amp; 0xff);
+            AA[6] ^= ((tt &gt;&gt; 8) &amp; 0xff);
+            AA[7] ^= (tt &amp; 0xff);
+        }
+        // init RR
+        AA[8] = RR[8 * ii];
+        AA[9] = RR[8 * ii + 1];
+        AA[10] = RR[8 * ii + 2];
+        AA[11] = RR[8 * ii + 3];
+        AA[12] = RR[8 * ii + 4];
+        AA[13] = RR[8 * ii + 5];
+        AA[14] = RR[8 * ii + 6];
+        AA[15] = RR[8 * ii + 7];
+        // encrypt / decrypt RR
+        BB = crypto(&quot;aes-128-cbc&quot;, KK, iv);
+        BB.setAutoPadding(false);
+        BB = Buffer.concat([
+            BB.update(AA), BB.final()
+        ]);
+        // update RR
+        AA[0] = BB[0];
+        AA[1] = BB[1];
+        AA[2] = BB[2];
+        AA[3] = BB[3];
+        AA[4] = BB[4];
+        AA[5] = BB[5];
+        AA[6] = BB[6];
+        AA[7] = BB[7];
+        RR[8 * ii + 0] = BB[8];
+        RR[8 * ii + 1] = BB[9];
+        RR[8 * ii + 2] = BB[10];
+        RR[8 * ii + 3] = BB[11];
+        RR[8 * ii + 4] = BB[12];
+        RR[8 * ii + 5] = BB[13];
+        RR[8 * ii + 6] = BB[14];
+        RR[8 * ii + 7] = BB[15];
+        // AA xor tt
+        if (mode !== &quot;unwrap&quot;) {
+            tt = nn * jj + ii;
+            AA[4] ^= ((tt &gt;&gt;&gt; 24) &amp; 0xff);
+            AA[5] ^= ((tt &gt;&gt; 16) &amp; 0xff);
+            AA[6] ^= ((tt &gt;&gt; 8) &amp; 0xff);
+            AA[7] ^= (tt &amp; 0xff);
+        }
+    };
+    if (mode === &quot;unwrap&quot;) {
+        AA[0] = RR[0];
+        AA[1] = R...</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+                   B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i
+                   A = MSB(64, B)
+                   R[i] = LSB(64, B)
+       3) Output results.
+           For i = 1 to n
+               P[i] = R[i]
+*/
+   return await local.<span class="apidocCodeKeywordSpan">cryptoKeyWrap256</span>(KK, RR, &quot;unwrap&quot;);
+};
+
+local.cryptoKeyWrap256 = async function (KK, RR, mode) {
+/*
+* this function will aes256 wrapKey/unwrapKey &lt;RR&gt; using &lt;KK&gt;
+* https://tools.ietf.org/html/rfc7516#appendix-A.3.3
+   2.2.1 Key Wrap
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.cryptoRandomBuffer" id="apidoc.elem.jose-lite.cryptoRandomBuffer">
+        function <span class="apidocSignatureSpan">jose-lite.</span>cryptoRandomBuffer
+        <span class="apidocSignatureSpan">(nn)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">cryptoRandomBuffer = function (nn) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will return random buf with length &lt;nn&gt;
+ */
+</span>    return (
+        (globalThis.crypto &amp;&amp; globalThis.crypto.subtle)
+        ? globalThis.crypto.getRandomValues(new Uint8Array(nn))
+        : require(&quot;crypto&quot;).randomBytes(nn)
+    );
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+    );
+    opt.plaintext = new TextDecoder().decode(opt.plaintext);
+    return opt.plaintext;
+// encrypt
+default:
+    // init cek
+    if (!opt.cek) {
+        opt.cek = local.<span class="apidocCodeKeywordSpan">cryptoRandomBuffer</span>(32);
+        delete opt.encrypted_key;
+        delete opt.iv;
+    }
+    opt.cek = base64urlToBuffer(opt.cek);
+    // wrapKey cek to encrypted_key
+    opt.encrypted_key = base64urlFromBuffer(
+        opt.encrypted_key || await local.cryptoKeyWrap256(
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.cryptoSignHmacSha256" id="apidoc.elem.jose-lite.cryptoSignHmacSha256">
+        function <span class="apidocSignatureSpan">jose-lite.</span>cryptoSignHmacSha256
+        <span class="apidocSignatureSpan">(key, data)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (key, data) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will crypto-hmac-sha256 sign &lt;data&gt; using &lt;key&gt;
+ */
+</span>    let crypto;
+    crypto = (
+        (globalThis.crypto &amp;&amp; globalThis.crypto.subtle)
+        ? globalThis.crypto
+        : require(&quot;crypto&quot;)
+    );
+    if (crypto.subtle) {
+        key = await crypto.subtle.importKey(&quot;raw&quot;, key, {
+            hash: &quot;SHA-256&quot;,
+            name: &quot;HMAC&quot;
+        }, false, [
+            &quot;sign&quot;
+        ]);
+        data = new Uint8Array(await crypto.subtle.sign({
+            name: &quot;HMAC&quot;
+        }, key, data));
+    } else {
+        data = crypto.createHmac(&quot;sha256&quot;, key).update(data).digest();
+    }
+    return data;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+        while (jj &lt; elem.length) {
+            data[ii] = elem[jj];
+            ii += 1;
+            jj += 1;
+        }
+    });
+    return base64urlFromBuffer((
+        await local.<span class="apidocCodeKeywordSpan">cryptoSignHmacSha256</span>(cek.slice(0, 16), data)
+    ).slice(0, 16));
+};
+// init kek
+opt.kek = base64urlToBuffer(opt.kek);
+// {&quot;alg&quot;:&quot;A128KW&quot;,&quot;enc&quot;:&quot;A128CBC-HS256&quot;}
+opt.protectedHeader = &quot;eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0&quot;;
+switch (opt.mode) {
+...</pre></li>
     </ul>
 
 
@@ -361,6 +1058,347 @@
 
 
     <h2>
+        <a href="#apidoc.elem.jose-lite.jweDecrypt" id="apidoc.elem.jose-lite.jweDecrypt">
+        function <span class="apidocSignatureSpan">jose-lite.</span>jweDecrypt
+        <span class="apidocSignatureSpan">(opt)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (opt) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will A128CBC-HS256 decrypt &lt;opt&gt;.jweCompact using &lt;opt&gt;.kek
+ */
+</span>    opt.mode = &quot;decrypt&quot;;
+    return local.jweEncrypt(opt);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+    // iv
+    + &quot;AxY8DCtDaGlsbGljb3RoZQ.&quot;
+    // data
+    + &quot;KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY.&quot;
+    // tag
+    + &quot;U0m_YmjN04DJvceFICbCVQ&quot;
+));
+opt.jweDecrypted = await local.<span class="apidocCodeKeywordSpan">jweDecrypt</span>({
+    jweCompact: opt.jweCompact,
+    kek: &quot;GawgguFyGrWKav7AX4VKUg&quot;
+});
+local.assertJsonEqual(opt.jweDecrypted, &quot;Live long and prosper.&quot;);
+await local.jweValidate({
+    jweCompact: opt.jweCompact,
+    kek: &quot;GawgguFyGrWKav7AX4VKUg&quot;
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.jweEncrypt" id="apidoc.elem.jose-lite.jweEncrypt">
+        function <span class="apidocSignatureSpan">jose-lite.</span>jweEncrypt
+        <span class="apidocSignatureSpan">(opt)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (opt) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will A128CBC-HS256 encrypt &lt;opt&gt;.plaintext
+ * using &lt;opt&gt;.cek, &lt;opt&gt;.iv, &lt;opt&gt;.kek
+ * to jwe-compact-serialization
+ * from https://tools.ietf.org/html/rfc7516#appendix-A.3
+    BASE64URL(UTF8(JWE Protected Header)) || &apos;.&apos; ||
+    BASE64URL(JWE Encrypted Key) || &apos;.&apos; ||
+    BASE64URL(JWE Initialization Vector) || &apos;.&apos; ||
+    BASE64URL(JWE Ciphertext) || &apos;.&apos; ||
+    BASE64URL(JWE Authentication Tag)
+*/
+</span>    let base64urlFromBuffer;
+    let base64urlToBuffer;
+    let sign;
+    let tmp;
+    base64urlFromBuffer = function (buf) {
+    /*
+     * this function will convert Uint8Array &lt;buf&gt; to base64url str
+     */
+        return (
+            typeof buf === &quot;string&quot;
+            ? buf
+            : local.base64urlFromBuffer(buf)
+        );
+    };
+    base64urlToBuffer = function (str) {
+    /*
+     * this function will convert base64url &lt;str&gt; to Uint8Array
+     */
+        return (
+            typeof str.byteLength === &quot;number&quot;
+            ? str
+            : local.base64ToBuffer(str)
+        );
+    };
+    sign = async function (cek, aad, iv, ciphertext) {
+    /*
+     * this function will hmac-sha-256 sign &lt;opt&gt;.ciphertext
+     * using &lt;opt&gt;.cek, &lt;opt&gt;.iv, &lt;opt&gt;.protectedHeader
+     * https://tools.ietf.org/html/rfc7516#appendix-B.5
+     */
+        let data;
+        let ii;
+        let jj;
+        // init aad
+        aad = new TextEncoder().encode(aad);
+        // init data
+        data = new Uint8Array(aad.length + iv.length + ciphertext.length + 8);
+        // concat data
+        ii = 0;
+        [
+            aad, iv, ciphertext, [
+                // 64-bit length of aad
+                0,
+                0,
+                0,
+                0,
+                (aad.length &gt;&gt;&gt; 21) &amp; 0xff,
+                (aad.length &gt;&gt; 13) &amp; 0xff,
+                (aad.length &gt;&gt; 5) &amp; 0xff,
+                (8 * aad.length) &amp; 0xff
+            ]
+        ].forEach(function (elem) {
+            jj = 0;
+            while (jj &lt; elem.length) {
+                data[ii] = elem[jj];
+                ii += 1;
+                jj += 1;
+            }
+        });
+        return base64urlFromBuffer((
+            await local.cryptoSignHmacSha256(cek.slice(0, 16), data)
+        ).slice(0, 16));
+    };
+    // init kek
+    opt.kek = base64urlToBuffer(opt.kek);
+    // {&quot;alg&quot;:&quot;A128KW&quot;,&quot;enc&quot;:&quot;A128CBC-HS256&quot;}
+    opt.protectedHeader = &quot;eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0&quot;;
+    switch (opt.mode) {
+    /*
+     * parse jweCompact to jwe-json-serialization
+     * from https://tools.ietf.org/html/rfc7516#section-3.2
+        &quot;protected&quot;, with the value BASE64URL(UTF8(JWE Protected Header))
+        &quot;unprotected&quot;, with the value JWE Shared Unprotected Header
+        &quot;header&quot;, with the value JWE Per-Recipient Unprotected Header
+        &quot;encrypted_key&quot;, with the value BASE64URL(JWE Encrypted Key)
+        &quot;iv&quot;, with the value BASE64URL(JWE Initialization Vector)
+        &quot;ciphertext&quot;, with the value BASE64URL(JWE Ciphertext)
+        &quot;tag&quot;, with the value BASE64URL(JWE Authentication Tag)
+        &quot;aad&quot;, with the value BASE64URL(JWE AAD)
+     */
+    case &quot;decrypt&quot;:
+    case &quot;validate&quot;:
+        tmp = opt.jweCompact.split(&quot;.&quot;);
+        opt.encrypted_key = tmp[1];
+        opt.iv = base64urlToBuffer(tmp[2]);
+        opt.ciphertext = base64urlToBuffer(tmp[3]);
+        opt.tag = tmp[4];
+        // unwrapKey encrypted_key to cek
+        opt.cek = base64urlToBuffer(opt.cek || await local.cryptoKeyUnwrap256(
+            opt.kek,
+            base64urlToBuffer(opt.encrypted_key)
+        ));
+        // validate tag
+        local.assertOrThrow(tmp.length === 5 &amp;&amp; opt.tag === await sign(
+            opt.cek,
+            opt.protectedHeader,
+            opt.iv,
+            opt.ciph...</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+};
+
+local.jweDecrypt = async function (opt) {
+/*
+* this function will A128CBC-HS256 decrypt &lt;opt&gt;.jweCompact using &lt;opt&gt;.kek
+*/
+   opt.mode = &quot;decrypt&quot;;
+   return local.<span class="apidocCodeKeywordSpan">jweEncrypt</span>(opt);
+};
+
+local.jweEncrypt = async function (opt) {
+/*
+* this function will A128CBC-HS256 encrypt &lt;opt&gt;.plaintext
+* using &lt;opt&gt;.cek, &lt;opt&gt;.iv, &lt;opt&gt;.kek
+* to jwe-compact-serialization
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.jweValidate" id="apidoc.elem.jose-lite.jweValidate">
+        function <span class="apidocSignatureSpan">jose-lite.</span>jweValidate
+        <span class="apidocSignatureSpan">(opt)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (opt) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will A128CBC-HS256 validate &lt;opt&gt;.jweCompact using &lt;opt&gt;.kek
+ */
+</span>    opt.mode = &quot;validate&quot;;
+    return local.jweEncrypt(opt);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+        + &quot;U0m_YmjN04DJvceFICbCVQ&quot;
+    ));
+    opt.jweDecrypted = await local.jweDecrypt({
+        jweCompact: opt.jweCompact,
+        kek: &quot;GawgguFyGrWKav7AX4VKUg&quot;
+    });
+    local.assertJsonEqual(opt.jweDecrypted, &quot;Live long and prosper.&quot;);
+    await local.<span class="apidocCodeKeywordSpan">jweValidate</span>({
+        jweCompact: opt.jweCompact,
+        kek: &quot;GawgguFyGrWKav7AX4VKUg&quot;
+    });
+    onError(undefined, opt);
+};
+
+local.testCase_jwsXxx_default = async function (opt, onError) {
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.jwsDecode" id="apidoc.elem.jose-lite.jwsDecode">
+        function <span class="apidocSignatureSpan">jose-lite.</span>jwsDecode
+        <span class="apidocSignatureSpan">(key, jwsCompact)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (key, jwsCompact) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will HS256 decode &lt;jwsCompact&gt; using &lt;key&gt;
+ */
+</span>    return await local.jwsEncode(key, jwsCompact, &quot;decode&quot;);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+            &quot;eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFt&quot;
+            + &quot;cGxlLmNvbS9pc19yb290Ijp0cnVlfQ.&quot;
+        )
+        // signature
+        + &quot;dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk&quot;
+    ));
+    local.assertJsonEqual(
+        await local.<span class="apidocCodeKeywordSpan">jwsDecode</span>(opt.key, opt.jwsCompact),
+        opt.payload
+    );
+    await local.jwsValidate(opt.key, opt.jwsCompact);
+    onError(undefined, opt);
+};
+
+//!! local.testCase_jweXxx_default(undefined, local.onErrorDefault);
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.jwsEncode" id="apidoc.elem.jose-lite.jwsEncode">
+        function <span class="apidocSignatureSpan">jose-lite.</span>jwsEncode
+        <span class="apidocSignatureSpan">(key, payload, mode)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (key, payload, mode) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will HS256 encode &lt;payload&gt; using &lt;key&gt;
+ * to jws-compact-serialization
+ * from https://tools.ietf.org/html/rfc7515#section-3.1
+    BASE64URL(UTF8(JWS Protected Header)) || &apos;.&apos; ||
+    BASE64URL(JWS Payload) || &apos;.&apos; ||
+    BASE64URL(JWS Signature)
+ */
+</span>    let sign;
+    sign = async function (key, data) {
+        return local.base64urlFromBuffer(await local.cryptoSignHmacSha256(
+            local.base64ToBuffer(key),
+            new TextEncoder().encode(data)
+        ));
+    };
+    switch (mode) {
+    case &quot;decode&quot;:
+    case &quot;validate&quot;:
+        payload = payload.split(&quot;.&quot;);
+        local.assertOrThrow((
+            payload.length === 3
+            &amp;&amp; payload[2] === (await sign(key, payload.slice(0, 2).join(&quot;.&quot;)))
+        ), &quot;invalid signature&quot;);
+        if (mode === &quot;validate&quot;) {
+            return;
+        }
+        return new TextDecoder().decode(local.base64ToBuffer(payload[1]));
+    // encode
+    default:
+        payload = (
+            &quot;eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9.&quot;
+            + local.base64urlFromBuffer(payload)
+        );
+        return payload + &quot;.&quot; + (await sign(key, payload));
+    }
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+   return local.jweEncrypt(opt);
+};
+
+local.jwsDecode = async function (key, jwsCompact) {
+/*
+* this function will HS256 decode &lt;jwsCompact&gt; using &lt;key&gt;
+*/
+   return await local.<span class="apidocCodeKeywordSpan">jwsEncode</span>(key, jwsCompact, &quot;decode&quot;);
+};
+
+local.jwsEncode = async function (key, payload, mode) {
+/*
+* this function will HS256 encode &lt;payload&gt; using &lt;key&gt;
+* to jws-compact-serialization
+* from https://tools.ietf.org/html/rfc7515#section-3.1
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.elem.jose-lite.jwsValidate" id="apidoc.elem.jose-lite.jwsValidate">
+        function <span class="apidocSignatureSpan">jose-lite.</span>jwsValidate
+        <span class="apidocSignatureSpan">(key, jwsCompact)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">async function (key, jwsCompact) {
+<span class="apidocCodeCommentSpan">/*
+ * this function will HS256 validate &lt;jwsCompact&gt; using &lt;key&gt;
+ */
+</span>    return await local.jwsEncode(key, jwsCompact, &quot;validate&quot;);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+        // signature
+        + &quot;dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk&quot;
+    ));
+    local.assertJsonEqual(
+        await local.jwsDecode(opt.key, opt.jwsCompact),
+        opt.payload
+    );
+    await local.<span class="apidocCodeKeywordSpan">jwsValidate</span>(opt.key, opt.jwsCompact);
+    onError(undefined, opt);
+};
+
+//!! local.testCase_jweXxx_default(undefined, local.onErrorDefault);
+//!! local.testCase_jwsXxx_default(undefined, local.onErrorDefault);
+}());
+}());
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
         <a href="#apidoc.elem.jose-lite.nop" id="apidoc.elem.jose-lite.nop">
         function <span class="apidocSignatureSpan">jose-lite.</span>nop
         <span class="apidocSignatureSpan">()</span>
@@ -412,12 +1450,12 @@
 });
 local.<span class="apidocCodeKeywordSpan">objectAssignDefault</span>(local, globalThis.domOnEventDelegateDict);
 globalThis.domOnEventDelegateDict = local;
-if ((
-    /\bmodeTest=1\b/
-).test(location.search)) {
-    local.testRunBrowser();
-}
 }());
+
+
+
+// run node js-env code - init-test
+(function () {
 ...</pre></li>
     </ul>
 

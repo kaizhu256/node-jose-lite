@@ -95,6 +95,8 @@
 
 
 
+
+
 /*
 example.js
 
@@ -499,7 +501,7 @@ instruction
 // init local
 local = (
     globalThis.utility2_rollup
-    || globalThis.utility2_jose_lite
+    || globalThis.utility2_jose
     || globalThis.utility2_moduleExports
 );
 // init exports
@@ -540,11 +542,6 @@ if (!local.isBrowser) {
 });
 local.objectAssignDefault(local, globalThis.domOnEventDelegateDict);
 globalThis.domOnEventDelegateDict = local;
-if ((
-    /\bmodeTest=1\b/
-).test(location.search)) {
-    local.testRunBrowser();
-}
 }());
 
 
@@ -983,7 +980,7 @@ utility2-comment -->\n\
 <script>window.utility2_onReadyBefore.counter += 1;</script>\n\
 <script src="jsonp.utility2.stateInit?callback=window.utility2.stateInit"></script>\n\
 utility2-comment -->\n\
-<script src="assets.jose_lite.js"></script>\n\
+<script src="assets.jose.js"></script>\n\
 <script src="assets.example.js"></script>\n\
 <script src="assets.test.js"></script>\n\
 <script>\n\
@@ -1006,10 +1003,10 @@ utility2-comment -->\n\
 </html>\n\
 ';
 /* jslint ignore:end */
-local.assetsDict["/assets.jose_lite.js"] = (
-    local.assetsDict["/assets.jose_lite.js"]
+local.assetsDict["/assets.jose.js"] = (
+    local.assetsDict["/assets.jose.js"]
     || local.fs.readFileSync(
-        local.__dirname + "/lib.jose_lite.js",
+        local.__dirname + "/lib.jose.js",
         "utf8"
     ).replace((
         /^#!\//
@@ -1027,7 +1024,7 @@ local.assetsDict["/"] = local.assetsDict[
     case "npm_package_name":
         return "jose-lite";
     case "npm_package_nameLib":
-        return "jose_lite";
+        return "jose";
     case "npm_package_version":
         return "0.0.1";
     default:

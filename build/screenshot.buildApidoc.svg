@@ -1,9 +1,9 @@
-<svg height="910" width="720" xmlns="http://www.w3.org/2000/svg">
-<rect height="910" fill="#555" width="720"></rect>
+<svg height="1022" width="720" xmlns="http://www.w3.org/2000/svg">
+<rect height="1022" fill="#555" width="720"></rect>
 <text fill="#7f7" font-family="Courier New" font-size="12" xml:space="preserve">
 <tspan x="10" y="26"></tspan>
 
-<tspan x="10" y="42">\x1b[35m[MODE_BUILD=buildApidoc]\x1b[0m - 2019-10-25T14:58:52.281Z - npm-testing /home/travis/bu\</tspan>
+<tspan x="10" y="42">\x1b[35m[MODE_BUILD=buildApidoc]\x1b[0m - 2019-10-25T15:03:44.960Z - npm-testing /home/travis/bu\</tspan>
 <tspan x="10" y="58">ild/kaizhu256/node-jose-lite</tspan>
 
 <tspan x="10" y="74"></tspan>
@@ -13,7 +13,7 @@
 <tspan x="10" y="106">buildApidoc - merged test-report from file /home/travis/build/kaizhu256/node-jose-lite/tmp/build\</tspan>
 <tspan x="10" y="122">/test-report.json</tspan>
 
-<tspan x="10" y="138">&gt; http-server listening on port 64232</tspan>
+<tspan x="10" y="138">&gt; http-server listening on port 41095</tspan>
 
 <tspan x="10" y="154">apidocCreate - readExample /home/travis/build/kaizhu256/node-jose-lite/package.json</tspan>
 
@@ -48,7 +48,7 @@
 
 <tspan x="10" y="410"></tspan>
 
-<tspan x="10" y="426">testRunDefault - 227 ms - [node test-case 1 of 1 passed] - testCase_buildApidoc_default</tspan>
+<tspan x="10" y="426">testRunDefault - 221 ms - [node test-case 1 of 1 passed] - testCase_buildApidoc_default</tspan>
 
 <tspan x="10" y="442"></tspan>
 
@@ -59,52 +59,65 @@
 
 <tspan x="10" y="506">-------------------------------------------------------</tspan>
 
-<tspan x="10" y="522">| test-report - buildApidoc - node - linux v13.0.1 - 2019-10-25T14:58:52.408Z</tspan>
+<tspan x="10" y="522">| test-report - buildApidoc - node - linux v13.0.1 - 2019-10-25T15:03:45.085Z</tspan>
 
-<tspan x="10" y="538">|     232 ms            0 failed        1 passed      |</tspan>
+<tspan x="10" y="538">|     224 ms            0 failed        1 passed      |</tspan>
 
 <tspan x="10" y="554">-------------------------------------------------------</tspan>
 
 <tspan x="10" y="570">| test-report - npmTest - browser - / - Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTM\</tspan>
-<tspan x="10" y="586">L, like Gecko) HeadlessChrome/78.0.3904.70 Safari/537.36 - 2019-10-25T14:58:46.288Z</tspan>
+<tspan x="10" y="586">L, like Gecko) HeadlessChrome/78.0.3904.70 Safari/537.36 - 2019-10-25T15:03:38.937Z</tspan>
 
-<tspan x="10" y="602">|      41 ms            0 failed        3 passed      |</tspan>
+<tspan x="10" y="602">|      42 ms            0 failed        3 passed      |</tspan>
 
 <tspan x="10" y="618">-------------------------------------------------------</tspan>
 
-<tspan x="10" y="634">| test-report - npmTest - node - linux v13.0.1 - 2019-10-25T14:58:44.774Z</tspan>
+<tspan x="10" y="634">| test-report - npmTest - node - linux v13.0.1 - 2019-10-25T15:03:37.404Z</tspan>
 
-<tspan x="10" y="650">|    5935 ms            0 failed        9 passed      |</tspan>
+<tspan x="10" y="650">|    5919 ms            0 failed        9 passed      |</tspan>
 
 <tspan x="10" y="666">-------------------------------------------------------</tspan>
 
-<tspan x="10" y="682"></tspan>
+<tspan x="10" y="682">| test-report - npmTestPublished - browser - / - Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537\</tspan>
+<tspan x="10" y="698">.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.70 Safari/537.36 - 2019-10-25T15:03:00.220Z</tspan>
 
-<tspan x="10" y="698">created test-report file /home/travis/build/kaizhu256/node-jose-lite/tmp/build/test-report.html</tspan>
+<tspan x="10" y="714">|      32 ms            0 failed        3 passed      |</tspan>
 
-<tspan x="10" y="714"></tspan>
+<tspan x="10" y="730">-------------------------------------------------------</tspan>
 
-<tspan x="10" y="730"></tspan>
+<tspan x="10" y="746">| test-report - npmTestPublished - node - linux v13.0.1 - 2019-10-25T15:02:58.315Z</tspan>
 
-<tspan x="10" y="746">buildApidoc - 0 failed tests</tspan>
+<tspan x="10" y="762">|    5722 ms            0 failed        9 passed      |</tspan>
 
-<tspan x="10" y="762"></tspan>
+<tspan x="10" y="778">-------------------------------------------------------</tspan>
 
-<tspan x="10" y="778"></tspan>
+<tspan x="10" y="794"></tspan>
 
-<tspan x="10" y="794">\x1b[35m[MODE_BUILD=buildApidoc]\x1b[0m - 2019-10-25T14:58:53.043Z - EXIT_CODE - 0</tspan>
+<tspan x="10" y="810">created test-report file /home/travis/build/kaizhu256/node-jose-lite/tmp/build/test-report.html</tspan>
 
-<tspan x="10" y="810"></tspan>
+<tspan x="10" y="826"></tspan>
 
-<tspan x="10" y="826">jslint - 369ms /home/travis/build/kaizhu256/node-jose-lite/README.md</tspan>
+<tspan x="10" y="842"></tspan>
 
-<tspan x="10" y="842">jslint - 111ms /home/travis/build/kaizhu256/node-jose-lite/lib.jose.js</tspan>
+<tspan x="10" y="858">buildApidoc - 0 failed tests</tspan>
 
-<tspan x="10" y="858">jslint - 2ms /home/travis/build/kaizhu256/node-jose-lite/npm_scripts.sh</tspan>
+<tspan x="10" y="874"></tspan>
 
-<tspan x="10" y="874">jslint - 0ms /home/travis/build/kaizhu256/node-jose-lite/package.json</tspan>
+<tspan x="10" y="890">jslint - 389ms /home/travis/build/kaizhu256/node-jose-lite/README.md</tspan>
 
-<tspan x="10" y="890">jslint - 51ms /home/travis/build/kaizhu256/node-jose-lite/test.js</tspan>
+<tspan x="10" y="906"></tspan>
+
+<tspan x="10" y="922">\x1b[35m[MODE_BUILD=buildApidoc]\x1b[0m - 2019-10-25T15:03:45.785Z - EXIT_CODE - 0</tspan>
+
+<tspan x="10" y="938"></tspan>
+
+<tspan x="10" y="954">jslint - 122ms /home/travis/build/kaizhu256/node-jose-lite/lib.jose.js</tspan>
+
+<tspan x="10" y="970">jslint - 2ms /home/travis/build/kaizhu256/node-jose-lite/npm_scripts.sh</tspan>
+
+<tspan x="10" y="986">jslint - 1ms /home/travis/build/kaizhu256/node-jose-lite/package.json</tspan>
+
+<tspan x="10" y="1002">jslint - 36ms /home/travis/build/kaizhu256/node-jose-lite/test.js</tspan>
 
 </text>
 </svg>

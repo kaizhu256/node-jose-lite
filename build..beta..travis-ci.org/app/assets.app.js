@@ -7,7 +7,7 @@
 /*
 assets.app.js
 
-this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens
+this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens in both browser/node
 
 instruction
     1. save this script as assets.app.js
@@ -1463,12 +1463,12 @@ local.objectSetDefault = function (dict, defaults, depth) {
     return dict;
 };
 
-local.stringHtmlSafe = function (text) {
+local.stringHtmlSafe = function (str) {
 /*
- * this function will make the text html-safe
+ * this function will make <str> html-safe
  * https://stackoverflow.com/questions/7381974/which-characters-need-to-be-escaped-on-html
  */
-    return text.replace((
+    return str.replace((
         /&/g
     ), "&amp;").replace((
         /"/g
@@ -50507,11 +50507,6 @@ if (!local.isBrowser) {\n\
 });\n\
 local.objectAssignDefault(local, globalThis.domOnEventDelegateDict);\n\
 globalThis.domOnEventDelegateDict = local;\n\
-if ((\n\
-    /\\bmodeTest=1\\b/\n\
-).test(location.search)) {\n\
-    local.testRunBrowser();\n\
-}\n\
 }());\n\
 \n\
 \n\
@@ -52123,12 +52118,11 @@ local.assertJsonNotEqual = function (aa, bb, message) {
 
 local.base64FromBuffer = function (buf) {
 /*
- * this function will convert Uint8Array <buf> to base64
- * https://developer.mozilla.org/en-US/Add-ons/Code_snippets/StringView#The_code
+ * this function will convert Uint8Array <buf> to base64 str
  */
     let ii;
     let mod3;
-    let text;
+    let str;
     let uint24;
     let uint6ToB64;
     // convert utf8 to Uint8Array
@@ -52136,7 +52130,7 @@ local.base64FromBuffer = function (buf) {
         buf = new TextEncoder().encode(buf);
     }
     buf = buf || [];
-    text = "";
+    str = "";
     uint24 = 0;
     uint6ToB64 = function (uint6) {
         return (
@@ -52156,7 +52150,7 @@ local.base64FromBuffer = function (buf) {
         mod3 = ii % 3;
         uint24 |= buf[ii] << (16 >>> mod3 & 24);
         if (mod3 === 2 || buf.length - ii === 1) {
-            text += String.fromCharCode(
+            str += String.fromCharCode(
                 uint6ToB64(uint24 >>> 18 & 63),
                 uint6ToB64(uint24 >>> 12 & 63),
                 uint6ToB64(uint24 >>> 6 & 63),
@@ -52166,14 +52160,14 @@ local.base64FromBuffer = function (buf) {
         }
         ii += 1;
     }
-    return text.replace((
+    return str.replace((
         /A(?=A$|$)/gm
-    ), "=");
+    ), "");
 };
 
-local.base64ToBuffer = function (b64, mode) {
+local.base64ToBuffer = function (str) {
 /*
- * this function will convert <b64> to Uint8Array
+ * this function will convert base64 <str> to Uint8Array
  * https://gist.github.com/wang-bin/7332335
  */
     let buf;
@@ -52183,16 +52177,22 @@ local.base64ToBuffer = function (b64, mode) {
     let jj;
     let map64;
     let mod4;
-    b64 = b64 || "";
-    buf = new Uint8Array(b64.length); // 3/4
+    str = str || "";
+    buf = new Uint8Array(str.length); // 3/4
     byte = 0;
     jj = 0;
-    map64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    map64 = (
+        !(str.indexOf("-") === -1 && str.indexOf("_") === -1)
+        // base64url
+        ? "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+        // base64
+        : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    );
     mod4 = 0;
     ii = 0;
-    while (ii < b64.length) {
-        chr = map64.indexOf(b64[ii]);
-        if (chr >= 0) {
+    while (ii < str.length) {
+        chr = map64.indexOf(str[ii]);
+        if (chr !== -1) {
             mod4 %= 4;
             if (mod4 === 0) {
                 byte = chr;
@@ -52206,15 +52206,25 @@ local.base64ToBuffer = function (b64, mode) {
         ii += 1;
     }
     // optimization - create resized-view of buf
-    buf = buf.subarray(0, jj);
-    return local.bufferValidateAndCoerce(buf, mode);
+    return buf.subarray(0, jj);
 };
 
-local.base64ToUtf8 = function (b64) {
+local.base64ToUtf8 = function (str) {
 /*
- * this function will convert <b64> to utf8
+ * this function will convert base64 <str> to utf8 str
  */
-    return local.base64ToBuffer(b64, "string");
+    return local.bufferValidateAndCoerce(local.base64ToBuffer(str), "string");
+};
+
+local.base64urlFromBuffer = function (str) {
+/*
+ * this function will convert base64url <str> to Uint8Array
+ */
+    return local.base64FromBuffer(str).replace((
+        /\+/g
+    ), "-").replace((
+        /\//g
+    ), "_");
 };
 
 local.blobRead = function (blob, onError) {
@@ -54166,7 +54176,9 @@ local.jwtHs256Decode = function (token, key) {
             )).encrypt(token[0] + "." + token[1])
         ) === token[2]);
         // return decoded data
-        token = JSON.parse(local.base64ToUtf8(token[1]));
+        token = JSON.parse(
+            new TextEncoder().encode(local.base64ToBuffer(token[1]))
+        );
         // https://tools.ietf.org/html/rfc7519#section-4.1
         // validate jwt-registered-headers
         local.assertOrThrow(!token.exp || token.exp >= timeNow);
@@ -54550,11 +54562,11 @@ local.normalizeJwt = function (data) {
     });
 };
 
-local.normalizeJwtBase64Url = function (b64) {
+local.normalizeJwtBase64Url = function (str) {
 /*
- * this function will normlize <b64> to base64url format
+ * this function will normlize <str> to base64url format
  */
-    return b64.replace((
+    return str.replace((
         /\=/g
     ), "").replace((
         /\+/g
@@ -55640,12 +55652,12 @@ local.streamCleanup = function (stream) {
     }
 };
 
-local.stringHtmlSafe = function (text) {
+local.stringHtmlSafe = function (str) {
 /*
- * this function will make the text html-safe
+ * this function will make <str> html-safe
  * https://stackoverflow.com/questions/7381974/which-characters-need-to-be-escaped-on-html
  */
-    return text.replace((
+    return str.replace((
         /&/g
     ), "&amp;").replace((
         /"/g
@@ -55693,41 +55705,14 @@ local.stringQuotedToAscii = function (str) {
     });
 };
 
-local.stringRegexpEscape = function (text) {
+local.stringRegexpEscape = function (str) {
 /*
- * this function will regexp-escape text
+ * this function will regexp-escape <str>
  * https://stackoverflow.com/questions/3561493/is-there-a-regexp-escape-function-in-javascript
  */
-    return text.replace((
+    return str.replace((
         /[\-\/\\\^$*+?.()|\[\]{}]/g
     ), "\\$&");
-};
-
-local.stringTruncate = function (text, maxLength) {
-/*
- * this function will truncate text to given maxLength
- */
-    return (
-        text.length > maxLength
-        ? text.slice(0, maxLength - 3).trimEnd() + "..."
-        : text
-    );
-};
-
-local.stringUniqueKey = function (text) {
-/*
- * this function will return a string-key that is unique in given text
- */
-    let key;
-    // seed the key with the least frequent letters in the english-language
-    // https://en.wikipedia.org/wiki/Letter_frequency
-    key = "zqxj";
-    do {
-        key += Number(
-            (1 + Math.random()) * 0x10000000000000
-        ).toString(36).slice(1);
-    } while (text.indexOf(key) >= 0);
-    return key;
 };
 
 local.templateRender = function (template, dict, opt, ii) {
@@ -56370,7 +56355,7 @@ local.testRunBrowser = function () {
     local.uiAnimateSlideDown(local.querySelector("#htmlTestReport1"));
     local.querySelector("#buttonTestRun1").textContent = "hide browser-tests";
     local.modeTest = 1;
-    local.testRunDefault(local);
+    local.testRunDefault(globalThis.local);
     // reset output
     local.querySelectorAll(".onevent-reset-output").forEach(function (elem) {
         elem.textContent = "";
@@ -61459,6 +61444,33 @@ local.serverRespondJsonapi = function (req, res, err, data, meta) {
     })(err, data, meta);
 };
 
+local.stringTruncate = function (str, maxLength) {
+/*
+ * this function will truncate <str> to given maxLength
+ */
+    return (
+        str.length > maxLength
+        ? str.slice(0, maxLength - 3).trimEnd() + "..."
+        : str
+    );
+};
+
+local.stringUniqueKey = function (str) {
+/*
+ * this function will return a random-string unique in given <str>
+ */
+    let key;
+    // seed the key with the least frequent letters in the english-language
+    // https://en.wikipedia.org/wiki/Letter_frequency
+    key = "zqxj";
+    do {
+        key += Number(
+            (1 + Math.random()) * 0x10000000000000
+        ).toString(36).slice(1);
+    } while (str.indexOf(key) >= 0);
+    return key;
+};
+
 local.swaggerJsonFromAjax = function (swaggerJson, opt) {
 /*
  * this function will update swaggerJson
@@ -64408,11 +64420,6 @@ if (!local.isBrowser) {\n\
 });\n\
 local.objectAssignDefault(local, globalThis.domOnEventDelegateDict);\n\
 globalThis.domOnEventDelegateDict = local;\n\
-if ((\n\
-    /\\bmodeTest=1\\b/\n\
-).test(location.search)) {\n\
-    local.testRunBrowser();\n\
-}\n\
 }());\n\
 \n\
 \n\
@@ -67135,66 +67142,66 @@ local.testCase_jsonStringifyOrdered_default = function (opt, onError) {\n\
     onError(undefined, opt);\n\
 };\n\
 \n\
-local.testCase_jwtAes256GcmXxx_default = function (opt, onError) {\n\
-/*\n\
- * this function will test jwtAes256GcmXxx's default handling-behavior\n\
- */\n\
-    opt = {};\n\
-    opt.key = local.jwtAes256KeyCreate();\n\
-    // use canonical example at https://jwt.io/\n\
-    opt.data = JSON.parse(local.jsonStringifyOrdered(local.normalizeJwt({\n\
-        sub: \"1234567890\",\n\
-        name: \"John Doe\",\n\
-        admin: true\n\
-    })));\n\
-    // encrypt token\n\
-    opt.token = local.jwtAes256GcmEncrypt(opt.data, opt.key);\n\
-    // validate encrypted-token\n\
-    local.assertJsonEqual(\n\
-        local.jwtAes256GcmDecrypt(opt.token, opt.key),\n\
-        opt.data\n\
-    );\n\
-    // test decryption-failed handling-behavior\n\
-    local.assertJsonEqual(local.jwtAes256GcmDecrypt(opt.token, null), {});\n\
-    onError(undefined, opt);\n\
-};\n\
+//!! local.testCase_jwtAes256GcmXxx_default = function (opt, onError) {\n\
+//!! /*\n\
+ //!! * this function will test jwtAes256GcmXxx's default handling-behavior\n\
+ //!! */\n\
+    //!! opt = {};\n\
+    //!! opt.key = local.jwtAes256KeyCreate();\n\
+    //!! // use canonical example at https://jwt.io/\n\
+    //!! opt.data = JSON.parse(local.jsonStringifyOrdered(local.normalizeJwt({\n\
+        //!! sub: \"1234567890\",\n\
+        //!! name: \"John Doe\",\n\
+        //!! admin: true\n\
+    //!! })));\n\
+    //!! // encrypt token\n\
+    //!! opt.token = local.jwtAes256GcmEncrypt(opt.data, opt.key);\n\
+    //!! // validate encrypted-token\n\
+    //!! local.assertJsonEqual(\n\
+        //!! local.jwtAes256GcmDecrypt(opt.token, opt.key),\n\
+        //!! opt.data\n\
+    //!! );\n\
+    //!! // test decryption-failed handling-behavior\n\
+    //!! local.assertJsonEqual(local.jwtAes256GcmDecrypt(opt.token, null), {});\n\
+    //!! onError(undefined, opt);\n\
+//!! };\n\
 \n\
-local.testCase_jwtHs256Xxx_default = function (opt, onError) {\n\
-/*\n\
- * this function will test jwtHs256Xxx's default handling-behavior\n\
- */\n\
-    opt = {};\n\
-    opt.key = local.normalizeJwtBase64Url(local.base64FromBuffer(\"secret\"));\n\
-    // use canonical example at https://jwt.io/\n\
-    opt.data = {\n\
-        sub: \"1234567890\",\n\
-        name: \"John Doe\",\n\
-        admin: true\n\
-    };\n\
-    opt.token = local.jwtHs256Encode(opt.data, opt.key);\n\
-    // validate encoded-token\n\
-    local.assertJsonEqual(\n\
-        opt.token,\n\
-        (\n\
-            \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\"\n\
-            + \".eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZ\"\n\
-            + \"SI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9\"\n\
-            + \".TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ\"\n\
-        )\n\
-    );\n\
-    // validate decoded-data\n\
-    local.assertJsonEqual(\n\
-        local.jwtHs256Decode(opt.token, opt.key),\n\
-        {\n\
-            admin: true,\n\
-            name: \"John Doe\",\n\
-            sub: \"1234567890\"\n\
-        }\n\
-    );\n\
-    // test decoding-failed handling-behavior\n\
-    local.assertJsonEqual(local.jwtHs256Decode(opt.token, \"undefined\"), {});\n\
-    onError(undefined, opt);\n\
-};\n\
+//!! local.testCase_jwtHs256Xxx_default = function (opt, onError) {\n\
+//!! /*\n\
+ //!! * this function will test jwtHs256Xxx's default handling-behavior\n\
+ //!! */\n\
+    //!! opt = {};\n\
+    //!! opt.key = local.normalizeJwtBase64Url(local.base64FromBuffer(\"secret\"));\n\
+    //!! // use canonical example at https://jwt.io/\n\
+    //!! opt.data = {\n\
+        //!! sub: \"1234567890\",\n\
+        //!! name: \"John Doe\",\n\
+        //!! admin: true\n\
+    //!! };\n\
+    //!! opt.token = local.jwtHs256Encode(opt.data, opt.key);\n\
+    //!! // validate encoded-token\n\
+    //!! local.assertJsonEqual(\n\
+        //!! opt.token,\n\
+        //!! (\n\
+            //!! \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\"\n\
+            //!! + \".eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZ\"\n\
+            //!! + \"SI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9\"\n\
+            //!! + \".TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ\"\n\
+        //!! )\n\
+    //!! );\n\
+    //!! // validate decoded-data\n\
+    //!! local.assertJsonEqual(\n\
+        //!! local.jwtHs256Decode(opt.token, opt.key),\n\
+        //!! {\n\
+            //!! admin: true,\n\
+            //!! name: \"John Doe\",\n\
+            //!! sub: \"1234567890\"\n\
+        //!! }\n\
+    //!! );\n\
+    //!! // test decoding-failed handling-behavior\n\
+    //!! local.assertJsonEqual(local.jwtHs256Decode(opt.token, \"undefined\"), {});\n\
+    //!! onError(undefined, opt);\n\
+//!! };\n\
 \n\
 local.testCase_libUtility2Js_standalone = function (opt, onError) {\n\
 /*\n\
@@ -68357,24 +68364,6 @@ local.testCase_stringRegexpEscape_default = function (opt, onError) {\n\
     onError(undefined, opt);\n\
 };\n\
 \n\
-local.testCase_stringTruncate_default = function (opt, onError) {\n\
-/*\n\
- * this function will test stringTruncate's default handling-behavior\n\
- */\n\
-    local.assertJsonEqual(local.stringTruncate(\"aa\"), \"aa\");\n\
-    local.assertJsonEqual(local.stringTruncate(\"aa\", 1), \"...\");\n\
-    local.assertJsonEqual(local.stringTruncate(\"aa\", 2), \"aa\");\n\
-    onError(undefined, opt);\n\
-};\n\
-\n\
-local.testCase_stringUniqueKey_default = function (opt, onError) {\n\
-/*\n\
- * this function will test stringUniqueKey's default handling-behavior\n\
- */\n\
-    local.assertOrThrow((\"zqxj\").indexOf(local.stringUniqueKey(\"zqxj\") < 0));\n\
-    onError(undefined, opt);\n\
-};\n\
-\n\
 local.testCase_templateRender_default = function (opt, onError) {\n\
 /*\n\
  * this function will test templateRender's default handling-behavior\n\
@@ -69310,19 +69299,19 @@ if (process.argv[2]) {\n\
 local.stateInit({
     "utility2": {
         "assetsDict": {
-            "/assets.example.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<!-- \"assets.utility2.template.html\" -->\n<title>jose-lite (0.0.1)</title>\n<style>\n/* jslint utility2:true */\n/*csslint\n*/\n/* csslint ignore:start */\n*,\n*:after,\n*:before {\n    box-sizing: border-box;\n}\n/* csslint ignore:end */\n@keyframes uiAnimateSpin {\n0% {\n    transform: rotate(0deg);\n}\n100% {\n    transform: rotate(360deg);\n}\n}\na {\n    overflow-wrap: break-word;\n}\nbody {\n    background: #f7f7f7;\n    font-family: Arial, Helvetica, sans-serif;\n    font-size: small;\n    margin: 0 40px;\n}\nbody > div,\nbody > input,\nbody > pre,\nbody > .button,\nbody > .textarea {\n    margin-bottom: 20px;\n    margin-top: 0;\n}\nbody > input,\nbody > .button {\n    width: 20rem;\n}\nbody > .readonly {\n    background: #ddd;\n}\nbody > .textarea {\n    height: 10rem;\n    resize: vertical;\n    width: 100%;\n}\ncode,\npre,\n.textarea {\n    font-family: Consolas, Menlo, monospace;\n    font-size: smaller;\n}\npre {\n    overflow-wrap: break-word;\n    white-space: pre-wrap;\n}\n.button {\n    background: #ddd;\n    border: 1px solid #999;\n    color: #000;\n    cursor: pointer;\n    display: inline-block;\n    padding: 2px 5px;\n    text-align: center;\n    text-decoration: none;\n}\n.button:hover {\n    background: #bbb;\n}\n.colorError {\n    color: #d00;\n}\n.textarea {\n    background: #fff;\n    border: 1px solid #999;\n    border-radius: 0;\n    cursor: auto;\n    overflow: auto;\n    padding: 2px;\n}\n.uiAnimateSlide {\n    overflow-y: hidden;\n    transition: max-height ease-in 250ms, min-height ease-in 250ms, padding-bottom ease-in 250ms, padding-top ease-in 250ms;\n}\n.zeroPixel {\n    border: 0;\n    height: 0;\n    margin: 0;\n    padding: 0;\n    width: 0;\n}\n</style>\n</head>\n<body>\n<div class=\"uiAnimateSpin\" style=\"animation: uiAnimateSpin 2s linear infinite; border: 5px solid #999; border-radius: 50%; border-top: 5px solid #7d7; display: none; height: 25px; vertical-align: middle; width: 25px;\"></div>\n<script>\n/* jslint utility2:true */\n// init domOnEventWindowOnloadTimeElapsed\n(function () {\n/*\n * this function will measure and print time-elapsed for window.onload\n */\n    \"use strict\";\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventWindowOnloadTimeElapsed) {\n        return;\n    }\n    window.domOnEventWindowOnloadTimeElapsed = Date.now() + 100;\n    window.addEventListener(\"load\", function () {\n        setTimeout(function () {\n            window.domOnEventWindowOnloadTimeElapsed = (\n                Date.now()\n                - window.domOnEventWindowOnloadTimeElapsed\n            );\n            console.error(\n                \"domOnEventWindowOnloadTimeElapsed = \"\n                + window.domOnEventWindowOnloadTimeElapsed\n            );\n        }, 100);\n    });\n}());\n\n\n\n// init domOnEventAjaxProgressUpdate\n(function () {\n/*\n * this function will display incrementing ajax-progress-bar\n */\n    \"use strict\";\n    let opt;\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventAjaxProgressUpdate) {\n        return;\n    }\n    window.domOnEventAjaxProgressUpdate = function (gotoState, onError) {\n        gotoState = (gotoState | 0) + 1;\n        switch (gotoState) {\n        // ajaxProgress - show\n        case 1:\n            // init timerInterval and timerTimeout\n            opt.timerInterval = (\n                opt.timerInterval || setInterval(opt, 2000, 1, onError)\n            );\n            opt.timerTimeout = (\n                opt.timerTimeout || setTimeout(opt, 30000, 2, onError)\n            );\n            // show ajaxProgress\n            if (opt.width !== -1) {\n                opt.style.background = opt.background;\n            }\n            setTimeout(opt, 50, gotoState, onError);\n            break;\n        // ajaxProgress - increment\n        case 2:\n            // show ajaxProgress\n            if (opt.width === -1) {\n                return;\n            }\n            opt.style.background = opt.background;\n            // reset ajaxProgress if it goes too high\n            if ((opt.style.width.slice(0, -1) | 0) > 95) {\n                opt.width = 0;\n            }\n            // this algorithm will indefinitely increment ajaxProgress\n            // with successively smaller increments without reaching 100%\n            opt.width += 1;\n            opt.style.width = Math.max(\n                100 - 75 * Math.exp(-0.125 * opt.width),\n                opt.style.width.slice(0, -1) | 0\n            ) + \"%\";\n            if (!opt.counter) {\n                setTimeout(opt, 0, gotoState, onError);\n            }\n            break;\n        // ajaxProgress - 100%\n        case 3:\n            opt.width = -1;\n            opt.style.width = \"100%\";\n            setTimeout(opt, 1000, gotoState, onError);\n            break;\n        // ajaxProgress - hide\n        case 4:\n            // cleanup timerInterval and timerTimeout\n            clearInterval(opt.timerInterval);\n            opt.timerInterval = null;\n            clearTimeout(opt.timerTimeout);\n            opt.timerTimeout = null;\n            // hide ajaxProgress\n            opt.style.background = \"transparent\";\n            if (onError) {\n                onError();\n            }\n            setTimeout(opt, 250, gotoState);\n            break;\n        // ajaxProgress - reset\n        default:\n            // reset ajaxProgress\n            opt.counter = 0;\n            opt.width = 0;\n            opt.style.width = \"0%\";\n        }\n    };\n    opt = window.domOnEventAjaxProgressUpdate;\n    opt.end = function (onError) {\n        opt.counter = 0;\n        window.domOnEventAjaxProgressUpdate(2, onError);\n    };\n    opt.elem = document.getElementById(\"domElementAjaxProgress1\");\n    if (!opt.elem) {\n        opt.elem = document.createElement(\"div\");\n        setTimeout(function () {\n            document.body.insertBefore(opt.elem, document.body.firstChild);\n        });\n    }\n    opt.elem.id = \"domElementAjaxProgress1\";\n    opt.style = opt.elem.style;\n    // init style\n    Object.entries({\n        background: \"#d00\",\n        height: \"2px\",\n        left: \"0\",\n        margin: \"0\",\n        padding: \"0\",\n        position: \"fixed\",\n        top: \"0\",\n        transition: \"background 250ms, width 750ms\",\n        width: \"0%\",\n        \"z-index\": \"1\"\n    }).forEach(function (entry) {\n        opt.style[entry[0]] = opt.style[entry[0]] || entry[1];\n    });\n    // init state\n    opt.background = opt.style.background;\n    opt.counter = 0;\n    opt.width = 0;\n}());\n\n\n\n// init domOnEventDelegateDict\n(function () {\n/*\n * this function will handle delegated dom-evt\n */\n    \"use strict\";\n    let debounce;\n    let timerTimeout;\n    debounce = function () {\n        return setTimeout(function () {\n            timerTimeout = undefined;\n        }, 30);\n    };\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventDelegateDict) {\n        return;\n    }\n    window.domOnEventDelegateDict = {};\n    window.domOnEventDelegateDict.domOnEventDelegate = function (evt) {\n        evt.targetOnEvent = evt.target.closest(\"[data-onevent]\");\n        if (\n            !evt.targetOnEvent\n            || evt.targetOnEvent.dataset.onevent === \"domOnEventNop\"\n            || evt.target.closest(\".disabled,.readonly\")\n        ) {\n            return;\n        }\n        // filter evt-change\n        switch (evt.type !== \"change\" && evt.target.type) {\n        case \"checkbox\":\n        case \"file\":\n        case \"select-one\":\n        case \"radio\":\n            return;\n        }\n        // filter evt-keyup\n        switch (evt.type) {\n        case \"keyup\":\n            if (!timerTimeout && (\n                evt.target.tagName === \"INPUT\"\n                || evt.target.tagName === \"TEXTAREA\"\n            )) {\n                timerTimeout = debounce();\n                if (evt.target.dataset.valueOld !== evt.target.value) {\n                    evt.target.dataset.valueOld = evt.target.value;\n                    break;\n                }\n            }\n            return;\n        }\n        switch (evt.targetOnEvent.tagName) {\n        case \"BUTTON\":\n        case \"FORM\":\n            evt.preventDefault();\n            break;\n        }\n        evt.stopPropagation();\n        // handle domOnEventClickTarget\n        if (evt.targetOnEvent.dataset.onevent === \"domOnEventClickTarget\") {\n            document.querySelector(\n                evt.targetOnEvent.dataset.clickTarget\n            ).click();\n            return;\n        }\n        window.domOnEventDelegateDict[evt.targetOnEvent.dataset.onevent](evt);\n    };\n    // handle evt\n    [\n        \"change\",\n        \"click\",\n        \"keyup\",\n        \"submit\"\n    ].forEach(function (eventType) {\n        document.addEventListener(\n            eventType,\n            window.domOnEventDelegateDict.domOnEventDelegate\n        );\n    });\n}());\n\n\n\n// init domOnEventSelectAllWithinPre\n(function () {\n/*\n * this function will limit select-all within <pre tabIndex=\"0\"> elem\n * https://stackoverflow.com/questions/985272/selecting-text-in-an-element-akin-to-highlighting-with-your-mouse\n */\n    \"use strict\";\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventSelectAllWithinPre) {\n        return;\n    }\n    window.domOnEventSelectAllWithinPre = function (evt) {\n        let range;\n        let selection;\n        if (\n            evt && (evt.ctrlKey || evt.metaKey) && evt.key === \"a\"\n            && evt.target.closest(\"pre\")\n        ) {\n            range = document.createRange();\n            range.selectNodeContents(evt.target.closest(\"pre\"));\n            selection = window.getSelection();\n            selection.removeAllRanges();\n            selection.addRange(range);\n            evt.preventDefault();\n        }\n    };\n    // handle evt\n    document.addEventListener(\n        \"keydown\",\n        window.domOnEventSelectAllWithinPre\n    );\n}());\n</script>\n<h1>\n<!-- utility2-comment\n<a\n    {{#if env.npm_package_homepage}}\n    href=\"{{env.npm_package_homepage}}\"\n    {{/if env.npm_package_homepage}}\n    target=\"_blank\"\n>\nutility2-comment -->\n    jose-lite (0.0.1)\n<!-- utility2-comment\n</a>\nutility2-comment -->\n</h1>\n<h3>the greatest app in the world!</h3>\n<!-- utility2-comment\n<a class=\"button\" download href=\"assets.app.js\">download standalone app</a><br>\n<button class=\"button\" data-onevent=\"testRunBrowser\" id=\"buttonTestRun1\">run browser-tests</button><br>\n<div class=\"uiAnimateSlide\" id=\"htmlTestReport1\" style=\"border-bottom: 0; border-top: 0; margin-bottom: 0; margin-top: 0; max-height: 0; padding-bottom: 0; padding-top: 0;\"></div>\nutility2-comment -->\n\n\n\n<!-- custom-html-start -->\n<label>stderr and stdout</label>\n<textarea class=\"onevent-reset-output readonly textarea\" id=\"outputStdout1\" readonly></textarea>\n<!-- custom-html-end -->\n\n\n\n<!-- utility2-comment\n{{#if isRollup}}\n<script src=\"assets.app.js\"></script>\n{{#unless isRollup}}\n<script src=\"assets.utility2.rollup.js\"></script>\n<script>window.utility2_onReadyBefore.counter += 1;</script>\n<script src=\"jsonp.utility2.stateInit?callback=window.utility2.stateInit\"></script>\nutility2-comment -->\n<script src=\"assets.jose_lite.js\"></script>\n<script src=\"assets.example.js\"></script>\n<script src=\"assets.test.js\"></script>\n<script>\nif (window.utility2_onReadyBefore) {\n    window.utility2_onReadyBefore();\n}\n</script>\n<!-- utility2-comment\n{{/if isRollup}}\nutility2-comment -->\n<div style=\"text-align: center;\">\n    [\n    this app was created with\n    <a\n        href=\"https://github.com/kaizhu256/node-utility2\" target=\"_blank\"\n    >utility2</a>\n    ]\n</div>\n</body>\n</html>\n",
-            "/assets.example.js": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/*\nexample.js\n\nthis script will run a web-demo of jose-lite\n\ninstruction\n    1. save this script as example.js\n    2. run shell-command:\n        $ npm install jose-lite && \\\n            PORT=8081 node example.js\n    3. open a browser to http://127.0.0.1:8081 and play with web-demo\n    4. edit this script to suit your needs\n*/\n\n\n\n// assets.utility2.header.js - start\n/* istanbul ignore next */\n/* jslint utility2:true */\n(function (globalThis) {\n    \"use strict\";\n    let ArrayPrototypeFlat;\n    let TextXxcoder;\n    let consoleError;\n    let debugName;\n    let local;\n    debugName = \"debug\" + String(\"Inline\");\n    // init globalThis\n    globalThis.globalThis = globalThis.globalThis || globalThis;\n    // init debug_inline\n    if (!globalThis[debugName]) {\n        consoleError = console.error;\n        globalThis[debugName] = function (...argList) {\n        /*\n         * this function will both print <argList> to stderr\n         * and return <argList>[0]\n         */\n            consoleError(\"\\n\\n\" + debugName);\n            consoleError.apply(console, argList);\n            consoleError(\"\\n\");\n            // return arg0 for inspection\n            return argList[0];\n        };\n    }\n    // polyfill\n    ArrayPrototypeFlat = function (depth) {\n    /*\n     * this function will polyfill Array.prototype.flat\n     * https://github.com/jonathantneal/array-flat-polyfill\n     */\n        depth = (\n            globalThis.isNaN(depth)\n            ? 1\n            : Number(depth)\n        );\n        if (!depth) {\n            return Array.prototype.slice.call(this);\n        }\n        return Array.prototype.reduce.call(this, function (acc, cur) {\n            if (Array.isArray(cur)) {\n                // recurse\n                acc.push.apply(acc, ArrayPrototypeFlat.call(cur, depth - 1));\n            } else {\n                acc.push(cur);\n            }\n            return acc;\n        }, []);\n    };\n    Array.prototype.flat = Array.prototype.flat || ArrayPrototypeFlat;\n    Array.prototype.flatMap = Array.prototype.flatMap || function flatMap(\n        ...argList\n    ) {\n    /*\n     * this function will polyfill Array.prototype.flatMap\n     * https://github.com/jonathantneal/array-flat-polyfill\n     */\n        return this.map(...argList).flat();\n    };\n    String.prototype.trimEnd = (\n        String.prototype.trimEnd || String.prototype.trimRight\n    );\n    String.prototype.trimStart = (\n        String.prototype.trimStart || String.prototype.trimLeft\n    );\n    (function () {\n        try {\n            globalThis.TextDecoder = (\n                globalThis.TextDecoder || require(\"util\").TextDecoder\n            );\n            globalThis.TextEncoder = (\n                globalThis.TextEncoder || require(\"util\").TextEncoder\n            );\n        } catch (ignore) {}\n    }());\n    TextXxcoder = function () {\n    /*\n     * this function will polyfill TextDecoder/TextEncoder\n     * https://gist.github.com/Yaffle/5458286\n     */\n        return;\n    };\n    TextXxcoder.prototype.decode = function (octets) {\n    /*\n     * this function will polyfill TextDecoder.prototype.decode\n     * https://gist.github.com/Yaffle/5458286\n     */\n        let bytesNeeded;\n        let codePoint;\n        let ii;\n        let kk;\n        let octet;\n        let string;\n        string = \"\";\n        ii = 0;\n        while (ii < octets.length) {\n            octet = octets[ii];\n            bytesNeeded = 0;\n            codePoint = 0;\n            if (octet <= 0x7F) {\n                bytesNeeded = 0;\n                codePoint = octet & 0xFF;\n            } else if (octet <= 0xDF) {\n                bytesNeeded = 1;\n                codePoint = octet & 0x1F;\n            } else if (octet <= 0xEF) {\n                bytesNeeded = 2;\n                codePoint = octet & 0x0F;\n            } else if (octet <= 0xF4) {\n                bytesNeeded = 3;\n                codePoint = octet & 0x07;\n            }\n            if (octets.length - ii - bytesNeeded > 0) {\n                kk = 0;\n                while (kk < bytesNeeded) {\n                    octet = octets[ii + kk + 1];\n                    codePoint = (codePoint << 6) | (octet & 0x3F);\n                    kk += 1;\n                }\n            } else {\n                codePoint = 0xFFFD;\n                bytesNeeded = octets.length - ii;\n            }\n            string += String.fromCodePoint(codePoint);\n            ii += bytesNeeded + 1;\n        }\n        return string;\n    };\n    TextXxcoder.prototype.encode = function (string) {\n    /*\n     * this function will polyfill TextEncoder.prototype.encode\n     * https://gist.github.com/Yaffle/5458286\n     */\n        let bits;\n        let cc;\n        let codePoint;\n        let ii;\n        let length;\n        let octets;\n        octets = [];\n        length = string.length;\n        ii = 0;\n        while (ii < length) {\n            codePoint = string.codePointAt(ii);\n            cc = 0;\n            bits = 0;\n            if (codePoint <= 0x0000007F) {\n                cc = 0;\n                bits = 0x00;\n            } else if (codePoint <= 0x000007FF) {\n                cc = 6;\n                bits = 0xC0;\n            } else if (codePoint <= 0x0000FFFF) {\n                cc = 12;\n                bits = 0xE0;\n            } else if (codePoint <= 0x001FFFFF) {\n                cc = 18;\n                bits = 0xF0;\n            }\n            octets.push(bits | (codePoint >> cc));\n            cc -= 6;\n            while (cc >= 0) {\n                octets.push(0x80 | ((codePoint >> cc) & 0x3F));\n                cc -= 6;\n            }\n            ii += (\n                codePoint >= 0x10000\n                ? 2\n                : 1\n            );\n        }\n        return octets;\n    };\n    globalThis.TextDecoder = globalThis.TextDecoder || TextXxcoder;\n    globalThis.TextEncoder = globalThis.TextEncoder || TextXxcoder;\n    // init local\n    local = {};\n    local.local = local;\n    globalThis.globalLocal = local;\n    // init isBrowser\n    local.isBrowser = (\n        typeof globalThis.XMLHttpRequest === \"function\"\n        && globalThis.navigator\n        && typeof globalThis.navigator.userAgent === \"string\"\n    );\n    // init isWebWorker\n    local.isWebWorker = (\n        local.isBrowser && typeof globalThis.importScript === \"function\"\n    );\n    // init function\n    local.assertOrThrow = function (passed, message) {\n    /*\n     * this function will throw err.<message> if <passed> is falsy\n     */\n        let err;\n        if (passed) {\n            return;\n        }\n        err = (\n            (\n                message\n                && typeof message.message === \"string\"\n                && typeof message.stack === \"string\"\n            )\n            // if message is errObj, then leave as is\n            ? message\n            : new Error(\n                typeof message === \"string\"\n                // if message is a string, then leave as is\n                ? message\n                // else JSON.stringify message\n                : JSON.stringify(message, undefined, 4)\n            )\n        );\n        throw err;\n    };\n    local.coalesce = function (...argList) {\n    /*\n     * this function will coalesce null, undefined, or \"\" in <argList>\n     */\n        let arg;\n        let ii;\n        ii = 0;\n        while (ii < argList.length) {\n            arg = argList[ii];\n            if (arg !== null && arg !== undefined && arg !== \"\") {\n                break;\n            }\n            ii += 1;\n        }\n        return arg;\n    };\n    local.fsRmrfSync = function (dir) {\n    /*\n     * this function will sync \"rm -rf\" <dir>\n     */\n        let child_process;\n        try {\n            child_process = require(\"child_process\");\n        } catch (ignore) {\n            return;\n        }\n        child_process.spawnSync(\"rm\", [\n            \"-rf\", dir\n        ], {\n            stdio: [\n                \"ignore\", 1, 2\n            ]\n        });\n    };\n    local.fsWriteFileWithMkdirpSync = function (file, data) {\n    /*\n     * this function will sync write <data> to <file> with \"mkdir -p\"\n     */\n        let fs;\n        try {\n            fs = require(\"fs\");\n        } catch (ignore) {\n            return;\n        }\n        // try to write file\n        try {\n            fs.writeFileSync(file, data);\n        } catch (ignore) {\n            // mkdir -p\n            require(\"child_process\").spawnSync(\n                \"mkdir\",\n                [\n                    \"-p\", require(\"path\").dirname(file)\n                ],\n                {\n                    stdio: [\n                        \"ignore\", 1, 2\n                    ]\n                }\n            );\n            // rewrite file\n            fs.writeFileSync(file, data);\n        }\n    };\n    local.functionOrNop = function (fnc) {\n    /*\n     * this function will if <fnc> exists,\n     * return <fnc>,\n     * else return <nop>\n     */\n        return fnc || local.nop;\n    };\n    local.identity = function (val) {\n    /*\n     * this function will return <val>\n     */\n        return val;\n    };\n    local.nop = function () {\n    /*\n     * this function will do nothing\n     */\n        return;\n    };\n    local.objectAssignDefault = function (target, source) {\n    /*\n     * this function will if items from <target> are null, undefined, or \"\",\n     * then overwrite them with items from <source>\n     */\n        target = target || {};\n        Object.keys(source || {}).forEach(function (key) {\n            if (\n                target[key] === null\n                || target[key] === undefined\n                || target[key] === \"\"\n            ) {\n                target[key] = target[key] || source[key];\n            }\n        });\n        return target;\n    };\n    local.querySelector = function (selectors) {\n    /*\n     * this function will return first dom-elem that match <selectors>\n     */\n        return (\n            typeof document === \"object\" && document\n            && typeof document.querySelector === \"function\"\n            && document.querySelector(selectors)\n        ) || {};\n    };\n    local.querySelectorAll = function (selectors) {\n    /*\n     * this function will return dom-elem-list that match <selectors>\n     */\n        return (\n            typeof document === \"object\" && document\n            && typeof document.querySelectorAll === \"function\"\n            && Array.from(document.querySelectorAll(selectors))\n        ) || [];\n    };\n    // require builtin\n    if (!local.isBrowser) {\n        local.assert = require(\"assert\");\n        local.buffer = require(\"buffer\");\n        local.child_process = require(\"child_process\");\n        local.cluster = require(\"cluster\");\n        local.crypto = require(\"crypto\");\n        local.dgram = require(\"dgram\");\n        local.dns = require(\"dns\");\n        local.domain = require(\"domain\");\n        local.events = require(\"events\");\n        local.fs = require(\"fs\");\n        local.http = require(\"http\");\n        local.https = require(\"https\");\n        local.net = require(\"net\");\n        local.os = require(\"os\");\n        local.path = require(\"path\");\n        local.querystring = require(\"querystring\");\n        local.readline = require(\"readline\");\n        local.repl = require(\"repl\");\n        local.stream = require(\"stream\");\n        local.string_decoder = require(\"string_decoder\");\n        local.timers = require(\"timers\");\n        local.tls = require(\"tls\");\n        local.tty = require(\"tty\");\n        local.url = require(\"url\");\n        local.util = require(\"util\");\n        local.vm = require(\"vm\");\n        local.zlib = require(\"zlib\");\n    }\n}((typeof globalThis === \"object\" && globalThis) || (function () {\n    return Function(\"return this\")(); // jslint ignore:line\n}())));\n// assets.utility2.header.js - end\n\n\n\n/* jslint utility2:true */\n(function (local) {\n\"use strict\";\n\n\n\n// run shared js-env code - init-before\n(function () {\n// init local\nlocal = (\n    globalThis.utility2_rollup\n    || globalThis.utility2_jose_lite\n    || globalThis.utility2_moduleExports\n);\n// init exports\nglobalThis.local = local;\n}());\n\n\n\n// run browser js-env code - init-test\n(function () {\nif (!local.isBrowser) {\n    return;\n}\n// log stderr and stdout to #outputStdout1\n[\"error\", \"log\"].forEach(function (key) {\n    let elem;\n    let fnc;\n    elem = local.querySelector(\"#outputStdout1\");\n    if (!elem) {\n        return;\n    }\n    fnc = console[key];\n    console[key] = function (...argList) {\n        fnc.apply(console, argList);\n        // append text to #outputStdout1\n        elem.textContent += argList.map(function (arg) {\n            return (\n                typeof arg === \"string\"\n                ? arg\n                : JSON.stringify(arg, undefined, 4)\n            );\n        }).join(\" \").replace((\n            /\\u001b\\[\\d*m/g\n        ), \"\") + \"\\n\";\n        // scroll textarea to bottom\n        elem.scrollTop = elem.scrollHeight;\n    };\n});\nlocal.objectAssignDefault(local, globalThis.domOnEventDelegateDict);\nglobalThis.domOnEventDelegateDict = local;\nif ((\n    /\\bmodeTest=1\\b/\n).test(location.search)) {\n    local.testRunBrowser();\n}\n}());\n\n\n\n// run node js-env code - init-test\n(function () {\nif (local.isBrowser) {\n    return;\n}\n// init exports\nmodule.exports = local;\n// init assetsDict\nlocal.assetsDict = local.assetsDict || {};\n[\n    \"assets.swgg.swagger.json\",\n    \"assets.swgg.swagger.server.json\"\n].forEach(function (file) {\n    file = \"/\" + file;\n    local.assetsDict[file] = local.assetsDict[file] || \"\";\n    if (local.fs.existsSync(local.__dirname + file)) {\n        local.assetsDict[file] = local.fs.readFileSync(\n            local.__dirname + file,\n            \"utf8\"\n        );\n    }\n});\n/* jslint ignore:start */\nlocal.assetsDict[\"/assets.index.template.html\"] = '\\\n<!doctype html>\\n\\\n<html lang=\"en\">\\n\\\n<head>\\n\\\n<meta charset=\"utf-8\">\\n\\\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\\n\\\n<!-- \"assets.utility2.template.html\" -->\\n\\\n<title>{{env.npm_package_name}} ({{env.npm_package_version}})</title>\\n\\\n<style>\\n\\\n/* jslint utility2:true */\\n\\\n/*csslint\\n\\\n*/\\n\\\n/* csslint ignore:start */\\n\\\n*,\\n\\\n*:after,\\n\\\n*:before {\\n\\\n    box-sizing: border-box;\\n\\\n}\\n\\\n/* csslint ignore:end */\\n\\\n@keyframes uiAnimateSpin {\\n\\\n0% {\\n\\\n    transform: rotate(0deg);\\n\\\n}\\n\\\n100% {\\n\\\n    transform: rotate(360deg);\\n\\\n}\\n\\\n}\\n\\\na {\\n\\\n    overflow-wrap: break-word;\\n\\\n}\\n\\\nbody {\\n\\\n    background: #f7f7f7;\\n\\\n    font-family: Arial, Helvetica, sans-serif;\\n\\\n    font-size: small;\\n\\\n    margin: 0 40px;\\n\\\n}\\n\\\nbody > div,\\n\\\nbody > input,\\n\\\nbody > pre,\\n\\\nbody > .button,\\n\\\nbody > .textarea {\\n\\\n    margin-bottom: 20px;\\n\\\n    margin-top: 0;\\n\\\n}\\n\\\nbody > input,\\n\\\nbody > .button {\\n\\\n    width: 20rem;\\n\\\n}\\n\\\nbody > .readonly {\\n\\\n    background: #ddd;\\n\\\n}\\n\\\nbody > .textarea {\\n\\\n    height: 10rem;\\n\\\n    resize: vertical;\\n\\\n    width: 100%;\\n\\\n}\\n\\\ncode,\\n\\\npre,\\n\\\n.textarea {\\n\\\n    font-family: Consolas, Menlo, monospace;\\n\\\n    font-size: smaller;\\n\\\n}\\n\\\npre {\\n\\\n    overflow-wrap: break-word;\\n\\\n    white-space: pre-wrap;\\n\\\n}\\n\\\n.button {\\n\\\n    background: #ddd;\\n\\\n    border: 1px solid #999;\\n\\\n    color: #000;\\n\\\n    cursor: pointer;\\n\\\n    display: inline-block;\\n\\\n    padding: 2px 5px;\\n\\\n    text-align: center;\\n\\\n    text-decoration: none;\\n\\\n}\\n\\\n.button:hover {\\n\\\n    background: #bbb;\\n\\\n}\\n\\\n.colorError {\\n\\\n    color: #d00;\\n\\\n}\\n\\\n.textarea {\\n\\\n    background: #fff;\\n\\\n    border: 1px solid #999;\\n\\\n    border-radius: 0;\\n\\\n    cursor: auto;\\n\\\n    overflow: auto;\\n\\\n    padding: 2px;\\n\\\n}\\n\\\n.uiAnimateSlide {\\n\\\n    overflow-y: hidden;\\n\\\n    transition: max-height ease-in 250ms, min-height ease-in 250ms, padding-bottom ease-in 250ms, padding-top ease-in 250ms;\\n\\\n}\\n\\\n.zeroPixel {\\n\\\n    border: 0;\\n\\\n    height: 0;\\n\\\n    margin: 0;\\n\\\n    padding: 0;\\n\\\n    width: 0;\\n\\\n}\\n\\\n</style>\\n\\\n</head>\\n\\\n<body>\\n\\\n<div class=\"uiAnimateSpin\" style=\"animation: uiAnimateSpin 2s linear infinite; border: 5px solid #999; border-radius: 50%; border-top: 5px solid #7d7; display: none; height: 25px; vertical-align: middle; width: 25px;\"></div>\\n\\\n<script>\\n\\\n/* jslint utility2:true */\\n\\\n// init domOnEventWindowOnloadTimeElapsed\\n\\\n(function () {\\n\\\n/*\\n\\\n * this function will measure and print time-elapsed for window.onload\\n\\\n */\\n\\\n    \"use strict\";\\n\\\n    if (!(\\n\\\n        typeof window === \"object\" && window && window.document\\n\\\n        && typeof document.addEventListener === \"function\"\\n\\\n    ) || window.domOnEventWindowOnloadTimeElapsed) {\\n\\\n        return;\\n\\\n    }\\n\\\n    window.domOnEventWindowOnloadTimeElapsed = Date.now() + 100;\\n\\\n    window.addEventListener(\"load\", function () {\\n\\\n        setTimeout(function () {\\n\\\n            window.domOnEventWindowOnloadTimeElapsed = (\\n\\\n                Date.now()\\n\\\n                - window.domOnEventWindowOnloadTimeElapsed\\n\\\n            );\\n\\\n            console.error(\\n\\\n                \"domOnEventWindowOnloadTimeElapsed = \"\\n\\\n                + window.domOnEventWindowOnloadTimeElapsed\\n\\\n            );\\n\\\n        }, 100);\\n\\\n    });\\n\\\n}());\\n\\\n\\n\\\n\\n\\\n\\n\\\n// init domOnEventAjaxProgressUpdate\\n\\\n(function () {\\n\\\n/*\\n\\\n * this function will display incrementing ajax-progress-bar\\n\\\n */\\n\\\n    \"use strict\";\\n\\\n    let opt;\\n\\\n    if (!(\\n\\\n        typeof window === \"object\" && window && window.document\\n\\\n        && typeof document.addEventListener === \"function\"\\n\\\n    ) || window.domOnEventAjaxProgressUpdate) {\\n\\\n        return;\\n\\\n    }\\n\\\n    window.domOnEventAjaxProgressUpdate = function (gotoState, onError) {\\n\\\n        gotoState = (gotoState | 0) + 1;\\n\\\n        switch (gotoState) {\\n\\\n        // ajaxProgress - show\\n\\\n        case 1:\\n\\\n            // init timerInterval and timerTimeout\\n\\\n            opt.timerInterval = (\\n\\\n                opt.timerInterval || setInterval(opt, 2000, 1, onError)\\n\\\n            );\\n\\\n            opt.timerTimeout = (\\n\\\n                opt.timerTimeout || setTimeout(opt, 30000, 2, onError)\\n\\\n            );\\n\\\n            // show ajaxProgress\\n\\\n            if (opt.width !== -1) {\\n\\\n                opt.style.background = opt.background;\\n\\\n            }\\n\\\n            setTimeout(opt, 50, gotoState, onError);\\n\\\n            break;\\n\\\n        // ajaxProgress - increment\\n\\\n        case 2:\\n\\\n            // show ajaxProgress\\n\\\n            if (opt.width === -1) {\\n\\\n                return;\\n\\\n            }\\n\\\n            opt.style.background = opt.background;\\n\\\n            // reset ajaxProgress if it goes too high\\n\\\n            if ((opt.style.width.slice(0, -1) | 0) > 95) {\\n\\\n                opt.width = 0;\\n\\\n            }\\n\\\n            // this algorithm will indefinitely increment ajaxProgress\\n\\\n            // with successively smaller increments without reaching 100%\\n\\\n            opt.width += 1;\\n\\\n            opt.style.width = Math.max(\\n\\\n                100 - 75 * Math.exp(-0.125 * opt.width),\\n\\\n                opt.style.width.slice(0, -1) | 0\\n\\\n            ) + \"%\";\\n\\\n            if (!opt.counter) {\\n\\\n                setTimeout(opt, 0, gotoState, onError);\\n\\\n            }\\n\\\n            break;\\n\\\n        // ajaxProgress - 100%\\n\\\n        case 3:\\n\\\n            opt.width = -1;\\n\\\n            opt.style.width = \"100%\";\\n\\\n            setTimeout(opt, 1000, gotoState, onError);\\n\\\n            break;\\n\\\n        // ajaxProgress - hide\\n\\\n        case 4:\\n\\\n            // cleanup timerInterval and timerTimeout\\n\\\n            clearInterval(opt.timerInterval);\\n\\\n            opt.timerInterval = null;\\n\\\n            clearTimeout(opt.timerTimeout);\\n\\\n            opt.timerTimeout = null;\\n\\\n            // hide ajaxProgress\\n\\\n            opt.style.background = \"transparent\";\\n\\\n            if (onError) {\\n\\\n                onError();\\n\\\n            }\\n\\\n            setTimeout(opt, 250, gotoState);\\n\\\n            break;\\n\\\n        // ajaxProgress - reset\\n\\\n        default:\\n\\\n            // reset ajaxProgress\\n\\\n            opt.counter = 0;\\n\\\n            opt.width = 0;\\n\\\n            opt.style.width = \"0%\";\\n\\\n        }\\n\\\n    };\\n\\\n    opt = window.domOnEventAjaxProgressUpdate;\\n\\\n    opt.end = function (onError) {\\n\\\n        opt.counter = 0;\\n\\\n        window.domOnEventAjaxProgressUpdate(2, onError);\\n\\\n    };\\n\\\n    opt.elem = document.getElementById(\"domElementAjaxProgress1\");\\n\\\n    if (!opt.elem) {\\n\\\n        opt.elem = document.createElement(\"div\");\\n\\\n        setTimeout(function () {\\n\\\n            document.body.insertBefore(opt.elem, document.body.firstChild);\\n\\\n        });\\n\\\n    }\\n\\\n    opt.elem.id = \"domElementAjaxProgress1\";\\n\\\n    opt.style = opt.elem.style;\\n\\\n    // init style\\n\\\n    Object.entries({\\n\\\n        background: \"#d00\",\\n\\\n        height: \"2px\",\\n\\\n        left: \"0\",\\n\\\n        margin: \"0\",\\n\\\n        padding: \"0\",\\n\\\n        position: \"fixed\",\\n\\\n        top: \"0\",\\n\\\n        transition: \"background 250ms, width 750ms\",\\n\\\n        width: \"0%\",\\n\\\n        \"z-index\": \"1\"\\n\\\n    }).forEach(function (entry) {\\n\\\n        opt.style[entry[0]] = opt.style[entry[0]] || entry[1];\\n\\\n    });\\n\\\n    // init state\\n\\\n    opt.background = opt.style.background;\\n\\\n    opt.counter = 0;\\n\\\n    opt.width = 0;\\n\\\n}());\\n\\\n\\n\\\n\\n\\\n\\n\\\n// init domOnEventDelegateDict\\n\\\n(function () {\\n\\\n/*\\n\\\n * this function will handle delegated dom-evt\\n\\\n */\\n\\\n    \"use strict\";\\n\\\n    let debounce;\\n\\\n    let timerTimeout;\\n\\\n    debounce = function () {\\n\\\n        return setTimeout(function () {\\n\\\n            timerTimeout = undefined;\\n\\\n        }, 30);\\n\\\n    };\\n\\\n    if (!(\\n\\\n        typeof window === \"object\" && window && window.document\\n\\\n        && typeof document.addEventListener === \"function\"\\n\\\n    ) || window.domOnEventDelegateDict) {\\n\\\n        return;\\n\\\n    }\\n\\\n    window.domOnEventDelegateDict = {};\\n\\\n    window.domOnEventDelegateDict.domOnEventDelegate = function (evt) {\\n\\\n        evt.targetOnEvent = evt.target.closest(\"[data-onevent]\");\\n\\\n        if (\\n\\\n            !evt.targetOnEvent\\n\\\n            || evt.targetOnEvent.dataset.onevent === \"domOnEventNop\"\\n\\\n            || evt.target.closest(\".disabled,.readonly\")\\n\\\n        ) {\\n\\\n            return;\\n\\\n        }\\n\\\n        // filter evt-change\\n\\\n        switch (evt.type !== \"change\" && evt.target.type) {\\n\\\n        case \"checkbox\":\\n\\\n        case \"file\":\\n\\\n        case \"select-one\":\\n\\\n        case \"radio\":\\n\\\n            return;\\n\\\n        }\\n\\\n        // filter evt-keyup\\n\\\n        switch (evt.type) {\\n\\\n        case \"keyup\":\\n\\\n            if (!timerTimeout && (\\n\\\n                evt.target.tagName === \"INPUT\"\\n\\\n                || evt.target.tagName === \"TEXTAREA\"\\n\\\n            )) {\\n\\\n                timerTimeout = debounce();\\n\\\n                if (evt.target.dataset.valueOld !== evt.target.value) {\\n\\\n                    evt.target.dataset.valueOld = evt.target.value;\\n\\\n                    break;\\n\\\n                }\\n\\\n            }\\n\\\n            return;\\n\\\n        }\\n\\\n        switch (evt.targetOnEvent.tagName) {\\n\\\n        case \"BUTTON\":\\n\\\n        case \"FORM\":\\n\\\n            evt.preventDefault();\\n\\\n            break;\\n\\\n        }\\n\\\n        evt.stopPropagation();\\n\\\n        // handle domOnEventClickTarget\\n\\\n        if (evt.targetOnEvent.dataset.onevent === \"domOnEventClickTarget\") {\\n\\\n            document.querySelector(\\n\\\n                evt.targetOnEvent.dataset.clickTarget\\n\\\n            ).click();\\n\\\n            return;\\n\\\n        }\\n\\\n        window.domOnEventDelegateDict[evt.targetOnEvent.dataset.onevent](evt);\\n\\\n    };\\n\\\n    // handle evt\\n\\\n    [\\n\\\n        \"change\",\\n\\\n        \"click\",\\n\\\n        \"keyup\",\\n\\\n        \"submit\"\\n\\\n    ].forEach(function (eventType) {\\n\\\n        document.addEventListener(\\n\\\n            eventType,\\n\\\n            window.domOnEventDelegateDict.domOnEventDelegate\\n\\\n        );\\n\\\n    });\\n\\\n}());\\n\\\n\\n\\\n\\n\\\n\\n\\\n// init domOnEventSelectAllWithinPre\\n\\\n(function () {\\n\\\n/*\\n\\\n * this function will limit select-all within <pre tabIndex=\"0\"> elem\\n\\\n * https://stackoverflow.com/questions/985272/selecting-text-in-an-element-akin-to-highlighting-with-your-mouse\\n\\\n */\\n\\\n    \"use strict\";\\n\\\n    if (!(\\n\\\n        typeof window === \"object\" && window && window.document\\n\\\n        && typeof document.addEventListener === \"function\"\\n\\\n    ) || window.domOnEventSelectAllWithinPre) {\\n\\\n        return;\\n\\\n    }\\n\\\n    window.domOnEventSelectAllWithinPre = function (evt) {\\n\\\n        let range;\\n\\\n        let selection;\\n\\\n        if (\\n\\\n            evt && (evt.ctrlKey || evt.metaKey) && evt.key === \"a\"\\n\\\n            && evt.target.closest(\"pre\")\\n\\\n        ) {\\n\\\n            range = document.createRange();\\n\\\n            range.selectNodeContents(evt.target.closest(\"pre\"));\\n\\\n            selection = window.getSelection();\\n\\\n            selection.removeAllRanges();\\n\\\n            selection.addRange(range);\\n\\\n            evt.preventDefault();\\n\\\n        }\\n\\\n    };\\n\\\n    // handle evt\\n\\\n    document.addEventListener(\\n\\\n        \"keydown\",\\n\\\n        window.domOnEventSelectAllWithinPre\\n\\\n    );\\n\\\n}());\\n\\\n</script>\\n\\\n<h1>\\n\\\n<!-- utility2-comment\\n\\\n<a\\n\\\n    {{#if env.npm_package_homepage}}\\n\\\n    href=\"{{env.npm_package_homepage}}\"\\n\\\n    {{/if env.npm_package_homepage}}\\n\\\n    target=\"_blank\"\\n\\\n>\\n\\\nutility2-comment -->\\n\\\n    {{env.npm_package_name}} ({{env.npm_package_version}})\\n\\\n<!-- utility2-comment\\n\\\n</a>\\n\\\nutility2-comment -->\\n\\\n</h1>\\n\\\n<h3>{{env.npm_package_description}}</h3>\\n\\\n<!-- utility2-comment\\n\\\n<a class=\"button\" download href=\"assets.app.js\">download standalone app</a><br>\\n\\\n<button class=\"button\" data-onevent=\"testRunBrowser\" id=\"buttonTestRun1\">run browser-tests</button><br>\\n\\\n<div class=\"uiAnimateSlide\" id=\"htmlTestReport1\" style=\"border-bottom: 0; border-top: 0; margin-bottom: 0; margin-top: 0; max-height: 0; padding-bottom: 0; padding-top: 0;\"></div>\\n\\\nutility2-comment -->\\n\\\n\\n\\\n\\n\\\n\\n\\\n<!-- custom-html-start -->\\n\\\n<label>stderr and stdout</label>\\n\\\n<textarea class=\"onevent-reset-output readonly textarea\" id=\"outputStdout1\" readonly></textarea>\\n\\\n<!-- custom-html-end -->\\n\\\n\\n\\\n\\n\\\n\\n\\\n<!-- utility2-comment\\n\\\n{{#if isRollup}}\\n\\\n<script src=\"assets.app.js\"></script>\\n\\\n{{#unless isRollup}}\\n\\\n<script src=\"assets.utility2.rollup.js\"></script>\\n\\\n<script>window.utility2_onReadyBefore.counter += 1;</script>\\n\\\n<script src=\"jsonp.utility2.stateInit?callback=window.utility2.stateInit\"></script>\\n\\\nutility2-comment -->\\n\\\n<script src=\"assets.jose_lite.js\"></script>\\n\\\n<script src=\"assets.example.js\"></script>\\n\\\n<script src=\"assets.test.js\"></script>\\n\\\n<script>\\n\\\nif (window.utility2_onReadyBefore) {\\n\\\n    window.utility2_onReadyBefore();\\n\\\n}\\n\\\n</script>\\n\\\n<!-- utility2-comment\\n\\\n{{/if isRollup}}\\n\\\nutility2-comment -->\\n\\\n<div style=\"text-align: center;\">\\n\\\n    [\\n\\\n    this app was created with\\n\\\n    <a\\n\\\n        href=\"https://github.com/kaizhu256/node-utility2\" target=\"_blank\"\\n\\\n    >utility2</a>\\n\\\n    ]\\n\\\n</div>\\n\\\n</body>\\n\\\n</html>\\n\\\n';\n/* jslint ignore:end */\nlocal.assetsDict[\"/assets.jose_lite.js\"] = (\n    local.assetsDict[\"/assets.jose_lite.js\"]\n    || local.fs.readFileSync(\n        local.__dirname + \"/lib.jose_lite.js\",\n        \"utf8\"\n    ).replace((\n        /^#!\\//\n    ), \"// \")\n);\n/* validateLineSortedReset */\nlocal.assetsDict[\"/\"] = local.assetsDict[\n    \"/assets.index.template.html\"\n].replace((\n    /\\{\\{env\\.(\\w+?)\\}\\}/g\n), function (match0, match1) {\n    switch (match1) {\n    case \"npm_package_description\":\n        return \"the greatest app in the world!\";\n    case \"npm_package_name\":\n        return \"jose-lite\";\n    case \"npm_package_nameLib\":\n        return \"jose_lite\";\n    case \"npm_package_version\":\n        return \"0.0.1\";\n    default:\n        return match0;\n    }\n});\nlocal.assetsDict[\"/assets.example.html\"] = local.assetsDict[\"/\"];\n// init cli\nif (module !== require.main || globalThis.utility2_rollup) {\n    return;\n}\nlocal.assetsDict[\"/assets.example.js\"] = (\n    local.assetsDict[\"/assets.example.js\"]\n    || local.fs.readFileSync(__filename, \"utf8\")\n);\nlocal.assetsDict[\"/favicon.ico\"] = local.assetsDict[\"/favicon.ico\"] || \"\";\nlocal.assetsDict[\"/index.html\"] = local.assetsDict[\"/\"];\n// if $npm_config_timeout_exit exists,\n// then exit this process after $npm_config_timeout_exit ms\nif (Number(process.env.npm_config_timeout_exit)) {\n    setTimeout(process.exit, Number(process.env.npm_config_timeout_exit));\n}\n// start server\nif (globalThis.utility2_serverHttp1) {\n    return;\n}\nprocess.env.PORT = process.env.PORT || \"8081\";\nconsole.error(\"http-server listening on port \" + process.env.PORT);\nlocal.http.createServer(function (req, res) {\n    req.urlParsed = local.url.parse(req.url);\n    if (local.assetsDict[req.urlParsed.pathname] !== undefined) {\n        res.end(local.assetsDict[req.urlParsed.pathname]);\n        return;\n    }\n    res.statusCode = 404;\n    res.end();\n}).listen(process.env.PORT);\n}());\n}());",
+            "/assets.example.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<!-- \"assets.utility2.template.html\" -->\n<title>jose-lite (0.0.1)</title>\n<style>\n/* jslint utility2:true */\n/*csslint\n*/\n/* csslint ignore:start */\n*,\n*:after,\n*:before {\n    box-sizing: border-box;\n}\n/* csslint ignore:end */\n@keyframes uiAnimateSpin {\n0% {\n    transform: rotate(0deg);\n}\n100% {\n    transform: rotate(360deg);\n}\n}\na {\n    overflow-wrap: break-word;\n}\nbody {\n    background: #f7f7f7;\n    font-family: Arial, Helvetica, sans-serif;\n    font-size: small;\n    margin: 0 40px;\n}\nbody > div,\nbody > input,\nbody > pre,\nbody > .button,\nbody > .textarea {\n    margin-bottom: 20px;\n    margin-top: 0;\n}\nbody > input,\nbody > .button {\n    width: 20rem;\n}\nbody > .readonly {\n    background: #ddd;\n}\nbody > .textarea {\n    height: 10rem;\n    resize: vertical;\n    width: 100%;\n}\ncode,\npre,\n.textarea {\n    font-family: Consolas, Menlo, monospace;\n    font-size: smaller;\n}\npre {\n    overflow-wrap: break-word;\n    white-space: pre-wrap;\n}\n.button {\n    background: #ddd;\n    border: 1px solid #999;\n    color: #000;\n    cursor: pointer;\n    display: inline-block;\n    padding: 2px 5px;\n    text-align: center;\n    text-decoration: none;\n}\n.button:hover {\n    background: #bbb;\n}\n.colorError {\n    color: #d00;\n}\n.textarea {\n    background: #fff;\n    border: 1px solid #999;\n    border-radius: 0;\n    cursor: auto;\n    overflow: auto;\n    padding: 2px;\n}\n.uiAnimateSlide {\n    overflow-y: hidden;\n    transition: max-height ease-in 250ms, min-height ease-in 250ms, padding-bottom ease-in 250ms, padding-top ease-in 250ms;\n}\n.zeroPixel {\n    border: 0;\n    height: 0;\n    margin: 0;\n    padding: 0;\n    width: 0;\n}\n</style>\n</head>\n<body>\n<div class=\"uiAnimateSpin\" style=\"animation: uiAnimateSpin 2s linear infinite; border: 5px solid #999; border-radius: 50%; border-top: 5px solid #7d7; display: none; height: 25px; vertical-align: middle; width: 25px;\"></div>\n<script>\n/* jslint utility2:true */\n// init domOnEventWindowOnloadTimeElapsed\n(function () {\n/*\n * this function will measure and print time-elapsed for window.onload\n */\n    \"use strict\";\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventWindowOnloadTimeElapsed) {\n        return;\n    }\n    window.domOnEventWindowOnloadTimeElapsed = Date.now() + 100;\n    window.addEventListener(\"load\", function () {\n        setTimeout(function () {\n            window.domOnEventWindowOnloadTimeElapsed = (\n                Date.now()\n                - window.domOnEventWindowOnloadTimeElapsed\n            );\n            console.error(\n                \"domOnEventWindowOnloadTimeElapsed = \"\n                + window.domOnEventWindowOnloadTimeElapsed\n            );\n        }, 100);\n    });\n}());\n\n\n\n// init domOnEventAjaxProgressUpdate\n(function () {\n/*\n * this function will display incrementing ajax-progress-bar\n */\n    \"use strict\";\n    let opt;\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventAjaxProgressUpdate) {\n        return;\n    }\n    window.domOnEventAjaxProgressUpdate = function (gotoState, onError) {\n        gotoState = (gotoState | 0) + 1;\n        switch (gotoState) {\n        // ajaxProgress - show\n        case 1:\n            // init timerInterval and timerTimeout\n            opt.timerInterval = (\n                opt.timerInterval || setInterval(opt, 2000, 1, onError)\n            );\n            opt.timerTimeout = (\n                opt.timerTimeout || setTimeout(opt, 30000, 2, onError)\n            );\n            // show ajaxProgress\n            if (opt.width !== -1) {\n                opt.style.background = opt.background;\n            }\n            setTimeout(opt, 50, gotoState, onError);\n            break;\n        // ajaxProgress - increment\n        case 2:\n            // show ajaxProgress\n            if (opt.width === -1) {\n                return;\n            }\n            opt.style.background = opt.background;\n            // reset ajaxProgress if it goes too high\n            if ((opt.style.width.slice(0, -1) | 0) > 95) {\n                opt.width = 0;\n            }\n            // this algorithm will indefinitely increment ajaxProgress\n            // with successively smaller increments without reaching 100%\n            opt.width += 1;\n            opt.style.width = Math.max(\n                100 - 75 * Math.exp(-0.125 * opt.width),\n                opt.style.width.slice(0, -1) | 0\n            ) + \"%\";\n            if (!opt.counter) {\n                setTimeout(opt, 0, gotoState, onError);\n            }\n            break;\n        // ajaxProgress - 100%\n        case 3:\n            opt.width = -1;\n            opt.style.width = \"100%\";\n            setTimeout(opt, 1000, gotoState, onError);\n            break;\n        // ajaxProgress - hide\n        case 4:\n            // cleanup timerInterval and timerTimeout\n            clearInterval(opt.timerInterval);\n            opt.timerInterval = null;\n            clearTimeout(opt.timerTimeout);\n            opt.timerTimeout = null;\n            // hide ajaxProgress\n            opt.style.background = \"transparent\";\n            if (onError) {\n                onError();\n            }\n            setTimeout(opt, 250, gotoState);\n            break;\n        // ajaxProgress - reset\n        default:\n            // reset ajaxProgress\n            opt.counter = 0;\n            opt.width = 0;\n            opt.style.width = \"0%\";\n        }\n    };\n    opt = window.domOnEventAjaxProgressUpdate;\n    opt.end = function (onError) {\n        opt.counter = 0;\n        window.domOnEventAjaxProgressUpdate(2, onError);\n    };\n    opt.elem = document.getElementById(\"domElementAjaxProgress1\");\n    if (!opt.elem) {\n        opt.elem = document.createElement(\"div\");\n        setTimeout(function () {\n            document.body.insertBefore(opt.elem, document.body.firstChild);\n        });\n    }\n    opt.elem.id = \"domElementAjaxProgress1\";\n    opt.style = opt.elem.style;\n    // init style\n    Object.entries({\n        background: \"#d00\",\n        height: \"2px\",\n        left: \"0\",\n        margin: \"0\",\n        padding: \"0\",\n        position: \"fixed\",\n        top: \"0\",\n        transition: \"background 250ms, width 750ms\",\n        width: \"0%\",\n        \"z-index\": \"1\"\n    }).forEach(function (entry) {\n        opt.style[entry[0]] = opt.style[entry[0]] || entry[1];\n    });\n    // init state\n    opt.background = opt.style.background;\n    opt.counter = 0;\n    opt.width = 0;\n}());\n\n\n\n// init domOnEventDelegateDict\n(function () {\n/*\n * this function will handle delegated dom-evt\n */\n    \"use strict\";\n    let debounce;\n    let timerTimeout;\n    debounce = function () {\n        return setTimeout(function () {\n            timerTimeout = undefined;\n        }, 30);\n    };\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventDelegateDict) {\n        return;\n    }\n    window.domOnEventDelegateDict = {};\n    window.domOnEventDelegateDict.domOnEventDelegate = function (evt) {\n        evt.targetOnEvent = evt.target.closest(\"[data-onevent]\");\n        if (\n            !evt.targetOnEvent\n            || evt.targetOnEvent.dataset.onevent === \"domOnEventNop\"\n            || evt.target.closest(\".disabled,.readonly\")\n        ) {\n            return;\n        }\n        // filter evt-change\n        switch (evt.type !== \"change\" && evt.target.type) {\n        case \"checkbox\":\n        case \"file\":\n        case \"select-one\":\n        case \"radio\":\n            return;\n        }\n        // filter evt-keyup\n        switch (evt.type) {\n        case \"keyup\":\n            if (!timerTimeout && (\n                evt.target.tagName === \"INPUT\"\n                || evt.target.tagName === \"TEXTAREA\"\n            )) {\n                timerTimeout = debounce();\n                if (evt.target.dataset.valueOld !== evt.target.value) {\n                    evt.target.dataset.valueOld = evt.target.value;\n                    break;\n                }\n            }\n            return;\n        }\n        switch (evt.targetOnEvent.tagName) {\n        case \"BUTTON\":\n        case \"FORM\":\n            evt.preventDefault();\n            break;\n        }\n        evt.stopPropagation();\n        // handle domOnEventClickTarget\n        if (evt.targetOnEvent.dataset.onevent === \"domOnEventClickTarget\") {\n            document.querySelector(\n                evt.targetOnEvent.dataset.clickTarget\n            ).click();\n            return;\n        }\n        window.domOnEventDelegateDict[evt.targetOnEvent.dataset.onevent](evt);\n    };\n    // handle evt\n    [\n        \"change\",\n        \"click\",\n        \"keyup\",\n        \"submit\"\n    ].forEach(function (eventType) {\n        document.addEventListener(\n            eventType,\n            window.domOnEventDelegateDict.domOnEventDelegate\n        );\n    });\n}());\n\n\n\n// init domOnEventSelectAllWithinPre\n(function () {\n/*\n * this function will limit select-all within <pre tabIndex=\"0\"> elem\n * https://stackoverflow.com/questions/985272/selecting-text-in-an-element-akin-to-highlighting-with-your-mouse\n */\n    \"use strict\";\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventSelectAllWithinPre) {\n        return;\n    }\n    window.domOnEventSelectAllWithinPre = function (evt) {\n        let range;\n        let selection;\n        if (\n            evt && (evt.ctrlKey || evt.metaKey) && evt.key === \"a\"\n            && evt.target.closest(\"pre\")\n        ) {\n            range = document.createRange();\n            range.selectNodeContents(evt.target.closest(\"pre\"));\n            selection = window.getSelection();\n            selection.removeAllRanges();\n            selection.addRange(range);\n            evt.preventDefault();\n        }\n    };\n    // handle evt\n    document.addEventListener(\n        \"keydown\",\n        window.domOnEventSelectAllWithinPre\n    );\n}());\n</script>\n<h1>\n<!-- utility2-comment\n<a\n    {{#if env.npm_package_homepage}}\n    href=\"{{env.npm_package_homepage}}\"\n    {{/if env.npm_package_homepage}}\n    target=\"_blank\"\n>\nutility2-comment -->\n    jose-lite (0.0.1)\n<!-- utility2-comment\n</a>\nutility2-comment -->\n</h1>\n<h3>the greatest app in the world!</h3>\n<!-- utility2-comment\n<a class=\"button\" download href=\"assets.app.js\">download standalone app</a><br>\n<button class=\"button\" data-onevent=\"testRunBrowser\" id=\"buttonTestRun1\">run browser-tests</button><br>\n<div class=\"uiAnimateSlide\" id=\"htmlTestReport1\" style=\"border-bottom: 0; border-top: 0; margin-bottom: 0; margin-top: 0; max-height: 0; padding-bottom: 0; padding-top: 0;\"></div>\nutility2-comment -->\n\n\n\n<!-- custom-html-start -->\n<label>stderr and stdout</label>\n<textarea class=\"onevent-reset-output readonly textarea\" id=\"outputStdout1\" readonly></textarea>\n<!-- custom-html-end -->\n\n\n\n<!-- utility2-comment\n{{#if isRollup}}\n<script src=\"assets.app.js\"></script>\n{{#unless isRollup}}\n<script src=\"assets.utility2.rollup.js\"></script>\n<script>window.utility2_onReadyBefore.counter += 1;</script>\n<script src=\"jsonp.utility2.stateInit?callback=window.utility2.stateInit\"></script>\nutility2-comment -->\n<script src=\"assets.jose.js\"></script>\n<script src=\"assets.example.js\"></script>\n<script src=\"assets.test.js\"></script>\n<script>\nif (window.utility2_onReadyBefore) {\n    window.utility2_onReadyBefore();\n}\n</script>\n<!-- utility2-comment\n{{/if isRollup}}\nutility2-comment -->\n<div style=\"text-align: center;\">\n    [\n    this app was created with\n    <a\n        href=\"https://github.com/kaizhu256/node-utility2\" target=\"_blank\"\n    >utility2</a>\n    ]\n</div>\n</body>\n</html>\n",
+            "/assets.example.js": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/*\nexample.js\n\nthis script will run a web-demo of jose-lite\n\ninstruction\n    1. save this script as example.js\n    2. run shell-command:\n        $ npm install jose-lite && \\\n            PORT=8081 node example.js\n    3. open a browser to http://127.0.0.1:8081 and play with web-demo\n    4. edit this script to suit your needs\n*/\n\n\n\n// assets.utility2.header.js - start\n/* istanbul ignore next */\n/* jslint utility2:true */\n(function (globalThis) {\n    \"use strict\";\n    let ArrayPrototypeFlat;\n    let TextXxcoder;\n    let consoleError;\n    let debugName;\n    let local;\n    debugName = \"debug\" + String(\"Inline\");\n    // init globalThis\n    globalThis.globalThis = globalThis.globalThis || globalThis;\n    // init debug_inline\n    if (!globalThis[debugName]) {\n        consoleError = console.error;\n        globalThis[debugName] = function (...argList) {\n        /*\n         * this function will both print <argList> to stderr\n         * and return <argList>[0]\n         */\n            consoleError(\"\\n\\n\" + debugName);\n            consoleError.apply(console, argList);\n            consoleError(\"\\n\");\n            // return arg0 for inspection\n            return argList[0];\n        };\n    }\n    // polyfill\n    ArrayPrototypeFlat = function (depth) {\n    /*\n     * this function will polyfill Array.prototype.flat\n     * https://github.com/jonathantneal/array-flat-polyfill\n     */\n        depth = (\n            globalThis.isNaN(depth)\n            ? 1\n            : Number(depth)\n        );\n        if (!depth) {\n            return Array.prototype.slice.call(this);\n        }\n        return Array.prototype.reduce.call(this, function (acc, cur) {\n            if (Array.isArray(cur)) {\n                // recurse\n                acc.push.apply(acc, ArrayPrototypeFlat.call(cur, depth - 1));\n            } else {\n                acc.push(cur);\n            }\n            return acc;\n        }, []);\n    };\n    Array.prototype.flat = Array.prototype.flat || ArrayPrototypeFlat;\n    Array.prototype.flatMap = Array.prototype.flatMap || function flatMap(\n        ...argList\n    ) {\n    /*\n     * this function will polyfill Array.prototype.flatMap\n     * https://github.com/jonathantneal/array-flat-polyfill\n     */\n        return this.map(...argList).flat();\n    };\n    String.prototype.trimEnd = (\n        String.prototype.trimEnd || String.prototype.trimRight\n    );\n    String.prototype.trimStart = (\n        String.prototype.trimStart || String.prototype.trimLeft\n    );\n    (function () {\n        try {\n            globalThis.TextDecoder = (\n                globalThis.TextDecoder || require(\"util\").TextDecoder\n            );\n            globalThis.TextEncoder = (\n                globalThis.TextEncoder || require(\"util\").TextEncoder\n            );\n        } catch (ignore) {}\n    }());\n    TextXxcoder = function () {\n    /*\n     * this function will polyfill TextDecoder/TextEncoder\n     * https://gist.github.com/Yaffle/5458286\n     */\n        return;\n    };\n    TextXxcoder.prototype.decode = function (octets) {\n    /*\n     * this function will polyfill TextDecoder.prototype.decode\n     * https://gist.github.com/Yaffle/5458286\n     */\n        let bytesNeeded;\n        let codePoint;\n        let ii;\n        let kk;\n        let octet;\n        let string;\n        string = \"\";\n        ii = 0;\n        while (ii < octets.length) {\n            octet = octets[ii];\n            bytesNeeded = 0;\n            codePoint = 0;\n            if (octet <= 0x7F) {\n                bytesNeeded = 0;\n                codePoint = octet & 0xFF;\n            } else if (octet <= 0xDF) {\n                bytesNeeded = 1;\n                codePoint = octet & 0x1F;\n            } else if (octet <= 0xEF) {\n                bytesNeeded = 2;\n                codePoint = octet & 0x0F;\n            } else if (octet <= 0xF4) {\n                bytesNeeded = 3;\n                codePoint = octet & 0x07;\n            }\n            if (octets.length - ii - bytesNeeded > 0) {\n                kk = 0;\n                while (kk < bytesNeeded) {\n                    octet = octets[ii + kk + 1];\n                    codePoint = (codePoint << 6) | (octet & 0x3F);\n                    kk += 1;\n                }\n            } else {\n                codePoint = 0xFFFD;\n                bytesNeeded = octets.length - ii;\n            }\n            string += String.fromCodePoint(codePoint);\n            ii += bytesNeeded + 1;\n        }\n        return string;\n    };\n    TextXxcoder.prototype.encode = function (string) {\n    /*\n     * this function will polyfill TextEncoder.prototype.encode\n     * https://gist.github.com/Yaffle/5458286\n     */\n        let bits;\n        let cc;\n        let codePoint;\n        let ii;\n        let length;\n        let octets;\n        octets = [];\n        length = string.length;\n        ii = 0;\n        while (ii < length) {\n            codePoint = string.codePointAt(ii);\n            cc = 0;\n            bits = 0;\n            if (codePoint <= 0x0000007F) {\n                cc = 0;\n                bits = 0x00;\n            } else if (codePoint <= 0x000007FF) {\n                cc = 6;\n                bits = 0xC0;\n            } else if (codePoint <= 0x0000FFFF) {\n                cc = 12;\n                bits = 0xE0;\n            } else if (codePoint <= 0x001FFFFF) {\n                cc = 18;\n                bits = 0xF0;\n            }\n            octets.push(bits | (codePoint >> cc));\n            cc -= 6;\n            while (cc >= 0) {\n                octets.push(0x80 | ((codePoint >> cc) & 0x3F));\n                cc -= 6;\n            }\n            ii += (\n                codePoint >= 0x10000\n                ? 2\n                : 1\n            );\n        }\n        return octets;\n    };\n    globalThis.TextDecoder = globalThis.TextDecoder || TextXxcoder;\n    globalThis.TextEncoder = globalThis.TextEncoder || TextXxcoder;\n    // init local\n    local = {};\n    local.local = local;\n    globalThis.globalLocal = local;\n    // init isBrowser\n    local.isBrowser = (\n        typeof globalThis.XMLHttpRequest === \"function\"\n        && globalThis.navigator\n        && typeof globalThis.navigator.userAgent === \"string\"\n    );\n    // init isWebWorker\n    local.isWebWorker = (\n        local.isBrowser && typeof globalThis.importScript === \"function\"\n    );\n    // init function\n    local.assertOrThrow = function (passed, message) {\n    /*\n     * this function will throw err.<message> if <passed> is falsy\n     */\n        let err;\n        if (passed) {\n            return;\n        }\n        err = (\n            (\n                message\n                && typeof message.message === \"string\"\n                && typeof message.stack === \"string\"\n            )\n            // if message is errObj, then leave as is\n            ? message\n            : new Error(\n                typeof message === \"string\"\n                // if message is a string, then leave as is\n                ? message\n                // else JSON.stringify message\n                : JSON.stringify(message, undefined, 4)\n            )\n        );\n        throw err;\n    };\n    local.coalesce = function (...argList) {\n    /*\n     * this function will coalesce null, undefined, or \"\" in <argList>\n     */\n        let arg;\n        let ii;\n        ii = 0;\n        while (ii < argList.length) {\n            arg = argList[ii];\n            if (arg !== null && arg !== undefined && arg !== \"\") {\n                break;\n            }\n            ii += 1;\n        }\n        return arg;\n    };\n    local.fsRmrfSync = function (dir) {\n    /*\n     * this function will sync \"rm -rf\" <dir>\n     */\n        let child_process;\n        try {\n            child_process = require(\"child_process\");\n        } catch (ignore) {\n            return;\n        }\n        child_process.spawnSync(\"rm\", [\n            \"-rf\", dir\n        ], {\n            stdio: [\n                \"ignore\", 1, 2\n            ]\n        });\n    };\n    local.fsWriteFileWithMkdirpSync = function (file, data) {\n    /*\n     * this function will sync write <data> to <file> with \"mkdir -p\"\n     */\n        let fs;\n        try {\n            fs = require(\"fs\");\n        } catch (ignore) {\n            return;\n        }\n        // try to write file\n        try {\n            fs.writeFileSync(file, data);\n        } catch (ignore) {\n            // mkdir -p\n            require(\"child_process\").spawnSync(\n                \"mkdir\",\n                [\n                    \"-p\", require(\"path\").dirname(file)\n                ],\n                {\n                    stdio: [\n                        \"ignore\", 1, 2\n                    ]\n                }\n            );\n            // rewrite file\n            fs.writeFileSync(file, data);\n        }\n    };\n    local.functionOrNop = function (fnc) {\n    /*\n     * this function will if <fnc> exists,\n     * return <fnc>,\n     * else return <nop>\n     */\n        return fnc || local.nop;\n    };\n    local.identity = function (val) {\n    /*\n     * this function will return <val>\n     */\n        return val;\n    };\n    local.nop = function () {\n    /*\n     * this function will do nothing\n     */\n        return;\n    };\n    local.objectAssignDefault = function (target, source) {\n    /*\n     * this function will if items from <target> are null, undefined, or \"\",\n     * then overwrite them with items from <source>\n     */\n        target = target || {};\n        Object.keys(source || {}).forEach(function (key) {\n            if (\n                target[key] === null\n                || target[key] === undefined\n                || target[key] === \"\"\n            ) {\n                target[key] = target[key] || source[key];\n            }\n        });\n        return target;\n    };\n    local.querySelector = function (selectors) {\n    /*\n     * this function will return first dom-elem that match <selectors>\n     */\n        return (\n            typeof document === \"object\" && document\n            && typeof document.querySelector === \"function\"\n            && document.querySelector(selectors)\n        ) || {};\n    };\n    local.querySelectorAll = function (selectors) {\n    /*\n     * this function will return dom-elem-list that match <selectors>\n     */\n        return (\n            typeof document === \"object\" && document\n            && typeof document.querySelectorAll === \"function\"\n            && Array.from(document.querySelectorAll(selectors))\n        ) || [];\n    };\n    // require builtin\n    if (!local.isBrowser) {\n        local.assert = require(\"assert\");\n        local.buffer = require(\"buffer\");\n        local.child_process = require(\"child_process\");\n        local.cluster = require(\"cluster\");\n        local.crypto = require(\"crypto\");\n        local.dgram = require(\"dgram\");\n        local.dns = require(\"dns\");\n        local.domain = require(\"domain\");\n        local.events = require(\"events\");\n        local.fs = require(\"fs\");\n        local.http = require(\"http\");\n        local.https = require(\"https\");\n        local.net = require(\"net\");\n        local.os = require(\"os\");\n        local.path = require(\"path\");\n        local.querystring = require(\"querystring\");\n        local.readline = require(\"readline\");\n        local.repl = require(\"repl\");\n        local.stream = require(\"stream\");\n        local.string_decoder = require(\"string_decoder\");\n        local.timers = require(\"timers\");\n        local.tls = require(\"tls\");\n        local.tty = require(\"tty\");\n        local.url = require(\"url\");\n        local.util = require(\"util\");\n        local.vm = require(\"vm\");\n        local.zlib = require(\"zlib\");\n    }\n}((typeof globalThis === \"object\" && globalThis) || (function () {\n    return Function(\"return this\")(); // jslint ignore:line\n}())));\n// assets.utility2.header.js - end\n\n\n\n/* jslint utility2:true */\n(function (local) {\n\"use strict\";\n\n\n\n// run shared js-env code - init-before\n(function () {\n// init local\nlocal = (\n    globalThis.utility2_rollup\n    || globalThis.utility2_jose\n    || globalThis.utility2_moduleExports\n);\n// init exports\nglobalThis.local = local;\n}());\n\n\n\n// run browser js-env code - init-test\n(function () {\nif (!local.isBrowser) {\n    return;\n}\n// log stderr and stdout to #outputStdout1\n[\"error\", \"log\"].forEach(function (key) {\n    let elem;\n    let fnc;\n    elem = local.querySelector(\"#outputStdout1\");\n    if (!elem) {\n        return;\n    }\n    fnc = console[key];\n    console[key] = function (...argList) {\n        fnc.apply(console, argList);\n        // append text to #outputStdout1\n        elem.textContent += argList.map(function (arg) {\n            return (\n                typeof arg === \"string\"\n                ? arg\n                : JSON.stringify(arg, undefined, 4)\n            );\n        }).join(\" \").replace((\n            /\\u001b\\[\\d*m/g\n        ), \"\") + \"\\n\";\n        // scroll textarea to bottom\n        elem.scrollTop = elem.scrollHeight;\n    };\n});\nlocal.objectAssignDefault(local, globalThis.domOnEventDelegateDict);\nglobalThis.domOnEventDelegateDict = local;\n}());\n\n\n\n// run node js-env code - init-test\n(function () {\nif (local.isBrowser) {\n    return;\n}\n// init exports\nmodule.exports = local;\n// init assetsDict\nlocal.assetsDict = local.assetsDict || {};\n[\n    \"assets.swgg.swagger.json\",\n    \"assets.swgg.swagger.server.json\"\n].forEach(function (file) {\n    file = \"/\" + file;\n    local.assetsDict[file] = local.assetsDict[file] || \"\";\n    if (local.fs.existsSync(local.__dirname + file)) {\n        local.assetsDict[file] = local.fs.readFileSync(\n            local.__dirname + file,\n            \"utf8\"\n        );\n    }\n});\n/* jslint ignore:start */\nlocal.assetsDict[\"/assets.index.template.html\"] = '\\\n<!doctype html>\\n\\\n<html lang=\"en\">\\n\\\n<head>\\n\\\n<meta charset=\"utf-8\">\\n\\\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\\n\\\n<!-- \"assets.utility2.template.html\" -->\\n\\\n<title>{{env.npm_package_name}} ({{env.npm_package_version}})</title>\\n\\\n<style>\\n\\\n/* jslint utility2:true */\\n\\\n/*csslint\\n\\\n*/\\n\\\n/* csslint ignore:start */\\n\\\n*,\\n\\\n*:after,\\n\\\n*:before {\\n\\\n    box-sizing: border-box;\\n\\\n}\\n\\\n/* csslint ignore:end */\\n\\\n@keyframes uiAnimateSpin {\\n\\\n0% {\\n\\\n    transform: rotate(0deg);\\n\\\n}\\n\\\n100% {\\n\\\n    transform: rotate(360deg);\\n\\\n}\\n\\\n}\\n\\\na {\\n\\\n    overflow-wrap: break-word;\\n\\\n}\\n\\\nbody {\\n\\\n    background: #f7f7f7;\\n\\\n    font-family: Arial, Helvetica, sans-serif;\\n\\\n    font-size: small;\\n\\\n    margin: 0 40px;\\n\\\n}\\n\\\nbody > div,\\n\\\nbody > input,\\n\\\nbody > pre,\\n\\\nbody > .button,\\n\\\nbody > .textarea {\\n\\\n    margin-bottom: 20px;\\n\\\n    margin-top: 0;\\n\\\n}\\n\\\nbody > input,\\n\\\nbody > .button {\\n\\\n    width: 20rem;\\n\\\n}\\n\\\nbody > .readonly {\\n\\\n    background: #ddd;\\n\\\n}\\n\\\nbody > .textarea {\\n\\\n    height: 10rem;\\n\\\n    resize: vertical;\\n\\\n    width: 100%;\\n\\\n}\\n\\\ncode,\\n\\\npre,\\n\\\n.textarea {\\n\\\n    font-family: Consolas, Menlo, monospace;\\n\\\n    font-size: smaller;\\n\\\n}\\n\\\npre {\\n\\\n    overflow-wrap: break-word;\\n\\\n    white-space: pre-wrap;\\n\\\n}\\n\\\n.button {\\n\\\n    background: #ddd;\\n\\\n    border: 1px solid #999;\\n\\\n    color: #000;\\n\\\n    cursor: pointer;\\n\\\n    display: inline-block;\\n\\\n    padding: 2px 5px;\\n\\\n    text-align: center;\\n\\\n    text-decoration: none;\\n\\\n}\\n\\\n.button:hover {\\n\\\n    background: #bbb;\\n\\\n}\\n\\\n.colorError {\\n\\\n    color: #d00;\\n\\\n}\\n\\\n.textarea {\\n\\\n    background: #fff;\\n\\\n    border: 1px solid #999;\\n\\\n    border-radius: 0;\\n\\\n    cursor: auto;\\n\\\n    overflow: auto;\\n\\\n    padding: 2px;\\n\\\n}\\n\\\n.uiAnimateSlide {\\n\\\n    overflow-y: hidden;\\n\\\n    transition: max-height ease-in 250ms, min-height ease-in 250ms, padding-bottom ease-in 250ms, padding-top ease-in 250ms;\\n\\\n}\\n\\\n.zeroPixel {\\n\\\n    border: 0;\\n\\\n    height: 0;\\n\\\n    margin: 0;\\n\\\n    padding: 0;\\n\\\n    width: 0;\\n\\\n}\\n\\\n</style>\\n\\\n</head>\\n\\\n<body>\\n\\\n<div class=\"uiAnimateSpin\" style=\"animation: uiAnimateSpin 2s linear infinite; border: 5px solid #999; border-radius: 50%; border-top: 5px solid #7d7; display: none; height: 25px; vertical-align: middle; width: 25px;\"></div>\\n\\\n<script>\\n\\\n/* jslint utility2:true */\\n\\\n// init domOnEventWindowOnloadTimeElapsed\\n\\\n(function () {\\n\\\n/*\\n\\\n * this function will measure and print time-elapsed for window.onload\\n\\\n */\\n\\\n    \"use strict\";\\n\\\n    if (!(\\n\\\n        typeof window === \"object\" && window && window.document\\n\\\n        && typeof document.addEventListener === \"function\"\\n\\\n    ) || window.domOnEventWindowOnloadTimeElapsed) {\\n\\\n        return;\\n\\\n    }\\n\\\n    window.domOnEventWindowOnloadTimeElapsed = Date.now() + 100;\\n\\\n    window.addEventListener(\"load\", function () {\\n\\\n        setTimeout(function () {\\n\\\n            window.domOnEventWindowOnloadTimeElapsed = (\\n\\\n                Date.now()\\n\\\n                - window.domOnEventWindowOnloadTimeElapsed\\n\\\n            );\\n\\\n            console.error(\\n\\\n                \"domOnEventWindowOnloadTimeElapsed = \"\\n\\\n                + window.domOnEventWindowOnloadTimeElapsed\\n\\\n            );\\n\\\n        }, 100);\\n\\\n    });\\n\\\n}());\\n\\\n\\n\\\n\\n\\\n\\n\\\n// init domOnEventAjaxProgressUpdate\\n\\\n(function () {\\n\\\n/*\\n\\\n * this function will display incrementing ajax-progress-bar\\n\\\n */\\n\\\n    \"use strict\";\\n\\\n    let opt;\\n\\\n    if (!(\\n\\\n        typeof window === \"object\" && window && window.document\\n\\\n        && typeof document.addEventListener === \"function\"\\n\\\n    ) || window.domOnEventAjaxProgressUpdate) {\\n\\\n        return;\\n\\\n    }\\n\\\n    window.domOnEventAjaxProgressUpdate = function (gotoState, onError) {\\n\\\n        gotoState = (gotoState | 0) + 1;\\n\\\n        switch (gotoState) {\\n\\\n        // ajaxProgress - show\\n\\\n        case 1:\\n\\\n            // init timerInterval and timerTimeout\\n\\\n            opt.timerInterval = (\\n\\\n                opt.timerInterval || setInterval(opt, 2000, 1, onError)\\n\\\n            );\\n\\\n            opt.timerTimeout = (\\n\\\n                opt.timerTimeout || setTimeout(opt, 30000, 2, onError)\\n\\\n            );\\n\\\n            // show ajaxProgress\\n\\\n            if (opt.width !== -1) {\\n\\\n                opt.style.background = opt.background;\\n\\\n            }\\n\\\n            setTimeout(opt, 50, gotoState, onError);\\n\\\n            break;\\n\\\n        // ajaxProgress - increment\\n\\\n        case 2:\\n\\\n            // show ajaxProgress\\n\\\n            if (opt.width === -1) {\\n\\\n                return;\\n\\\n            }\\n\\\n            opt.style.background = opt.background;\\n\\\n            // reset ajaxProgress if it goes too high\\n\\\n            if ((opt.style.width.slice(0, -1) | 0) > 95) {\\n\\\n                opt.width = 0;\\n\\\n            }\\n\\\n            // this algorithm will indefinitely increment ajaxProgress\\n\\\n            // with successively smaller increments without reaching 100%\\n\\\n            opt.width += 1;\\n\\\n            opt.style.width = Math.max(\\n\\\n                100 - 75 * Math.exp(-0.125 * opt.width),\\n\\\n                opt.style.width.slice(0, -1) | 0\\n\\\n            ) + \"%\";\\n\\\n            if (!opt.counter) {\\n\\\n                setTimeout(opt, 0, gotoState, onError);\\n\\\n            }\\n\\\n            break;\\n\\\n        // ajaxProgress - 100%\\n\\\n        case 3:\\n\\\n            opt.width = -1;\\n\\\n            opt.style.width = \"100%\";\\n\\\n            setTimeout(opt, 1000, gotoState, onError);\\n\\\n            break;\\n\\\n        // ajaxProgress - hide\\n\\\n        case 4:\\n\\\n            // cleanup timerInterval and timerTimeout\\n\\\n            clearInterval(opt.timerInterval);\\n\\\n            opt.timerInterval = null;\\n\\\n            clearTimeout(opt.timerTimeout);\\n\\\n            opt.timerTimeout = null;\\n\\\n            // hide ajaxProgress\\n\\\n            opt.style.background = \"transparent\";\\n\\\n            if (onError) {\\n\\\n                onError();\\n\\\n            }\\n\\\n            setTimeout(opt, 250, gotoState);\\n\\\n            break;\\n\\\n        // ajaxProgress - reset\\n\\\n        default:\\n\\\n            // reset ajaxProgress\\n\\\n            opt.counter = 0;\\n\\\n            opt.width = 0;\\n\\\n            opt.style.width = \"0%\";\\n\\\n        }\\n\\\n    };\\n\\\n    opt = window.domOnEventAjaxProgressUpdate;\\n\\\n    opt.end = function (onError) {\\n\\\n        opt.counter = 0;\\n\\\n        window.domOnEventAjaxProgressUpdate(2, onError);\\n\\\n    };\\n\\\n    opt.elem = document.getElementById(\"domElementAjaxProgress1\");\\n\\\n    if (!opt.elem) {\\n\\\n        opt.elem = document.createElement(\"div\");\\n\\\n        setTimeout(function () {\\n\\\n            document.body.insertBefore(opt.elem, document.body.firstChild);\\n\\\n        });\\n\\\n    }\\n\\\n    opt.elem.id = \"domElementAjaxProgress1\";\\n\\\n    opt.style = opt.elem.style;\\n\\\n    // init style\\n\\\n    Object.entries({\\n\\\n        background: \"#d00\",\\n\\\n        height: \"2px\",\\n\\\n        left: \"0\",\\n\\\n        margin: \"0\",\\n\\\n        padding: \"0\",\\n\\\n        position: \"fixed\",\\n\\\n        top: \"0\",\\n\\\n        transition: \"background 250ms, width 750ms\",\\n\\\n        width: \"0%\",\\n\\\n        \"z-index\": \"1\"\\n\\\n    }).forEach(function (entry) {\\n\\\n        opt.style[entry[0]] = opt.style[entry[0]] || entry[1];\\n\\\n    });\\n\\\n    // init state\\n\\\n    opt.background = opt.style.background;\\n\\\n    opt.counter = 0;\\n\\\n    opt.width = 0;\\n\\\n}());\\n\\\n\\n\\\n\\n\\\n\\n\\\n// init domOnEventDelegateDict\\n\\\n(function () {\\n\\\n/*\\n\\\n * this function will handle delegated dom-evt\\n\\\n */\\n\\\n    \"use strict\";\\n\\\n    let debounce;\\n\\\n    let timerTimeout;\\n\\\n    debounce = function () {\\n\\\n        return setTimeout(function () {\\n\\\n            timerTimeout = undefined;\\n\\\n        }, 30);\\n\\\n    };\\n\\\n    if (!(\\n\\\n        typeof window === \"object\" && window && window.document\\n\\\n        && typeof document.addEventListener === \"function\"\\n\\\n    ) || window.domOnEventDelegateDict) {\\n\\\n        return;\\n\\\n    }\\n\\\n    window.domOnEventDelegateDict = {};\\n\\\n    window.domOnEventDelegateDict.domOnEventDelegate = function (evt) {\\n\\\n        evt.targetOnEvent = evt.target.closest(\"[data-onevent]\");\\n\\\n        if (\\n\\\n            !evt.targetOnEvent\\n\\\n            || evt.targetOnEvent.dataset.onevent === \"domOnEventNop\"\\n\\\n            || evt.target.closest(\".disabled,.readonly\")\\n\\\n        ) {\\n\\\n            return;\\n\\\n        }\\n\\\n        // filter evt-change\\n\\\n        switch (evt.type !== \"change\" && evt.target.type) {\\n\\\n        case \"checkbox\":\\n\\\n        case \"file\":\\n\\\n        case \"select-one\":\\n\\\n        case \"radio\":\\n\\\n            return;\\n\\\n        }\\n\\\n        // filter evt-keyup\\n\\\n        switch (evt.type) {\\n\\\n        case \"keyup\":\\n\\\n            if (!timerTimeout && (\\n\\\n                evt.target.tagName === \"INPUT\"\\n\\\n                || evt.target.tagName === \"TEXTAREA\"\\n\\\n            )) {\\n\\\n                timerTimeout = debounce();\\n\\\n                if (evt.target.dataset.valueOld !== evt.target.value) {\\n\\\n                    evt.target.dataset.valueOld = evt.target.value;\\n\\\n                    break;\\n\\\n                }\\n\\\n            }\\n\\\n            return;\\n\\\n        }\\n\\\n        switch (evt.targetOnEvent.tagName) {\\n\\\n        case \"BUTTON\":\\n\\\n        case \"FORM\":\\n\\\n            evt.preventDefault();\\n\\\n            break;\\n\\\n        }\\n\\\n        evt.stopPropagation();\\n\\\n        // handle domOnEventClickTarget\\n\\\n        if (evt.targetOnEvent.dataset.onevent === \"domOnEventClickTarget\") {\\n\\\n            document.querySelector(\\n\\\n                evt.targetOnEvent.dataset.clickTarget\\n\\\n            ).click();\\n\\\n            return;\\n\\\n        }\\n\\\n        window.domOnEventDelegateDict[evt.targetOnEvent.dataset.onevent](evt);\\n\\\n    };\\n\\\n    // handle evt\\n\\\n    [\\n\\\n        \"change\",\\n\\\n        \"click\",\\n\\\n        \"keyup\",\\n\\\n        \"submit\"\\n\\\n    ].forEach(function (eventType) {\\n\\\n        document.addEventListener(\\n\\\n            eventType,\\n\\\n            window.domOnEventDelegateDict.domOnEventDelegate\\n\\\n        );\\n\\\n    });\\n\\\n}());\\n\\\n\\n\\\n\\n\\\n\\n\\\n// init domOnEventSelectAllWithinPre\\n\\\n(function () {\\n\\\n/*\\n\\\n * this function will limit select-all within <pre tabIndex=\"0\"> elem\\n\\\n * https://stackoverflow.com/questions/985272/selecting-text-in-an-element-akin-to-highlighting-with-your-mouse\\n\\\n */\\n\\\n    \"use strict\";\\n\\\n    if (!(\\n\\\n        typeof window === \"object\" && window && window.document\\n\\\n        && typeof document.addEventListener === \"function\"\\n\\\n    ) || window.domOnEventSelectAllWithinPre) {\\n\\\n        return;\\n\\\n    }\\n\\\n    window.domOnEventSelectAllWithinPre = function (evt) {\\n\\\n        let range;\\n\\\n        let selection;\\n\\\n        if (\\n\\\n            evt && (evt.ctrlKey || evt.metaKey) && evt.key === \"a\"\\n\\\n            && evt.target.closest(\"pre\")\\n\\\n        ) {\\n\\\n            range = document.createRange();\\n\\\n            range.selectNodeContents(evt.target.closest(\"pre\"));\\n\\\n            selection = window.getSelection();\\n\\\n            selection.removeAllRanges();\\n\\\n            selection.addRange(range);\\n\\\n            evt.preventDefault();\\n\\\n        }\\n\\\n    };\\n\\\n    // handle evt\\n\\\n    document.addEventListener(\\n\\\n        \"keydown\",\\n\\\n        window.domOnEventSelectAllWithinPre\\n\\\n    );\\n\\\n}());\\n\\\n</script>\\n\\\n<h1>\\n\\\n<!-- utility2-comment\\n\\\n<a\\n\\\n    {{#if env.npm_package_homepage}}\\n\\\n    href=\"{{env.npm_package_homepage}}\"\\n\\\n    {{/if env.npm_package_homepage}}\\n\\\n    target=\"_blank\"\\n\\\n>\\n\\\nutility2-comment -->\\n\\\n    {{env.npm_package_name}} ({{env.npm_package_version}})\\n\\\n<!-- utility2-comment\\n\\\n</a>\\n\\\nutility2-comment -->\\n\\\n</h1>\\n\\\n<h3>{{env.npm_package_description}}</h3>\\n\\\n<!-- utility2-comment\\n\\\n<a class=\"button\" download href=\"assets.app.js\">download standalone app</a><br>\\n\\\n<button class=\"button\" data-onevent=\"testRunBrowser\" id=\"buttonTestRun1\">run browser-tests</button><br>\\n\\\n<div class=\"uiAnimateSlide\" id=\"htmlTestReport1\" style=\"border-bottom: 0; border-top: 0; margin-bottom: 0; margin-top: 0; max-height: 0; padding-bottom: 0; padding-top: 0;\"></div>\\n\\\nutility2-comment -->\\n\\\n\\n\\\n\\n\\\n\\n\\\n<!-- custom-html-start -->\\n\\\n<label>stderr and stdout</label>\\n\\\n<textarea class=\"onevent-reset-output readonly textarea\" id=\"outputStdout1\" readonly></textarea>\\n\\\n<!-- custom-html-end -->\\n\\\n\\n\\\n\\n\\\n\\n\\\n<!-- utility2-comment\\n\\\n{{#if isRollup}}\\n\\\n<script src=\"assets.app.js\"></script>\\n\\\n{{#unless isRollup}}\\n\\\n<script src=\"assets.utility2.rollup.js\"></script>\\n\\\n<script>window.utility2_onReadyBefore.counter += 1;</script>\\n\\\n<script src=\"jsonp.utility2.stateInit?callback=window.utility2.stateInit\"></script>\\n\\\nutility2-comment -->\\n\\\n<script src=\"assets.jose.js\"></script>\\n\\\n<script src=\"assets.example.js\"></script>\\n\\\n<script src=\"assets.test.js\"></script>\\n\\\n<script>\\n\\\nif (window.utility2_onReadyBefore) {\\n\\\n    window.utility2_onReadyBefore();\\n\\\n}\\n\\\n</script>\\n\\\n<!-- utility2-comment\\n\\\n{{/if isRollup}}\\n\\\nutility2-comment -->\\n\\\n<div style=\"text-align: center;\">\\n\\\n    [\\n\\\n    this app was created with\\n\\\n    <a\\n\\\n        href=\"https://github.com/kaizhu256/node-utility2\" target=\"_blank\"\\n\\\n    >utility2</a>\\n\\\n    ]\\n\\\n</div>\\n\\\n</body>\\n\\\n</html>\\n\\\n';\n/* jslint ignore:end */\nlocal.assetsDict[\"/assets.jose.js\"] = (\n    local.assetsDict[\"/assets.jose.js\"]\n    || local.fs.readFileSync(\n        local.__dirname + \"/lib.jose.js\",\n        \"utf8\"\n    ).replace((\n        /^#!\\//\n    ), \"// \")\n);\n/* validateLineSortedReset */\nlocal.assetsDict[\"/\"] = local.assetsDict[\n    \"/assets.index.template.html\"\n].replace((\n    /\\{\\{env\\.(\\w+?)\\}\\}/g\n), function (match0, match1) {\n    switch (match1) {\n    case \"npm_package_description\":\n        return \"the greatest app in the world!\";\n    case \"npm_package_name\":\n        return \"jose-lite\";\n    case \"npm_package_nameLib\":\n        return \"jose\";\n    case \"npm_package_version\":\n        return \"0.0.1\";\n    default:\n        return match0;\n    }\n});\nlocal.assetsDict[\"/assets.example.html\"] = local.assetsDict[\"/\"];\n// init cli\nif (module !== require.main || globalThis.utility2_rollup) {\n    return;\n}\nlocal.assetsDict[\"/assets.example.js\"] = (\n    local.assetsDict[\"/assets.example.js\"]\n    || local.fs.readFileSync(__filename, \"utf8\")\n);\nlocal.assetsDict[\"/favicon.ico\"] = local.assetsDict[\"/favicon.ico\"] || \"\";\nlocal.assetsDict[\"/index.html\"] = local.assetsDict[\"/\"];\n// if $npm_config_timeout_exit exists,\n// then exit this process after $npm_config_timeout_exit ms\nif (Number(process.env.npm_config_timeout_exit)) {\n    setTimeout(process.exit, Number(process.env.npm_config_timeout_exit));\n}\n// start server\nif (globalThis.utility2_serverHttp1) {\n    return;\n}\nprocess.env.PORT = process.env.PORT || \"8081\";\nconsole.error(\"http-server listening on port \" + process.env.PORT);\nlocal.http.createServer(function (req, res) {\n    req.urlParsed = local.url.parse(req.url);\n    if (local.assetsDict[req.urlParsed.pathname] !== undefined) {\n        res.end(local.assetsDict[req.urlParsed.pathname]);\n        return;\n    }\n    res.statusCode = 404;\n    res.end();\n}).listen(process.env.PORT);\n}());\n}());",
             "/assets.swgg.swagger.json": "",
-            "/assets.test.js": "/* istanbul instrument in package jose_lite */\n// assets.utility2.header.js - start\n/* istanbul ignore next */\n/* jslint utility2:true */\n(function (globalThis) {\n    \"use strict\";\n    let ArrayPrototypeFlat;\n    let TextXxcoder;\n    let consoleError;\n    let debugName;\n    let local;\n    debugName = \"debug\" + String(\"Inline\");\n    // init globalThis\n    globalThis.globalThis = globalThis.globalThis || globalThis;\n    // init debug_inline\n    if (!globalThis[debugName]) {\n        consoleError = console.error;\n        globalThis[debugName] = function (...argList) {\n        /*\n         * this function will both print <argList> to stderr\n         * and return <argList>[0]\n         */\n            consoleError(\"\\n\\n\" + debugName);\n            consoleError.apply(console, argList);\n            consoleError(\"\\n\");\n            // return arg0 for inspection\n            return argList[0];\n        };\n    }\n    // polyfill\n    ArrayPrototypeFlat = function (depth) {\n    /*\n     * this function will polyfill Array.prototype.flat\n     * https://github.com/jonathantneal/array-flat-polyfill\n     */\n        depth = (\n            globalThis.isNaN(depth)\n            ? 1\n            : Number(depth)\n        );\n        if (!depth) {\n            return Array.prototype.slice.call(this);\n        }\n        return Array.prototype.reduce.call(this, function (acc, cur) {\n            if (Array.isArray(cur)) {\n                // recurse\n                acc.push.apply(acc, ArrayPrototypeFlat.call(cur, depth - 1));\n            } else {\n                acc.push(cur);\n            }\n            return acc;\n        }, []);\n    };\n    Array.prototype.flat = Array.prototype.flat || ArrayPrototypeFlat;\n    Array.prototype.flatMap = Array.prototype.flatMap || function flatMap(\n        ...argList\n    ) {\n    /*\n     * this function will polyfill Array.prototype.flatMap\n     * https://github.com/jonathantneal/array-flat-polyfill\n     */\n        return this.map(...argList).flat();\n    };\n    String.prototype.trimEnd = (\n        String.prototype.trimEnd || String.prototype.trimRight\n    );\n    String.prototype.trimStart = (\n        String.prototype.trimStart || String.prototype.trimLeft\n    );\n    (function () {\n        try {\n            globalThis.TextDecoder = (\n                globalThis.TextDecoder || require(\"util\").TextDecoder\n            );\n            globalThis.TextEncoder = (\n                globalThis.TextEncoder || require(\"util\").TextEncoder\n            );\n        } catch (ignore) {}\n    }());\n    TextXxcoder = function () {\n    /*\n     * this function will polyfill TextDecoder/TextEncoder\n     * https://gist.github.com/Yaffle/5458286\n     */\n        return;\n    };\n    TextXxcoder.prototype.decode = function (octets) {\n    /*\n     * this function will polyfill TextDecoder.prototype.decode\n     * https://gist.github.com/Yaffle/5458286\n     */\n        let bytesNeeded;\n        let codePoint;\n        let ii;\n        let kk;\n        let octet;\n        let string;\n        string = \"\";\n        ii = 0;\n        while (ii < octets.length) {\n            octet = octets[ii];\n            bytesNeeded = 0;\n            codePoint = 0;\n            if (octet <= 0x7F) {\n                bytesNeeded = 0;\n                codePoint = octet & 0xFF;\n            } else if (octet <= 0xDF) {\n                bytesNeeded = 1;\n                codePoint = octet & 0x1F;\n            } else if (octet <= 0xEF) {\n                bytesNeeded = 2;\n                codePoint = octet & 0x0F;\n            } else if (octet <= 0xF4) {\n                bytesNeeded = 3;\n                codePoint = octet & 0x07;\n            }\n            if (octets.length - ii - bytesNeeded > 0) {\n                kk = 0;\n                while (kk < bytesNeeded) {\n                    octet = octets[ii + kk + 1];\n                    codePoint = (codePoint << 6) | (octet & 0x3F);\n                    kk += 1;\n                }\n            } else {\n                codePoint = 0xFFFD;\n                bytesNeeded = octets.length - ii;\n            }\n            string += String.fromCodePoint(codePoint);\n            ii += bytesNeeded + 1;\n        }\n        return string;\n    };\n    TextXxcoder.prototype.encode = function (string) {\n    /*\n     * this function will polyfill TextEncoder.prototype.encode\n     * https://gist.github.com/Yaffle/5458286\n     */\n        let bits;\n        let cc;\n        let codePoint;\n        let ii;\n        let length;\n        let octets;\n        octets = [];\n        length = string.length;\n        ii = 0;\n        while (ii < length) {\n            codePoint = string.codePointAt(ii);\n            cc = 0;\n            bits = 0;\n            if (codePoint <= 0x0000007F) {\n                cc = 0;\n                bits = 0x00;\n            } else if (codePoint <= 0x000007FF) {\n                cc = 6;\n                bits = 0xC0;\n            } else if (codePoint <= 0x0000FFFF) {\n                cc = 12;\n                bits = 0xE0;\n            } else if (codePoint <= 0x001FFFFF) {\n                cc = 18;\n                bits = 0xF0;\n            }\n            octets.push(bits | (codePoint >> cc));\n            cc -= 6;\n            while (cc >= 0) {\n                octets.push(0x80 | ((codePoint >> cc) & 0x3F));\n                cc -= 6;\n            }\n            ii += (\n                codePoint >= 0x10000\n                ? 2\n                : 1\n            );\n        }\n        return octets;\n    };\n    globalThis.TextDecoder = globalThis.TextDecoder || TextXxcoder;\n    globalThis.TextEncoder = globalThis.TextEncoder || TextXxcoder;\n    // init local\n    local = {};\n    local.local = local;\n    globalThis.globalLocal = local;\n    // init isBrowser\n    local.isBrowser = (\n        typeof globalThis.XMLHttpRequest === \"function\"\n        && globalThis.navigator\n        && typeof globalThis.navigator.userAgent === \"string\"\n    );\n    // init isWebWorker\n    local.isWebWorker = (\n        local.isBrowser && typeof globalThis.importScript === \"function\"\n    );\n    // init function\n    local.assertOrThrow = function (passed, message) {\n    /*\n     * this function will throw err.<message> if <passed> is falsy\n     */\n        let err;\n        if (passed) {\n            return;\n        }\n        err = (\n            (\n                message\n                && typeof message.message === \"string\"\n                && typeof message.stack === \"string\"\n            )\n            // if message is errObj, then leave as is\n            ? message\n            : new Error(\n                typeof message === \"string\"\n                // if message is a string, then leave as is\n                ? message\n                // else JSON.stringify message\n                : JSON.stringify(message, undefined, 4)\n            )\n        );\n        throw err;\n    };\n    local.coalesce = function (...argList) {\n    /*\n     * this function will coalesce null, undefined, or \"\" in <argList>\n     */\n        let arg;\n        let ii;\n        ii = 0;\n        while (ii < argList.length) {\n            arg = argList[ii];\n            if (arg !== null && arg !== undefined && arg !== \"\") {\n                break;\n            }\n            ii += 1;\n        }\n        return arg;\n    };\n    local.fsRmrfSync = function (dir) {\n    /*\n     * this function will sync \"rm -rf\" <dir>\n     */\n        let child_process;\n        try {\n            child_process = require(\"child_process\");\n        } catch (ignore) {\n            return;\n        }\n        child_process.spawnSync(\"rm\", [\n            \"-rf\", dir\n        ], {\n            stdio: [\n                \"ignore\", 1, 2\n            ]\n        });\n    };\n    local.fsWriteFileWithMkdirpSync = function (file, data) {\n    /*\n     * this function will sync write <data> to <file> with \"mkdir -p\"\n     */\n        let fs;\n        try {\n            fs = require(\"fs\");\n        } catch (ignore) {\n            return;\n        }\n        // try to write file\n        try {\n            fs.writeFileSync(file, data);\n        } catch (ignore) {\n            // mkdir -p\n            require(\"child_process\").spawnSync(\n                \"mkdir\",\n                [\n                    \"-p\", require(\"path\").dirname(file)\n                ],\n                {\n                    stdio: [\n                        \"ignore\", 1, 2\n                    ]\n                }\n            );\n            // rewrite file\n            fs.writeFileSync(file, data);\n        }\n    };\n    local.functionOrNop = function (fnc) {\n    /*\n     * this function will if <fnc> exists,\n     * return <fnc>,\n     * else return <nop>\n     */\n        return fnc || local.nop;\n    };\n    local.identity = function (val) {\n    /*\n     * this function will return <val>\n     */\n        return val;\n    };\n    local.nop = function () {\n    /*\n     * this function will do nothing\n     */\n        return;\n    };\n    local.objectAssignDefault = function (target, source) {\n    /*\n     * this function will if items from <target> are null, undefined, or \"\",\n     * then overwrite them with items from <source>\n     */\n        target = target || {};\n        Object.keys(source || {}).forEach(function (key) {\n            if (\n                target[key] === null\n                || target[key] === undefined\n                || target[key] === \"\"\n            ) {\n                target[key] = target[key] || source[key];\n            }\n        });\n        return target;\n    };\n    local.querySelector = function (selectors) {\n    /*\n     * this function will return first dom-elem that match <selectors>\n     */\n        return (\n            typeof document === \"object\" && document\n            && typeof document.querySelector === \"function\"\n            && document.querySelector(selectors)\n        ) || {};\n    };\n    local.querySelectorAll = function (selectors) {\n    /*\n     * this function will return dom-elem-list that match <selectors>\n     */\n        return (\n            typeof document === \"object\" && document\n            && typeof document.querySelectorAll === \"function\"\n            && Array.from(document.querySelectorAll(selectors))\n        ) || [];\n    };\n    // require builtin\n    if (!local.isBrowser) {\n        local.assert = require(\"assert\");\n        local.buffer = require(\"buffer\");\n        local.child_process = require(\"child_process\");\n        local.cluster = require(\"cluster\");\n        local.crypto = require(\"crypto\");\n        local.dgram = require(\"dgram\");\n        local.dns = require(\"dns\");\n        local.domain = require(\"domain\");\n        local.events = require(\"events\");\n        local.fs = require(\"fs\");\n        local.http = require(\"http\");\n        local.https = require(\"https\");\n        local.net = require(\"net\");\n        local.os = require(\"os\");\n        local.path = require(\"path\");\n        local.querystring = require(\"querystring\");\n        local.readline = require(\"readline\");\n        local.repl = require(\"repl\");\n        local.stream = require(\"stream\");\n        local.string_decoder = require(\"string_decoder\");\n        local.timers = require(\"timers\");\n        local.tls = require(\"tls\");\n        local.tty = require(\"tty\");\n        local.url = require(\"url\");\n        local.util = require(\"util\");\n        local.vm = require(\"vm\");\n        local.zlib = require(\"zlib\");\n    }\n}((typeof globalThis === \"object\" && globalThis) || (function () {\n    return Function(\"return this\")(); // jslint ignore:line\n}())));\n// assets.utility2.header.js - end\n\n\n\n/* istanbul ignore next */\n/* jslint utility2:true */\n(function (local) {\n\"use strict\";\n\n\n\n// run shared js-env code - init-before\n(function () {\n// init local\nlocal = globalThis.utility2 || require(\"utility2\");\nlocal = local.requireReadme();\nglobalThis.local = local;\n// init test\nlocal.testRunDefault(local);\n}());\n\n\n\n// run shared js-env code - function\n(function () {\nreturn;\n}());\n}());\n",
-            "/index.rollup.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<!-- \"assets.utility2.template.html\" -->\n<title>jose-lite (2019.10.18)</title>\n<style>\n/* jslint utility2:true */\n/*csslint\n*/\n/* csslint ignore:start */\n*,\n*:after,\n*:before {\n    box-sizing: border-box;\n}\n/* csslint ignore:end */\n@keyframes uiAnimateSpin {\n0% {\n    transform: rotate(0deg);\n}\n100% {\n    transform: rotate(360deg);\n}\n}\na {\n    overflow-wrap: break-word;\n}\nbody {\n    background: #f7f7f7;\n    font-family: Arial, Helvetica, sans-serif;\n    font-size: small;\n    margin: 0 40px;\n}\nbody > div,\nbody > input,\nbody > pre,\nbody > .button,\nbody > .textarea {\n    margin-bottom: 20px;\n    margin-top: 0;\n}\nbody > input,\nbody > .button {\n    width: 20rem;\n}\nbody > .readonly {\n    background: #ddd;\n}\nbody > .textarea {\n    height: 10rem;\n    resize: vertical;\n    width: 100%;\n}\ncode,\npre,\n.textarea {\n    font-family: Consolas, Menlo, monospace;\n    font-size: smaller;\n}\npre {\n    overflow-wrap: break-word;\n    white-space: pre-wrap;\n}\n.button {\n    background: #ddd;\n    border: 1px solid #999;\n    color: #000;\n    cursor: pointer;\n    display: inline-block;\n    padding: 2px 5px;\n    text-align: center;\n    text-decoration: none;\n}\n.button:hover {\n    background: #bbb;\n}\n.colorError {\n    color: #d00;\n}\n.textarea {\n    background: #fff;\n    border: 1px solid #999;\n    border-radius: 0;\n    cursor: auto;\n    overflow: auto;\n    padding: 2px;\n}\n.uiAnimateSlide {\n    overflow-y: hidden;\n    transition: max-height ease-in 250ms, min-height ease-in 250ms, padding-bottom ease-in 250ms, padding-top ease-in 250ms;\n}\n.zeroPixel {\n    border: 0;\n    height: 0;\n    margin: 0;\n    padding: 0;\n    width: 0;\n}\n</style>\n</head>\n<body>\n<div class=\"uiAnimateSpin\" style=\"animation: uiAnimateSpin 2s linear infinite; border: 5px solid #999; border-radius: 50%; border-top: 5px solid #7d7; display: none; height: 25px; vertical-align: middle; width: 25px;\"></div>\n<script>\n/* jslint utility2:true */\n// init domOnEventWindowOnloadTimeElapsed\n(function () {\n/*\n * this function will measure and print time-elapsed for window.onload\n */\n    \"use strict\";\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventWindowOnloadTimeElapsed) {\n        return;\n    }\n    window.domOnEventWindowOnloadTimeElapsed = Date.now() + 100;\n    window.addEventListener(\"load\", function () {\n        setTimeout(function () {\n            window.domOnEventWindowOnloadTimeElapsed = (\n                Date.now()\n                - window.domOnEventWindowOnloadTimeElapsed\n            );\n            console.error(\n                \"domOnEventWindowOnloadTimeElapsed = \"\n                + window.domOnEventWindowOnloadTimeElapsed\n            );\n        }, 100);\n    });\n}());\n\n\n\n// init domOnEventAjaxProgressUpdate\n(function () {\n/*\n * this function will display incrementing ajax-progress-bar\n */\n    \"use strict\";\n    let opt;\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventAjaxProgressUpdate) {\n        return;\n    }\n    window.domOnEventAjaxProgressUpdate = function (gotoState, onError) {\n        gotoState = (gotoState | 0) + 1;\n        switch (gotoState) {\n        // ajaxProgress - show\n        case 1:\n            // init timerInterval and timerTimeout\n            opt.timerInterval = (\n                opt.timerInterval || setInterval(opt, 2000, 1, onError)\n            );\n            opt.timerTimeout = (\n                opt.timerTimeout || setTimeout(opt, 30000, 2, onError)\n            );\n            // show ajaxProgress\n            if (opt.width !== -1) {\n                opt.style.background = opt.background;\n            }\n            setTimeout(opt, 50, gotoState, onError);\n            break;\n        // ajaxProgress - increment\n        case 2:\n            // show ajaxProgress\n            if (opt.width === -1) {\n                return;\n            }\n            opt.style.background = opt.background;\n            // reset ajaxProgress if it goes too high\n            if ((opt.style.width.slice(0, -1) | 0) > 95) {\n                opt.width = 0;\n            }\n            // this algorithm will indefinitely increment ajaxProgress\n            // with successively smaller increments without reaching 100%\n            opt.width += 1;\n            opt.style.width = Math.max(\n                100 - 75 * Math.exp(-0.125 * opt.width),\n                opt.style.width.slice(0, -1) | 0\n            ) + \"%\";\n            if (!opt.counter) {\n                setTimeout(opt, 0, gotoState, onError);\n            }\n            break;\n        // ajaxProgress - 100%\n        case 3:\n            opt.width = -1;\n            opt.style.width = \"100%\";\n            setTimeout(opt, 1000, gotoState, onError);\n            break;\n        // ajaxProgress - hide\n        case 4:\n            // cleanup timerInterval and timerTimeout\n            clearInterval(opt.timerInterval);\n            opt.timerInterval = null;\n            clearTimeout(opt.timerTimeout);\n            opt.timerTimeout = null;\n            // hide ajaxProgress\n            opt.style.background = \"transparent\";\n            if (onError) {\n                onError();\n            }\n            setTimeout(opt, 250, gotoState);\n            break;\n        // ajaxProgress - reset\n        default:\n            // reset ajaxProgress\n            opt.counter = 0;\n            opt.width = 0;\n            opt.style.width = \"0%\";\n        }\n    };\n    opt = window.domOnEventAjaxProgressUpdate;\n    opt.end = function (onError) {\n        opt.counter = 0;\n        window.domOnEventAjaxProgressUpdate(2, onError);\n    };\n    opt.elem = document.getElementById(\"domElementAjaxProgress1\");\n    if (!opt.elem) {\n        opt.elem = document.createElement(\"div\");\n        setTimeout(function () {\n            document.body.insertBefore(opt.elem, document.body.firstChild);\n        });\n    }\n    opt.elem.id = \"domElementAjaxProgress1\";\n    opt.style = opt.elem.style;\n    // init style\n    Object.entries({\n        background: \"#d00\",\n        height: \"2px\",\n        left: \"0\",\n        margin: \"0\",\n        padding: \"0\",\n        position: \"fixed\",\n        top: \"0\",\n        transition: \"background 250ms, width 750ms\",\n        width: \"0%\",\n        \"z-index\": \"1\"\n    }).forEach(function (entry) {\n        opt.style[entry[0]] = opt.style[entry[0]] || entry[1];\n    });\n    // init state\n    opt.background = opt.style.background;\n    opt.counter = 0;\n    opt.width = 0;\n}());\n\n\n\n// init domOnEventDelegateDict\n(function () {\n/*\n * this function will handle delegated dom-evt\n */\n    \"use strict\";\n    let debounce;\n    let timerTimeout;\n    debounce = function () {\n        return setTimeout(function () {\n            timerTimeout = undefined;\n        }, 30);\n    };\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventDelegateDict) {\n        return;\n    }\n    window.domOnEventDelegateDict = {};\n    window.domOnEventDelegateDict.domOnEventDelegate = function (evt) {\n        evt.targetOnEvent = evt.target.closest(\"[data-onevent]\");\n        if (\n            !evt.targetOnEvent\n            || evt.targetOnEvent.dataset.onevent === \"domOnEventNop\"\n            || evt.target.closest(\".disabled,.readonly\")\n        ) {\n            return;\n        }\n        // filter evt-change\n        switch (evt.type !== \"change\" && evt.target.type) {\n        case \"checkbox\":\n        case \"file\":\n        case \"select-one\":\n        case \"radio\":\n            return;\n        }\n        // filter evt-keyup\n        switch (evt.type) {\n        case \"keyup\":\n            if (!timerTimeout && (\n                evt.target.tagName === \"INPUT\"\n                || evt.target.tagName === \"TEXTAREA\"\n            )) {\n                timerTimeout = debounce();\n                if (evt.target.dataset.valueOld !== evt.target.value) {\n                    evt.target.dataset.valueOld = evt.target.value;\n                    break;\n                }\n            }\n            return;\n        }\n        switch (evt.targetOnEvent.tagName) {\n        case \"BUTTON\":\n        case \"FORM\":\n            evt.preventDefault();\n            break;\n        }\n        evt.stopPropagation();\n        // handle domOnEventClickTarget\n        if (evt.targetOnEvent.dataset.onevent === \"domOnEventClickTarget\") {\n            document.querySelector(\n                evt.targetOnEvent.dataset.clickTarget\n            ).click();\n            return;\n        }\n        window.domOnEventDelegateDict[evt.targetOnEvent.dataset.onevent](evt);\n    };\n    // handle evt\n    [\n        \"change\",\n        \"click\",\n        \"keyup\",\n        \"submit\"\n    ].forEach(function (eventType) {\n        document.addEventListener(\n            eventType,\n            window.domOnEventDelegateDict.domOnEventDelegate\n        );\n    });\n}());\n\n\n\n// init domOnEventSelectAllWithinPre\n(function () {\n/*\n * this function will limit select-all within <pre tabIndex=\"0\"> elem\n * https://stackoverflow.com/questions/985272/selecting-text-in-an-element-akin-to-highlighting-with-your-mouse\n */\n    \"use strict\";\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventSelectAllWithinPre) {\n        return;\n    }\n    window.domOnEventSelectAllWithinPre = function (evt) {\n        let range;\n        let selection;\n        if (\n            evt && (evt.ctrlKey || evt.metaKey) && evt.key === \"a\"\n            && evt.target.closest(\"pre\")\n        ) {\n            range = document.createRange();\n            range.selectNodeContents(evt.target.closest(\"pre\"));\n            selection = window.getSelection();\n            selection.removeAllRanges();\n            selection.addRange(range);\n            evt.preventDefault();\n        }\n    };\n    // handle evt\n    document.addEventListener(\n        \"keydown\",\n        window.domOnEventSelectAllWithinPre\n    );\n}());\n</script>\n<h1>\n\n<a\n    \n    href=\"https://github.com/kaizhu256/node-jose-lite\"\n    \n    target=\"_blank\"\n>\n\n    jose-lite (2019.10.18)\n\n</a>\n\n</h1>\n<h3>this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens</h3>\n\n<a class=\"button\" download href=\"assets.app.js\">download standalone app</a><br>\n<button class=\"button\" data-onevent=\"testRunBrowser\" id=\"buttonTestRun1\">run browser-tests</button><br>\n<div class=\"uiAnimateSlide\" id=\"htmlTestReport1\" style=\"border-bottom: 0; border-top: 0; margin-bottom: 0; margin-top: 0; max-height: 0; padding-bottom: 0; padding-top: 0;\"></div>\n\n\n\n\n<!-- custom-html-start -->\n<label>stderr and stdout</label>\n<textarea class=\"onevent-reset-output readonly textarea\" id=\"outputStdout1\" readonly></textarea>\n<!-- custom-html-end -->\n\n\n\n\n\n<script src=\"assets.app.js\"></script>\n\n\n<div style=\"text-align: center;\">\n    [\n    this app was created with\n    <a\n        href=\"https://github.com/kaizhu256/node-utility2\" target=\"_blank\"\n    >utility2</a>\n    ]\n</div>\n</body>\n</html>\n"
+            "/assets.test.js": "/* istanbul instrument in package jose */\n// assets.utility2.header.js - start\n/* istanbul ignore next */\n/* jslint utility2:true */\n(function (globalThis) {\n    \"use strict\";\n    let ArrayPrototypeFlat;\n    let TextXxcoder;\n    let consoleError;\n    let debugName;\n    let local;\n    debugName = \"debug\" + String(\"Inline\");\n    // init globalThis\n    globalThis.globalThis = globalThis.globalThis || globalThis;\n    // init debug_inline\n    if (!globalThis[debugName]) {\n        consoleError = console.error;\n        globalThis[debugName] = function (...argList) {\n        /*\n         * this function will both print <argList> to stderr\n         * and return <argList>[0]\n         */\n            consoleError(\"\\n\\n\" + debugName);\n            consoleError.apply(console, argList);\n            consoleError(\"\\n\");\n            // return arg0 for inspection\n            return argList[0];\n        };\n    }\n    // polyfill\n    ArrayPrototypeFlat = function (depth) {\n    /*\n     * this function will polyfill Array.prototype.flat\n     * https://github.com/jonathantneal/array-flat-polyfill\n     */\n        depth = (\n            globalThis.isNaN(depth)\n            ? 1\n            : Number(depth)\n        );\n        if (!depth) {\n            return Array.prototype.slice.call(this);\n        }\n        return Array.prototype.reduce.call(this, function (acc, cur) {\n            if (Array.isArray(cur)) {\n                // recurse\n                acc.push.apply(acc, ArrayPrototypeFlat.call(cur, depth - 1));\n            } else {\n                acc.push(cur);\n            }\n            return acc;\n        }, []);\n    };\n    Array.prototype.flat = Array.prototype.flat || ArrayPrototypeFlat;\n    Array.prototype.flatMap = Array.prototype.flatMap || function flatMap(\n        ...argList\n    ) {\n    /*\n     * this function will polyfill Array.prototype.flatMap\n     * https://github.com/jonathantneal/array-flat-polyfill\n     */\n        return this.map(...argList).flat();\n    };\n    String.prototype.trimEnd = (\n        String.prototype.trimEnd || String.prototype.trimRight\n    );\n    String.prototype.trimStart = (\n        String.prototype.trimStart || String.prototype.trimLeft\n    );\n    (function () {\n        try {\n            globalThis.TextDecoder = (\n                globalThis.TextDecoder || require(\"util\").TextDecoder\n            );\n            globalThis.TextEncoder = (\n                globalThis.TextEncoder || require(\"util\").TextEncoder\n            );\n        } catch (ignore) {}\n    }());\n    TextXxcoder = function () {\n    /*\n     * this function will polyfill TextDecoder/TextEncoder\n     * https://gist.github.com/Yaffle/5458286\n     */\n        return;\n    };\n    TextXxcoder.prototype.decode = function (octets) {\n    /*\n     * this function will polyfill TextDecoder.prototype.decode\n     * https://gist.github.com/Yaffle/5458286\n     */\n        let bytesNeeded;\n        let codePoint;\n        let ii;\n        let kk;\n        let octet;\n        let string;\n        string = \"\";\n        ii = 0;\n        while (ii < octets.length) {\n            octet = octets[ii];\n            bytesNeeded = 0;\n            codePoint = 0;\n            if (octet <= 0x7F) {\n                bytesNeeded = 0;\n                codePoint = octet & 0xFF;\n            } else if (octet <= 0xDF) {\n                bytesNeeded = 1;\n                codePoint = octet & 0x1F;\n            } else if (octet <= 0xEF) {\n                bytesNeeded = 2;\n                codePoint = octet & 0x0F;\n            } else if (octet <= 0xF4) {\n                bytesNeeded = 3;\n                codePoint = octet & 0x07;\n            }\n            if (octets.length - ii - bytesNeeded > 0) {\n                kk = 0;\n                while (kk < bytesNeeded) {\n                    octet = octets[ii + kk + 1];\n                    codePoint = (codePoint << 6) | (octet & 0x3F);\n                    kk += 1;\n                }\n            } else {\n                codePoint = 0xFFFD;\n                bytesNeeded = octets.length - ii;\n            }\n            string += String.fromCodePoint(codePoint);\n            ii += bytesNeeded + 1;\n        }\n        return string;\n    };\n    TextXxcoder.prototype.encode = function (string) {\n    /*\n     * this function will polyfill TextEncoder.prototype.encode\n     * https://gist.github.com/Yaffle/5458286\n     */\n        let bits;\n        let cc;\n        let codePoint;\n        let ii;\n        let length;\n        let octets;\n        octets = [];\n        length = string.length;\n        ii = 0;\n        while (ii < length) {\n            codePoint = string.codePointAt(ii);\n            cc = 0;\n            bits = 0;\n            if (codePoint <= 0x0000007F) {\n                cc = 0;\n                bits = 0x00;\n            } else if (codePoint <= 0x000007FF) {\n                cc = 6;\n                bits = 0xC0;\n            } else if (codePoint <= 0x0000FFFF) {\n                cc = 12;\n                bits = 0xE0;\n            } else if (codePoint <= 0x001FFFFF) {\n                cc = 18;\n                bits = 0xF0;\n            }\n            octets.push(bits | (codePoint >> cc));\n            cc -= 6;\n            while (cc >= 0) {\n                octets.push(0x80 | ((codePoint >> cc) & 0x3F));\n                cc -= 6;\n            }\n            ii += (\n                codePoint >= 0x10000\n                ? 2\n                : 1\n            );\n        }\n        return octets;\n    };\n    globalThis.TextDecoder = globalThis.TextDecoder || TextXxcoder;\n    globalThis.TextEncoder = globalThis.TextEncoder || TextXxcoder;\n    // init local\n    local = {};\n    local.local = local;\n    globalThis.globalLocal = local;\n    // init isBrowser\n    local.isBrowser = (\n        typeof globalThis.XMLHttpRequest === \"function\"\n        && globalThis.navigator\n        && typeof globalThis.navigator.userAgent === \"string\"\n    );\n    // init isWebWorker\n    local.isWebWorker = (\n        local.isBrowser && typeof globalThis.importScript === \"function\"\n    );\n    // init function\n    local.assertOrThrow = function (passed, message) {\n    /*\n     * this function will throw err.<message> if <passed> is falsy\n     */\n        let err;\n        if (passed) {\n            return;\n        }\n        err = (\n            (\n                message\n                && typeof message.message === \"string\"\n                && typeof message.stack === \"string\"\n            )\n            // if message is errObj, then leave as is\n            ? message\n            : new Error(\n                typeof message === \"string\"\n                // if message is a string, then leave as is\n                ? message\n                // else JSON.stringify message\n                : JSON.stringify(message, undefined, 4)\n            )\n        );\n        throw err;\n    };\n    local.coalesce = function (...argList) {\n    /*\n     * this function will coalesce null, undefined, or \"\" in <argList>\n     */\n        let arg;\n        let ii;\n        ii = 0;\n        while (ii < argList.length) {\n            arg = argList[ii];\n            if (arg !== null && arg !== undefined && arg !== \"\") {\n                break;\n            }\n            ii += 1;\n        }\n        return arg;\n    };\n    local.fsRmrfSync = function (dir) {\n    /*\n     * this function will sync \"rm -rf\" <dir>\n     */\n        let child_process;\n        try {\n            child_process = require(\"child_process\");\n        } catch (ignore) {\n            return;\n        }\n        child_process.spawnSync(\"rm\", [\n            \"-rf\", dir\n        ], {\n            stdio: [\n                \"ignore\", 1, 2\n            ]\n        });\n    };\n    local.fsWriteFileWithMkdirpSync = function (file, data) {\n    /*\n     * this function will sync write <data> to <file> with \"mkdir -p\"\n     */\n        let fs;\n        try {\n            fs = require(\"fs\");\n        } catch (ignore) {\n            return;\n        }\n        // try to write file\n        try {\n            fs.writeFileSync(file, data);\n        } catch (ignore) {\n            // mkdir -p\n            require(\"child_process\").spawnSync(\n                \"mkdir\",\n                [\n                    \"-p\", require(\"path\").dirname(file)\n                ],\n                {\n                    stdio: [\n                        \"ignore\", 1, 2\n                    ]\n                }\n            );\n            // rewrite file\n            fs.writeFileSync(file, data);\n        }\n    };\n    local.functionOrNop = function (fnc) {\n    /*\n     * this function will if <fnc> exists,\n     * return <fnc>,\n     * else return <nop>\n     */\n        return fnc || local.nop;\n    };\n    local.identity = function (val) {\n    /*\n     * this function will return <val>\n     */\n        return val;\n    };\n    local.nop = function () {\n    /*\n     * this function will do nothing\n     */\n        return;\n    };\n    local.objectAssignDefault = function (target, source) {\n    /*\n     * this function will if items from <target> are null, undefined, or \"\",\n     * then overwrite them with items from <source>\n     */\n        target = target || {};\n        Object.keys(source || {}).forEach(function (key) {\n            if (\n                target[key] === null\n                || target[key] === undefined\n                || target[key] === \"\"\n            ) {\n                target[key] = target[key] || source[key];\n            }\n        });\n        return target;\n    };\n    local.querySelector = function (selectors) {\n    /*\n     * this function will return first dom-elem that match <selectors>\n     */\n        return (\n            typeof document === \"object\" && document\n            && typeof document.querySelector === \"function\"\n            && document.querySelector(selectors)\n        ) || {};\n    };\n    local.querySelectorAll = function (selectors) {\n    /*\n     * this function will return dom-elem-list that match <selectors>\n     */\n        return (\n            typeof document === \"object\" && document\n            && typeof document.querySelectorAll === \"function\"\n            && Array.from(document.querySelectorAll(selectors))\n        ) || [];\n    };\n    // require builtin\n    if (!local.isBrowser) {\n        local.assert = require(\"assert\");\n        local.buffer = require(\"buffer\");\n        local.child_process = require(\"child_process\");\n        local.cluster = require(\"cluster\");\n        local.crypto = require(\"crypto\");\n        local.dgram = require(\"dgram\");\n        local.dns = require(\"dns\");\n        local.domain = require(\"domain\");\n        local.events = require(\"events\");\n        local.fs = require(\"fs\");\n        local.http = require(\"http\");\n        local.https = require(\"https\");\n        local.net = require(\"net\");\n        local.os = require(\"os\");\n        local.path = require(\"path\");\n        local.querystring = require(\"querystring\");\n        local.readline = require(\"readline\");\n        local.repl = require(\"repl\");\n        local.stream = require(\"stream\");\n        local.string_decoder = require(\"string_decoder\");\n        local.timers = require(\"timers\");\n        local.tls = require(\"tls\");\n        local.tty = require(\"tty\");\n        local.url = require(\"url\");\n        local.util = require(\"util\");\n        local.vm = require(\"vm\");\n        local.zlib = require(\"zlib\");\n    }\n}((typeof globalThis === \"object\" && globalThis) || (function () {\n    return Function(\"return this\")(); // jslint ignore:line\n}())));\n// assets.utility2.header.js - end\n\n\n\n/* istanbul ignore next */\n/* jslint utility2:true */\n(function (local) {\n\"use strict\";\n\n\n\n// run shared js-env code - init-before\n(function () {\n// init local\nlocal = globalThis.utility2 || require(\"utility2\");\nlocal = local.requireReadme();\nglobalThis.local = local;\n// init test\nlocal.testRunDefault(local);\n}());\n\n\n\n// run shared js-env code - function\n(function () {\nlocal.testCase_jweXxx_default = async function (opt, onError) {\n/*\n * this function will test jweXxx's default handling-behavior\n */\n    // test example from\n    // https://tools.ietf.org/html/rfc7516#appendix-A.3\n    opt = {};\n    opt.jweCompact = await local.jweEncrypt({\n        cek: \"BNMfxVSd_P4LZJ36P6pqzmt81C1vawnbyLEA8I-cLM8\",\n        ivOverride: \"AxY8DCtDaGlsbGljb3RoZQ\",\n        kek: \"GawgguFyGrWKav7AX4VKUg\",\n        plaintext: \"Live long and prosper.\"\n    });\n    local.assertJsonEqual(opt.jweCompact, (\n        // protected\n        \"eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0.\"\n        // cek\n        + \"6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ.\"\n        // iv\n        + \"AxY8DCtDaGlsbGljb3RoZQ.\"\n        // data\n        + \"KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY.\"\n        // tag\n        + \"U0m_YmjN04DJvceFICbCVQ\"\n    ));\n    opt.jweDecrypted = await local.jweDecrypt({\n        jweCompact: opt.jweCompact,\n        kek: \"GawgguFyGrWKav7AX4VKUg\"\n    });\n    local.assertJsonEqual(opt.jweDecrypted, \"Live long and prosper.\");\n    await local.jweValidate({\n        jweCompact: opt.jweCompact,\n        kek: \"GawgguFyGrWKav7AX4VKUg\"\n    });\n    onError(undefined, opt);\n};\n\nlocal.testCase_jwsXxx_default = async function (opt, onError) {\n/*\n * this function will test jweXxx's default handling-behavior\n */\n    // test example from\n    // https://tools.ietf.org/html/rfc7515#section-3.3\n    opt = {};\n    opt.key = (\n        \"AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75\"\n        + \"aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow\"\n    );\n    opt.payload = (\n        \"{\\\"iss\\\":\\\"joe\\\",\\r\\n \"\n        + \"\\\"exp\\\":1300819380,\\r\\n \"\n        + \"\\\"http://example.com/is_root\\\":true}\"\n    );\n    opt.jwsCompact = await local.jwsEncode(opt.key, opt.payload);\n    local.assertJsonEqual(opt.jwsCompact, (\n        // protected\n        \"eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9.\"\n        // payload\n        + (\n            \"eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFt\"\n            + \"cGxlLmNvbS9pc19yb290Ijp0cnVlfQ.\"\n        )\n        // signature\n        + \"dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk\"\n    ));\n    local.assertJsonEqual(\n        await local.jwsDecode(opt.key, opt.jwsCompact),\n        opt.payload\n    );\n    await local.jwsValidate(opt.key, opt.jwsCompact);\n    onError(undefined, opt);\n};\n\n//!! local.testCase_jweXxx_default(undefined, local.onErrorDefault);\n//!! local.testCase_jwsXxx_default(undefined, local.onErrorDefault);\n}());\n}());\n",
+            "/index.rollup.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<!-- \"assets.utility2.template.html\" -->\n<title>jose-lite (2019.10.25)</title>\n<style>\n/* jslint utility2:true */\n/*csslint\n*/\n/* csslint ignore:start */\n*,\n*:after,\n*:before {\n    box-sizing: border-box;\n}\n/* csslint ignore:end */\n@keyframes uiAnimateSpin {\n0% {\n    transform: rotate(0deg);\n}\n100% {\n    transform: rotate(360deg);\n}\n}\na {\n    overflow-wrap: break-word;\n}\nbody {\n    background: #f7f7f7;\n    font-family: Arial, Helvetica, sans-serif;\n    font-size: small;\n    margin: 0 40px;\n}\nbody > div,\nbody > input,\nbody > pre,\nbody > .button,\nbody > .textarea {\n    margin-bottom: 20px;\n    margin-top: 0;\n}\nbody > input,\nbody > .button {\n    width: 20rem;\n}\nbody > .readonly {\n    background: #ddd;\n}\nbody > .textarea {\n    height: 10rem;\n    resize: vertical;\n    width: 100%;\n}\ncode,\npre,\n.textarea {\n    font-family: Consolas, Menlo, monospace;\n    font-size: smaller;\n}\npre {\n    overflow-wrap: break-word;\n    white-space: pre-wrap;\n}\n.button {\n    background: #ddd;\n    border: 1px solid #999;\n    color: #000;\n    cursor: pointer;\n    display: inline-block;\n    padding: 2px 5px;\n    text-align: center;\n    text-decoration: none;\n}\n.button:hover {\n    background: #bbb;\n}\n.colorError {\n    color: #d00;\n}\n.textarea {\n    background: #fff;\n    border: 1px solid #999;\n    border-radius: 0;\n    cursor: auto;\n    overflow: auto;\n    padding: 2px;\n}\n.uiAnimateSlide {\n    overflow-y: hidden;\n    transition: max-height ease-in 250ms, min-height ease-in 250ms, padding-bottom ease-in 250ms, padding-top ease-in 250ms;\n}\n.zeroPixel {\n    border: 0;\n    height: 0;\n    margin: 0;\n    padding: 0;\n    width: 0;\n}\n</style>\n</head>\n<body>\n<div class=\"uiAnimateSpin\" style=\"animation: uiAnimateSpin 2s linear infinite; border: 5px solid #999; border-radius: 50%; border-top: 5px solid #7d7; display: none; height: 25px; vertical-align: middle; width: 25px;\"></div>\n<script>\n/* jslint utility2:true */\n// init domOnEventWindowOnloadTimeElapsed\n(function () {\n/*\n * this function will measure and print time-elapsed for window.onload\n */\n    \"use strict\";\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventWindowOnloadTimeElapsed) {\n        return;\n    }\n    window.domOnEventWindowOnloadTimeElapsed = Date.now() + 100;\n    window.addEventListener(\"load\", function () {\n        setTimeout(function () {\n            window.domOnEventWindowOnloadTimeElapsed = (\n                Date.now()\n                - window.domOnEventWindowOnloadTimeElapsed\n            );\n            console.error(\n                \"domOnEventWindowOnloadTimeElapsed = \"\n                + window.domOnEventWindowOnloadTimeElapsed\n            );\n        }, 100);\n    });\n}());\n\n\n\n// init domOnEventAjaxProgressUpdate\n(function () {\n/*\n * this function will display incrementing ajax-progress-bar\n */\n    \"use strict\";\n    let opt;\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventAjaxProgressUpdate) {\n        return;\n    }\n    window.domOnEventAjaxProgressUpdate = function (gotoState, onError) {\n        gotoState = (gotoState | 0) + 1;\n        switch (gotoState) {\n        // ajaxProgress - show\n        case 1:\n            // init timerInterval and timerTimeout\n            opt.timerInterval = (\n                opt.timerInterval || setInterval(opt, 2000, 1, onError)\n            );\n            opt.timerTimeout = (\n                opt.timerTimeout || setTimeout(opt, 30000, 2, onError)\n            );\n            // show ajaxProgress\n            if (opt.width !== -1) {\n                opt.style.background = opt.background;\n            }\n            setTimeout(opt, 50, gotoState, onError);\n            break;\n        // ajaxProgress - increment\n        case 2:\n            // show ajaxProgress\n            if (opt.width === -1) {\n                return;\n            }\n            opt.style.background = opt.background;\n            // reset ajaxProgress if it goes too high\n            if ((opt.style.width.slice(0, -1) | 0) > 95) {\n                opt.width = 0;\n            }\n            // this algorithm will indefinitely increment ajaxProgress\n            // with successively smaller increments without reaching 100%\n            opt.width += 1;\n            opt.style.width = Math.max(\n                100 - 75 * Math.exp(-0.125 * opt.width),\n                opt.style.width.slice(0, -1) | 0\n            ) + \"%\";\n            if (!opt.counter) {\n                setTimeout(opt, 0, gotoState, onError);\n            }\n            break;\n        // ajaxProgress - 100%\n        case 3:\n            opt.width = -1;\n            opt.style.width = \"100%\";\n            setTimeout(opt, 1000, gotoState, onError);\n            break;\n        // ajaxProgress - hide\n        case 4:\n            // cleanup timerInterval and timerTimeout\n            clearInterval(opt.timerInterval);\n            opt.timerInterval = null;\n            clearTimeout(opt.timerTimeout);\n            opt.timerTimeout = null;\n            // hide ajaxProgress\n            opt.style.background = \"transparent\";\n            if (onError) {\n                onError();\n            }\n            setTimeout(opt, 250, gotoState);\n            break;\n        // ajaxProgress - reset\n        default:\n            // reset ajaxProgress\n            opt.counter = 0;\n            opt.width = 0;\n            opt.style.width = \"0%\";\n        }\n    };\n    opt = window.domOnEventAjaxProgressUpdate;\n    opt.end = function (onError) {\n        opt.counter = 0;\n        window.domOnEventAjaxProgressUpdate(2, onError);\n    };\n    opt.elem = document.getElementById(\"domElementAjaxProgress1\");\n    if (!opt.elem) {\n        opt.elem = document.createElement(\"div\");\n        setTimeout(function () {\n            document.body.insertBefore(opt.elem, document.body.firstChild);\n        });\n    }\n    opt.elem.id = \"domElementAjaxProgress1\";\n    opt.style = opt.elem.style;\n    // init style\n    Object.entries({\n        background: \"#d00\",\n        height: \"2px\",\n        left: \"0\",\n        margin: \"0\",\n        padding: \"0\",\n        position: \"fixed\",\n        top: \"0\",\n        transition: \"background 250ms, width 750ms\",\n        width: \"0%\",\n        \"z-index\": \"1\"\n    }).forEach(function (entry) {\n        opt.style[entry[0]] = opt.style[entry[0]] || entry[1];\n    });\n    // init state\n    opt.background = opt.style.background;\n    opt.counter = 0;\n    opt.width = 0;\n}());\n\n\n\n// init domOnEventDelegateDict\n(function () {\n/*\n * this function will handle delegated dom-evt\n */\n    \"use strict\";\n    let debounce;\n    let timerTimeout;\n    debounce = function () {\n        return setTimeout(function () {\n            timerTimeout = undefined;\n        }, 30);\n    };\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventDelegateDict) {\n        return;\n    }\n    window.domOnEventDelegateDict = {};\n    window.domOnEventDelegateDict.domOnEventDelegate = function (evt) {\n        evt.targetOnEvent = evt.target.closest(\"[data-onevent]\");\n        if (\n            !evt.targetOnEvent\n            || evt.targetOnEvent.dataset.onevent === \"domOnEventNop\"\n            || evt.target.closest(\".disabled,.readonly\")\n        ) {\n            return;\n        }\n        // filter evt-change\n        switch (evt.type !== \"change\" && evt.target.type) {\n        case \"checkbox\":\n        case \"file\":\n        case \"select-one\":\n        case \"radio\":\n            return;\n        }\n        // filter evt-keyup\n        switch (evt.type) {\n        case \"keyup\":\n            if (!timerTimeout && (\n                evt.target.tagName === \"INPUT\"\n                || evt.target.tagName === \"TEXTAREA\"\n            )) {\n                timerTimeout = debounce();\n                if (evt.target.dataset.valueOld !== evt.target.value) {\n                    evt.target.dataset.valueOld = evt.target.value;\n                    break;\n                }\n            }\n            return;\n        }\n        switch (evt.targetOnEvent.tagName) {\n        case \"BUTTON\":\n        case \"FORM\":\n            evt.preventDefault();\n            break;\n        }\n        evt.stopPropagation();\n        // handle domOnEventClickTarget\n        if (evt.targetOnEvent.dataset.onevent === \"domOnEventClickTarget\") {\n            document.querySelector(\n                evt.targetOnEvent.dataset.clickTarget\n            ).click();\n            return;\n        }\n        window.domOnEventDelegateDict[evt.targetOnEvent.dataset.onevent](evt);\n    };\n    // handle evt\n    [\n        \"change\",\n        \"click\",\n        \"keyup\",\n        \"submit\"\n    ].forEach(function (eventType) {\n        document.addEventListener(\n            eventType,\n            window.domOnEventDelegateDict.domOnEventDelegate\n        );\n    });\n}());\n\n\n\n// init domOnEventSelectAllWithinPre\n(function () {\n/*\n * this function will limit select-all within <pre tabIndex=\"0\"> elem\n * https://stackoverflow.com/questions/985272/selecting-text-in-an-element-akin-to-highlighting-with-your-mouse\n */\n    \"use strict\";\n    if (!(\n        typeof window === \"object\" && window && window.document\n        && typeof document.addEventListener === \"function\"\n    ) || window.domOnEventSelectAllWithinPre) {\n        return;\n    }\n    window.domOnEventSelectAllWithinPre = function (evt) {\n        let range;\n        let selection;\n        if (\n            evt && (evt.ctrlKey || evt.metaKey) && evt.key === \"a\"\n            && evt.target.closest(\"pre\")\n        ) {\n            range = document.createRange();\n            range.selectNodeContents(evt.target.closest(\"pre\"));\n            selection = window.getSelection();\n            selection.removeAllRanges();\n            selection.addRange(range);\n            evt.preventDefault();\n        }\n    };\n    // handle evt\n    document.addEventListener(\n        \"keydown\",\n        window.domOnEventSelectAllWithinPre\n    );\n}());\n</script>\n<h1>\n\n<a\n    \n    href=\"https://github.com/kaizhu256/node-jose-lite\"\n    \n    target=\"_blank\"\n>\n\n    jose-lite (2019.10.25)\n\n</a>\n\n</h1>\n<h3>this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens in both browser/node</h3>\n\n<a class=\"button\" download href=\"assets.app.js\">download standalone app</a><br>\n<button class=\"button\" data-onevent=\"testRunBrowser\" id=\"buttonTestRun1\">run browser-tests</button><br>\n<div class=\"uiAnimateSlide\" id=\"htmlTestReport1\" style=\"border-bottom: 0; border-top: 0; margin-bottom: 0; margin-top: 0; max-height: 0; padding-bottom: 0; padding-top: 0;\"></div>\n\n\n\n\n<!-- custom-html-start -->\n<label>stderr and stdout</label>\n<textarea class=\"onevent-reset-output readonly textarea\" id=\"outputStdout1\" readonly></textarea>\n<!-- custom-html-end -->\n\n\n\n\n\n<script src=\"assets.app.js\"></script>\n\n\n<div style=\"text-align: center;\">\n    [\n    this app was created with\n    <a\n        href=\"https://github.com/kaizhu256/node-utility2\" target=\"_blank\"\n    >utility2</a>\n    ]\n</div>\n</body>\n</html>\n"
         },
         "env": {
             "NODE_ENV": "test",
-            "npm_package_description": "this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens",
+            "npm_package_description": "this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens in both browser/node",
             "npm_package_homepage": "https://github.com/kaizhu256/node-jose-lite",
             "npm_package_name": "jose-lite",
-            "npm_package_nameLib": "jose_lite",
-            "npm_package_version": "2019.10.18"
+            "npm_package_nameLib": "jose",
+            "npm_package_version": "2019.10.25"
         }
     }
 });
@@ -69337,17 +69326,17 @@ local.stateInit({
 (function (local) {
     "use strict";
 /* jslint ignore:start */
-local.assetsDict["/assets.jose_lite.js"] = "// usr/bin/env node\n\
+local.assetsDict["/assets.jose.js"] = "// usr/bin/env node\n\
 /*\n\
- * lib.jose_lite.js (2019.10.18)\n\
+ * lib.jose.js (2019.10.25)\n\
  * https://github.com/kaizhu256/node-jose-lite\n\
- * this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens\n\
+ * this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens in both browser/node\n\
  *\n\
  */\n\
 \n\
 \n\
 \n\
-/* istanbul instrument in package jose_lite */\n\
+/* istanbul instrument in package jose */\n\
 // assets.utility2.header.js - start\n\
 /* istanbul ignore next */\n\
 /* jslint utility2:true */\n\
@@ -69742,18 +69731,648 @@ local = (\n\
 );\n\
 // init exports\n\
 if (local.isBrowser) {\n\
-    globalThis.utility2_jose_lite = local;\n\
+    globalThis.utility2_jose = local;\n\
 } else {\n\
     module.exports = local;\n\
     module.exports.__dirname = __dirname;\n\
 }\n\
 // init lib main\n\
-local.jose_lite = local;\n\
+local.jose = local;\n\
 \n\
 \n\
 \n\
 /* validateLineSortedReset */\n\
 return;\n\
+}());\n\
+\n\
+\n\
+\n\
+// run shared js-env code - function\n\
+(function () {\n\
+local.base64FromBuffer = function (buf) {\n\
+/*\n\
+ * this function will convert Uint8Array <buf> to base64 str\n\
+ */\n\
+    let ii;\n\
+    let mod3;\n\
+    let str;\n\
+    let uint24;\n\
+    let uint6ToB64;\n\
+    // convert utf8 to Uint8Array\n\
+    if (typeof buf === \"string\") {\n\
+        buf = new TextEncoder().encode(buf);\n\
+    }\n\
+    buf = buf || [];\n\
+    str = \"\";\n\
+    uint24 = 0;\n\
+    uint6ToB64 = function (uint6) {\n\
+        return (\n\
+            uint6 < 26\n\
+            ? uint6 + 65\n\
+            : uint6 < 52\n\
+            ? uint6 + 71\n\
+            : uint6 < 62\n\
+            ? uint6 - 4\n\
+            : uint6 === 62\n\
+            ? 43\n\
+            : 47\n\
+        );\n\
+    };\n\
+    ii = 0;\n\
+    while (ii < buf.length) {\n\
+        mod3 = ii % 3;\n\
+        uint24 |= buf[ii] << (16 >>> mod3 & 24);\n\
+        if (mod3 === 2 || buf.length - ii === 1) {\n\
+            str += String.fromCharCode(\n\
+                uint6ToB64(uint24 >>> 18 & 63),\n\
+                uint6ToB64(uint24 >>> 12 & 63),\n\
+                uint6ToB64(uint24 >>> 6 & 63),\n\
+                uint6ToB64(uint24 & 63)\n\
+            );\n\
+            uint24 = 0;\n\
+        }\n\
+        ii += 1;\n\
+    }\n\
+    return str.replace((\n\
+        /A(?=A$|$)/gm\n\
+    ), \"\");\n\
+};\n\
+\n\
+local.base64ToBuffer = function (str) {\n\
+/*\n\
+ * this function will convert base64 <str> to Uint8Array\n\
+ * https://gist.github.com/wang-bin/7332335\n\
+ */\n\
+    let buf;\n\
+    let byte;\n\
+    let chr;\n\
+    let ii;\n\
+    let jj;\n\
+    let map64;\n\
+    let mod4;\n\
+    str = str || \"\";\n\
+    buf = new Uint8Array(str.length); // 3/4\n\
+    byte = 0;\n\
+    jj = 0;\n\
+    map64 = (\n\
+        !(str.indexOf(\"-\") === -1 && str.indexOf(\"_\") === -1)\n\
+        // base64url\n\
+        ? \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_\"\n\
+        // base64\n\
+        : \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/\"\n\
+    );\n\
+    mod4 = 0;\n\
+    ii = 0;\n\
+    while (ii < str.length) {\n\
+        chr = map64.indexOf(str[ii]);\n\
+        if (chr !== -1) {\n\
+            mod4 %= 4;\n\
+            if (mod4 === 0) {\n\
+                byte = chr;\n\
+            } else {\n\
+                byte = byte * 64 + chr;\n\
+                buf[jj] = 255 & (byte >> ((-2 * (mod4 + 1)) & 6));\n\
+                jj += 1;\n\
+            }\n\
+            mod4 += 1;\n\
+        }\n\
+        ii += 1;\n\
+    }\n\
+    // optimization - create resized-view of buf\n\
+    return buf.subarray(0, jj);\n\
+};\n\
+\n\
+local.base64urlFromBuffer = function (str) {\n\
+/*\n\
+ * this function will convert base64url <str> to Uint8Array\n\
+ */\n\
+    return local.base64FromBuffer(str).replace((\n\
+        /\\+/g\n\
+    ), \"-\").replace((\n\
+        /\\//g\n\
+    ), \"_\");\n\
+};\n\
+\n\
+local.cryptoEncryptAes128cbc = async function (key, iv, data, mode) {\n\
+/*\n\
+ * this function will encrypt/decrypt <data> using <key>, <iv>, <mode>\n\
+ */\n\
+    let crypto;\n\
+    // encode data\n\
+    if (typeof data === \"string\") {\n\
+        data = new TextEncoder().encode(data);\n\
+    }\n\
+    crypto = (\n\
+        (globalThis.crypto && globalThis.crypto.subtle)\n\
+        ? globalThis.crypto\n\
+        : require(\"crypto\")\n\
+    );\n\
+    mode = (\n\
+        (crypto.subtle && mode === \"decrypt\")\n\
+        ? crypto.subtle.decrypt.bind(crypto.subtle)\n\
+        : crypto.subtle\n\
+        ? crypto.subtle.encrypt.bind(crypto.subtle)\n\
+        : mode === \"decrypt\"\n\
+        ? crypto.createDecipheriv\n\
+        : crypto.createCipheriv\n\
+    );\n\
+    if (crypto.subtle) {\n\
+        key = await crypto.subtle.importKey(\"raw\", key, {\n\
+            name: \"AES-CBC\"\n\
+        }, false, [\n\
+            \"decrypt\", \"encrypt\"\n\
+        ]);\n\
+        mode = await mode({\n\
+            iv,\n\
+            name: \"AES-CBC\"\n\
+        }, key, data);\n\
+        data = new Uint8Array(mode);\n\
+    } else {\n\
+        mode = mode(\"aes-128-cbc\", key, iv);\n\
+        data = Buffer.concat([\n\
+            mode.update(data), mode.final()\n\
+        ]);\n\
+    }\n\
+    return data;\n\
+};\n\
+\n\
+local.cryptoKeyUnwrap256 = async function (KK, RR) {\n\
+/*\n\
+ * this function will aes256 wrapKey/unwrapKey <RR> using <KK>\n\
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3\n\
+    2.2.2 Key Unwrap\n\
+    https://tools.ietf.org/html/rfc3394#section-2.2.2\n\
+        Inputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and\n\
+            Key, K (the KEK).\n\
+        Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.\n\
+        1) Initialize variables.\n\
+            Set A = C[0]\n\
+            For i = 1 to n\n\
+                R[i] = C[i]\n\
+        2) Compute intermediate values.\n\
+            For j = 5 to 0\n\
+                For i = n to 1\n\
+                    B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i\n\
+                    A = MSB(64, B)\n\
+                    R[i] = LSB(64, B)\n\
+        3) Output results.\n\
+            For i = 1 to n\n\
+                P[i] = R[i]\n\
+ */\n\
+    return await local.cryptoKeyWrap256(KK, RR, \"unwrap\");\n\
+};\n\
+\n\
+local.cryptoKeyWrap256 = async function (KK, RR, mode) {\n\
+/*\n\
+ * this function will aes256 wrapKey/unwrapKey <RR> using <KK>\n\
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3\n\
+    2.2.1 Key Wrap\n\
+    https://tools.ietf.org/html/rfc3394#section-2.2.1\n\
+        Inputs: Plaintext, n 64-bit values {P1, P2, ..., Pn}, and\n\
+            Key, K (the KEK).\n\
+        Outputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}.\n\
+        1) Initialize variables.\n\
+            Set A = IV, an initial value (see 2.2.3)\n\
+            For i = 1 to n\n\
+                R[i] = P[i]\n\
+        2) Calculate intermediate values.\n\
+            For j = 0 to 5\n\
+                For i = 1 to n\n\
+                    B = AES(K, A | R[i])\n\
+                    A = MSB(64, B) ^ t where t = (n*j)+i\n\
+                    R[i] = LSB(64, B)\n\
+        3) Output the results.\n\
+            Set C[0] = A\n\
+            For i = 1 to n\n\
+                C[i] = R[i]\n\
+*/\n\
+    let AA;\n\
+    let BB;\n\
+    let crypto;\n\
+    let ii;\n\
+    let iv;\n\
+    let jj;\n\
+    let loop;\n\
+    let nn;\n\
+    let tt;\n\
+    // init var\n\
+    AA = new Uint8Array(32);\n\
+    ii = 0;\n\
+    iv = new Uint8Array(16);\n\
+    nn = 4;\n\
+    crypto = (\n\
+        (globalThis.crypto && globalThis.crypto.subtle)\n\
+        ? globalThis.crypto\n\
+        : require(\"crypto\")\n\
+    );\n\
+    // use crypto.subtle\n\
+    if (crypto.subtle) {\n\
+        KK = await crypto.subtle.importKey(\"raw\", KK, {\n\
+            name: \"AES-KW\"\n\
+        }, false, [\n\
+            \"unwrapKey\", \"wrapKey\"\n\
+        ]);\n\
+        if (mode === \"unwrap\") {\n\
+            RR = await crypto.subtle.unwrapKey(\"raw\", RR, KK, {\n\
+                name: \"AES-KW\"\n\
+            }, {\n\
+                name: \"AES-CBC\"\n\
+            }, true, [\n\
+                \"decrypt\", \"encrypt\"\n\
+            ]);\n\
+            RR = await crypto.subtle.exportKey(\"raw\", RR);\n\
+        } else {\n\
+            RR = await crypto.subtle.importKey(\"raw\", RR, {\n\
+                name: \"AES-CBC\"\n\
+            }, true, [\n\
+                \"decrypt\", \"encrypt\"\n\
+            ]);\n\
+            RR = await crypto.subtle.wrapKey(\"raw\", RR, KK, \"AES-KW\");\n\
+        }\n\
+        return new Uint8Array(RR);\n\
+    }\n\
+    crypto = (\n\
+        mode === \"unwrap\"\n\
+        ? crypto.createDecipheriv\n\
+        : crypto.createCipheriv\n\
+    );\n\
+    // init loop\n\
+    loop = async function () {\n\
+        // AA xor tt\n\
+        if (mode === \"unwrap\") {\n\
+            tt = nn * jj + ii;\n\
+            AA[4] ^= ((tt >>> 24) & 0xff);\n\
+            AA[5] ^= ((tt >> 16) & 0xff);\n\
+            AA[6] ^= ((tt >> 8) & 0xff);\n\
+            AA[7] ^= (tt & 0xff);\n\
+        }\n\
+        // init RR\n\
+        AA[8] = RR[8 * ii];\n\
+        AA[9] = RR[8 * ii + 1];\n\
+        AA[10] = RR[8 * ii + 2];\n\
+        AA[11] = RR[8 * ii + 3];\n\
+        AA[12] = RR[8 * ii + 4];\n\
+        AA[13] = RR[8 * ii + 5];\n\
+        AA[14] = RR[8 * ii + 6];\n\
+        AA[15] = RR[8 * ii + 7];\n\
+        // encrypt / decrypt RR\n\
+        BB = crypto(\"aes-128-cbc\", KK, iv);\n\
+        BB.setAutoPadding(false);\n\
+        BB = Buffer.concat([\n\
+            BB.update(AA), BB.final()\n\
+        ]);\n\
+        // update RR\n\
+        AA[0] = BB[0];\n\
+        AA[1] = BB[1];\n\
+        AA[2] = BB[2];\n\
+        AA[3] = BB[3];\n\
+        AA[4] = BB[4];\n\
+        AA[5] = BB[5];\n\
+        AA[6] = BB[6];\n\
+        AA[7] = BB[7];\n\
+        RR[8 * ii + 0] = BB[8];\n\
+        RR[8 * ii + 1] = BB[9];\n\
+        RR[8 * ii + 2] = BB[10];\n\
+        RR[8 * ii + 3] = BB[11];\n\
+        RR[8 * ii + 4] = BB[12];\n\
+        RR[8 * ii + 5] = BB[13];\n\
+        RR[8 * ii + 6] = BB[14];\n\
+        RR[8 * ii + 7] = BB[15];\n\
+        // AA xor tt\n\
+        if (mode !== \"unwrap\") {\n\
+            tt = nn * jj + ii;\n\
+            AA[4] ^= ((tt >>> 24) & 0xff);\n\
+            AA[5] ^= ((tt >> 16) & 0xff);\n\
+            AA[6] ^= ((tt >> 8) & 0xff);\n\
+            AA[7] ^= (tt & 0xff);\n\
+        }\n\
+    };\n\
+    if (mode === \"unwrap\") {\n\
+        AA[0] = RR[0];\n\
+        AA[1] = RR[1];\n\
+        AA[2] = RR[2];\n\
+        AA[3] = RR[3];\n\
+        AA[4] = RR[4];\n\
+        AA[5] = RR[5];\n\
+        AA[6] = RR[6];\n\
+        AA[7] = RR[7];\n\
+        jj = 5;\n\
+        while (0 <= jj) {\n\
+            ii = nn;\n\
+            while (1 <= ii) {\n\
+                await loop();\n\
+                ii -= 1;\n\
+            }\n\
+            jj -= 1;\n\
+        }\n\
+        return RR.slice(8);\n\
+    }\n\
+    BB = RR;\n\
+    RR = new Uint8Array(BB.length + 8);\n\
+    ii = 0;\n\
+    while (ii < BB.length) {\n\
+        RR[ii + 8] = BB[ii];\n\
+        ii += 1;\n\
+    }\n\
+    AA[0] = 0xa6;\n\
+    AA[1] = 0xa6;\n\
+    AA[2] = 0xa6;\n\
+    AA[3] = 0xa6;\n\
+    AA[4] = 0xa6;\n\
+    AA[5] = 0xa6;\n\
+    AA[6] = 0xa6;\n\
+    AA[7] = 0xa6;\n\
+    jj = 0;\n\
+    while (jj <= 5) {\n\
+        ii = 1;\n\
+        while (ii <= nn) {\n\
+            await loop();\n\
+            ii += 1;\n\
+        }\n\
+        jj += 1;\n\
+    }\n\
+    RR[0] = AA[0];\n\
+    RR[1] = AA[1];\n\
+    RR[2] = AA[2];\n\
+    RR[3] = AA[3];\n\
+    RR[4] = AA[4];\n\
+    RR[5] = AA[5];\n\
+    RR[6] = AA[6];\n\
+    RR[7] = AA[7];\n\
+    return RR;\n\
+};\n\
+\n\
+local.cryptoRandomBuffer = function (nn) {\n\
+/*\n\
+ * this function will return random buf with length <nn>\n\
+ */\n\
+    return (\n\
+        (globalThis.crypto && globalThis.crypto.subtle)\n\
+        ? globalThis.crypto.getRandomValues(new Uint8Array(nn))\n\
+        : require(\"crypto\").randomBytes(nn)\n\
+    );\n\
+};\n\
+\n\
+local.cryptoSignHmacSha256 = async function (key, data) {\n\
+/*\n\
+ * this function will crypto-hmac-sha256 sign <data> using <key>\n\
+ */\n\
+    let crypto;\n\
+    crypto = (\n\
+        (globalThis.crypto && globalThis.crypto.subtle)\n\
+        ? globalThis.crypto\n\
+        : require(\"crypto\")\n\
+    );\n\
+    if (crypto.subtle) {\n\
+        key = await crypto.subtle.importKey(\"raw\", key, {\n\
+            hash: \"SHA-256\",\n\
+            name: \"HMAC\"\n\
+        }, false, [\n\
+            \"sign\"\n\
+        ]);\n\
+        data = new Uint8Array(await crypto.subtle.sign({\n\
+            name: \"HMAC\"\n\
+        }, key, data));\n\
+    } else {\n\
+        data = crypto.createHmac(\"sha256\", key).update(data).digest();\n\
+    }\n\
+    return data;\n\
+};\n\
+\n\
+local.jweDecrypt = async function (opt) {\n\
+/*\n\
+ * this function will A128CBC-HS256 decrypt <opt>.jweCompact using <opt>.kek\n\
+ */\n\
+    opt.mode = \"decrypt\";\n\
+    return local.jweEncrypt(opt);\n\
+};\n\
+\n\
+local.jweEncrypt = async function (opt) {\n\
+/*\n\
+ * this function will A128CBC-HS256 encrypt <opt>.plaintext\n\
+ * using <opt>.cek, <opt>.iv, <opt>.kek\n\
+ * to jwe-compact-serialization\n\
+ * from https://tools.ietf.org/html/rfc7516#appendix-A.3\n\
+    BASE64URL(UTF8(JWE Protected Header)) || '.' ||\n\
+    BASE64URL(JWE Encrypted Key) || '.' ||\n\
+    BASE64URL(JWE Initialization Vector) || '.' ||\n\
+    BASE64URL(JWE Ciphertext) || '.' ||\n\
+    BASE64URL(JWE Authentication Tag)\n\
+*/\n\
+    let base64urlFromBuffer;\n\
+    let base64urlToBuffer;\n\
+    let sign;\n\
+    let tmp;\n\
+    base64urlFromBuffer = function (buf) {\n\
+    /*\n\
+     * this function will convert Uint8Array <buf> to base64url str\n\
+     */\n\
+        return (\n\
+            typeof buf === \"string\"\n\
+            ? buf\n\
+            : local.base64urlFromBuffer(buf)\n\
+        );\n\
+    };\n\
+    base64urlToBuffer = function (str) {\n\
+    /*\n\
+     * this function will convert base64url <str> to Uint8Array\n\
+     */\n\
+        return (\n\
+            typeof str.byteLength === \"number\"\n\
+            ? str\n\
+            : local.base64ToBuffer(str)\n\
+        );\n\
+    };\n\
+    sign = async function (cek, aad, iv, ciphertext) {\n\
+    /*\n\
+     * this function will hmac-sha-256 sign <opt>.ciphertext\n\
+     * using <opt>.cek, <opt>.iv, <opt>.protectedHeader\n\
+     * https://tools.ietf.org/html/rfc7516#appendix-B.5\n\
+     */\n\
+        let data;\n\
+        let ii;\n\
+        let jj;\n\
+        // init aad\n\
+        aad = new TextEncoder().encode(aad);\n\
+        // init data\n\
+        data = new Uint8Array(aad.length + iv.length + ciphertext.length + 8);\n\
+        // concat data\n\
+        ii = 0;\n\
+        [\n\
+            aad, iv, ciphertext, [\n\
+                // 64-bit length of aad\n\
+                0,\n\
+                0,\n\
+                0,\n\
+                0,\n\
+                (aad.length >>> 21) & 0xff,\n\
+                (aad.length >> 13) & 0xff,\n\
+                (aad.length >> 5) & 0xff,\n\
+                (8 * aad.length) & 0xff\n\
+            ]\n\
+        ].forEach(function (elem) {\n\
+            jj = 0;\n\
+            while (jj < elem.length) {\n\
+                data[ii] = elem[jj];\n\
+                ii += 1;\n\
+                jj += 1;\n\
+            }\n\
+        });\n\
+        return base64urlFromBuffer((\n\
+            await local.cryptoSignHmacSha256(cek.slice(0, 16), data)\n\
+        ).slice(0, 16));\n\
+    };\n\
+    // init kek\n\
+    opt.kek = base64urlToBuffer(opt.kek);\n\
+    // {\"alg\":\"A128KW\",\"enc\":\"A128CBC-HS256\"}\n\
+    opt.protectedHeader = \"eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0\";\n\
+    switch (opt.mode) {\n\
+    /*\n\
+     * parse jweCompact to jwe-json-serialization\n\
+     * from https://tools.ietf.org/html/rfc7516#section-3.2\n\
+        \"protected\", with the value BASE64URL(UTF8(JWE Protected Header))\n\
+        \"unprotected\", with the value JWE Shared Unprotected Header\n\
+        \"header\", with the value JWE Per-Recipient Unprotected Header\n\
+        \"encrypted_key\", with the value BASE64URL(JWE Encrypted Key)\n\
+        \"iv\", with the value BASE64URL(JWE Initialization Vector)\n\
+        \"ciphertext\", with the value BASE64URL(JWE Ciphertext)\n\
+        \"tag\", with the value BASE64URL(JWE Authentication Tag)\n\
+        \"aad\", with the value BASE64URL(JWE AAD)\n\
+     */\n\
+    case \"decrypt\":\n\
+    case \"validate\":\n\
+        tmp = opt.jweCompact.split(\".\");\n\
+        opt.encrypted_key = tmp[1];\n\
+        opt.iv = base64urlToBuffer(tmp[2]);\n\
+        opt.ciphertext = base64urlToBuffer(tmp[3]);\n\
+        opt.tag = tmp[4];\n\
+        // unwrapKey encrypted_key to cek\n\
+        opt.cek = base64urlToBuffer(opt.cek || await local.cryptoKeyUnwrap256(\n\
+            opt.kek,\n\
+            base64urlToBuffer(opt.encrypted_key)\n\
+        ));\n\
+        // validate tag\n\
+        local.assertOrThrow(tmp.length === 5 && opt.tag === await sign(\n\
+            opt.cek,\n\
+            opt.protectedHeader,\n\
+            opt.iv,\n\
+            opt.ciphertext\n\
+        ), \"invalid signature\");\n\
+        if (opt.mode === \"validate\") {\n\
+            return;\n\
+        }\n\
+        // decrypt ciphertext to plaintext\n\
+        opt.plaintext = await local.cryptoEncryptAes128cbc(\n\
+            opt.cek.slice(16),\n\
+            opt.iv,\n\
+            opt.ciphertext,\n\
+            \"decrypt\"\n\
+        );\n\
+        opt.plaintext = new TextDecoder().decode(opt.plaintext);\n\
+        return opt.plaintext;\n\
+    // encrypt\n\
+    default:\n\
+        // init cek\n\
+        if (!opt.cek) {\n\
+            opt.cek = local.cryptoRandomBuffer(32);\n\
+            delete opt.encrypted_key;\n\
+            delete opt.iv;\n\
+        }\n\
+        opt.cek = base64urlToBuffer(opt.cek);\n\
+        // wrapKey cek to encrypted_key\n\
+        opt.encrypted_key = base64urlFromBuffer(\n\
+            opt.encrypted_key || await local.cryptoKeyWrap256(\n\
+                opt.kek,\n\
+                opt.cek\n\
+            )\n\
+        );\n\
+        // init iv\n\
+        opt.iv = base64urlToBuffer(\n\
+            opt.ivOverride || local.cryptoRandomBuffer(16)\n\
+        );\n\
+        // encrypt plaintext to ciphertext\n\
+        opt.ciphertext = await local.cryptoEncryptAes128cbc(\n\
+            opt.cek.slice(16),\n\
+            opt.iv,\n\
+            opt.plaintext\n\
+        );\n\
+        // init tag\n\
+        opt.tag = await sign(\n\
+            opt.cek,\n\
+            opt.protectedHeader,\n\
+            opt.iv,\n\
+            opt.ciphertext\n\
+        );\n\
+        opt.jweCompact = (\n\
+            opt.protectedHeader + \".\"\n\
+            + opt.encrypted_key + \".\"\n\
+            + base64urlFromBuffer(opt.iv) + \".\"\n\
+            + base64urlFromBuffer(opt.ciphertext) + \".\"\n\
+            + opt.tag\n\
+        );\n\
+        return opt.jweCompact;\n\
+    }\n\
+};\n\
+\n\
+local.jweValidate = async function (opt) {\n\
+/*\n\
+ * this function will A128CBC-HS256 validate <opt>.jweCompact using <opt>.kek\n\
+ */\n\
+    opt.mode = \"validate\";\n\
+    return local.jweEncrypt(opt);\n\
+};\n\
+\n\
+local.jwsDecode = async function (key, jwsCompact) {\n\
+/*\n\
+ * this function will HS256 decode <jwsCompact> using <key>\n\
+ */\n\
+    return await local.jwsEncode(key, jwsCompact, \"decode\");\n\
+};\n\
+\n\
+local.jwsEncode = async function (key, payload, mode) {\n\
+/*\n\
+ * this function will HS256 encode <payload> using <key>\n\
+ * to jws-compact-serialization\n\
+ * from https://tools.ietf.org/html/rfc7515#section-3.1\n\
+    BASE64URL(UTF8(JWS Protected Header)) || '.' ||\n\
+    BASE64URL(JWS Payload) || '.' ||\n\
+    BASE64URL(JWS Signature)\n\
+ */\n\
+    let sign;\n\
+    sign = async function (key, data) {\n\
+        return local.base64urlFromBuffer(await local.cryptoSignHmacSha256(\n\
+            local.base64ToBuffer(key),\n\
+            new TextEncoder().encode(data)\n\
+        ));\n\
+    };\n\
+    switch (mode) {\n\
+    case \"decode\":\n\
+    case \"validate\":\n\
+        payload = payload.split(\".\");\n\
+        local.assertOrThrow((\n\
+            payload.length === 3\n\
+            && payload[2] === (await sign(key, payload.slice(0, 2).join(\".\")))\n\
+        ), \"invalid signature\");\n\
+        if (mode === \"validate\") {\n\
+            return;\n\
+        }\n\
+        return new TextDecoder().decode(local.base64ToBuffer(payload[1]));\n\
+    // encode\n\
+    default:\n\
+        payload = (\n\
+            \"eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9.\"\n\
+            + local.base64urlFromBuffer(payload)\n\
+        );\n\
+        return payload + \".\" + (await sign(key, payload));\n\
+    }\n\
+};\n\
+\n\
+local.jwsValidate = async function (key, jwsCompact) {\n\
+/*\n\
+ * this function will HS256 validate <jwsCompact> using <key>\n\
+ */\n\
+    return await local.jwsEncode(key, jwsCompact, \"validate\");\n\
+};\n\
 }());\n\
 }());\n\
 "
@@ -69763,15 +70382,15 @@ return;\n\
 
 // usr/bin/env node
 /*
- * lib.jose_lite.js (2019.10.18)
+ * lib.jose.js (2019.10.25)
  * https://github.com/kaizhu256/node-jose-lite
- * this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens
+ * this zero-dependency package will provide a standalone solution to encrypt/decrypt json-web-tokens in both browser/node
  *
  */
 
 
 
-/* istanbul instrument in package jose_lite */
+/* istanbul instrument in package jose */
 // assets.utility2.header.js - start
 /* istanbul ignore next */
 /* jslint utility2:true */
@@ -70166,18 +70785,648 @@ local = (
 );
 // init exports
 if (local.isBrowser) {
-    globalThis.utility2_jose_lite = local;
+    globalThis.utility2_jose = local;
 } else {
     module.exports = local;
     module.exports.__dirname = __dirname;
 }
 // init lib main
-local.jose_lite = local;
+local.jose = local;
 
 
 
 /* validateLineSortedReset */
 return;
+}());
+
+
+
+// run shared js-env code - function
+(function () {
+local.base64FromBuffer = function (buf) {
+/*
+ * this function will convert Uint8Array <buf> to base64 str
+ */
+    let ii;
+    let mod3;
+    let str;
+    let uint24;
+    let uint6ToB64;
+    // convert utf8 to Uint8Array
+    if (typeof buf === "string") {
+        buf = new TextEncoder().encode(buf);
+    }
+    buf = buf || [];
+    str = "";
+    uint24 = 0;
+    uint6ToB64 = function (uint6) {
+        return (
+            uint6 < 26
+            ? uint6 + 65
+            : uint6 < 52
+            ? uint6 + 71
+            : uint6 < 62
+            ? uint6 - 4
+            : uint6 === 62
+            ? 43
+            : 47
+        );
+    };
+    ii = 0;
+    while (ii < buf.length) {
+        mod3 = ii % 3;
+        uint24 |= buf[ii] << (16 >>> mod3 & 24);
+        if (mod3 === 2 || buf.length - ii === 1) {
+            str += String.fromCharCode(
+                uint6ToB64(uint24 >>> 18 & 63),
+                uint6ToB64(uint24 >>> 12 & 63),
+                uint6ToB64(uint24 >>> 6 & 63),
+                uint6ToB64(uint24 & 63)
+            );
+            uint24 = 0;
+        }
+        ii += 1;
+    }
+    return str.replace((
+        /A(?=A$|$)/gm
+    ), "");
+};
+
+local.base64ToBuffer = function (str) {
+/*
+ * this function will convert base64 <str> to Uint8Array
+ * https://gist.github.com/wang-bin/7332335
+ */
+    let buf;
+    let byte;
+    let chr;
+    let ii;
+    let jj;
+    let map64;
+    let mod4;
+    str = str || "";
+    buf = new Uint8Array(str.length); // 3/4
+    byte = 0;
+    jj = 0;
+    map64 = (
+        !(str.indexOf("-") === -1 && str.indexOf("_") === -1)
+        // base64url
+        ? "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+        // base64
+        : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    );
+    mod4 = 0;
+    ii = 0;
+    while (ii < str.length) {
+        chr = map64.indexOf(str[ii]);
+        if (chr !== -1) {
+            mod4 %= 4;
+            if (mod4 === 0) {
+                byte = chr;
+            } else {
+                byte = byte * 64 + chr;
+                buf[jj] = 255 & (byte >> ((-2 * (mod4 + 1)) & 6));
+                jj += 1;
+            }
+            mod4 += 1;
+        }
+        ii += 1;
+    }
+    // optimization - create resized-view of buf
+    return buf.subarray(0, jj);
+};
+
+local.base64urlFromBuffer = function (str) {
+/*
+ * this function will convert base64url <str> to Uint8Array
+ */
+    return local.base64FromBuffer(str).replace((
+        /\+/g
+    ), "-").replace((
+        /\//g
+    ), "_");
+};
+
+local.cryptoEncryptAes128cbc = async function (key, iv, data, mode) {
+/*
+ * this function will encrypt/decrypt <data> using <key>, <iv>, <mode>
+ */
+    let crypto;
+    // encode data
+    if (typeof data === "string") {
+        data = new TextEncoder().encode(data);
+    }
+    crypto = (
+        (globalThis.crypto && globalThis.crypto.subtle)
+        ? globalThis.crypto
+        : require("crypto")
+    );
+    mode = (
+        (crypto.subtle && mode === "decrypt")
+        ? crypto.subtle.decrypt.bind(crypto.subtle)
+        : crypto.subtle
+        ? crypto.subtle.encrypt.bind(crypto.subtle)
+        : mode === "decrypt"
+        ? crypto.createDecipheriv
+        : crypto.createCipheriv
+    );
+    if (crypto.subtle) {
+        key = await crypto.subtle.importKey("raw", key, {
+            name: "AES-CBC"
+        }, false, [
+            "decrypt", "encrypt"
+        ]);
+        mode = await mode({
+            iv,
+            name: "AES-CBC"
+        }, key, data);
+        data = new Uint8Array(mode);
+    } else {
+        mode = mode("aes-128-cbc", key, iv);
+        data = Buffer.concat([
+            mode.update(data), mode.final()
+        ]);
+    }
+    return data;
+};
+
+local.cryptoKeyUnwrap256 = async function (KK, RR) {
+/*
+ * this function will aes256 wrapKey/unwrapKey <RR> using <KK>
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
+    2.2.2 Key Unwrap
+    https://tools.ietf.org/html/rfc3394#section-2.2.2
+        Inputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and
+            Key, K (the KEK).
+        Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.
+        1) Initialize variables.
+            Set A = C[0]
+            For i = 1 to n
+                R[i] = C[i]
+        2) Compute intermediate values.
+            For j = 5 to 0
+                For i = n to 1
+                    B = AES-1(K, (A ^ t) | R[i]) where t = n*j+i
+                    A = MSB(64, B)
+                    R[i] = LSB(64, B)
+        3) Output results.
+            For i = 1 to n
+                P[i] = R[i]
+ */
+    return await local.cryptoKeyWrap256(KK, RR, "unwrap");
+};
+
+local.cryptoKeyWrap256 = async function (KK, RR, mode) {
+/*
+ * this function will aes256 wrapKey/unwrapKey <RR> using <KK>
+ * https://tools.ietf.org/html/rfc7516#appendix-A.3.3
+    2.2.1 Key Wrap
+    https://tools.ietf.org/html/rfc3394#section-2.2.1
+        Inputs: Plaintext, n 64-bit values {P1, P2, ..., Pn}, and
+            Key, K (the KEK).
+        Outputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}.
+        1) Initialize variables.
+            Set A = IV, an initial value (see 2.2.3)
+            For i = 1 to n
+                R[i] = P[i]
+        2) Calculate intermediate values.
+            For j = 0 to 5
+                For i = 1 to n
+                    B = AES(K, A | R[i])
+                    A = MSB(64, B) ^ t where t = (n*j)+i
+                    R[i] = LSB(64, B)
+        3) Output the results.
+            Set C[0] = A
+            For i = 1 to n
+                C[i] = R[i]
+*/
+    let AA;
+    let BB;
+    let crypto;
+    let ii;
+    let iv;
+    let jj;
+    let loop;
+    let nn;
+    let tt;
+    // init var
+    AA = new Uint8Array(32);
+    ii = 0;
+    iv = new Uint8Array(16);
+    nn = 4;
+    crypto = (
+        (globalThis.crypto && globalThis.crypto.subtle)
+        ? globalThis.crypto
+        : require("crypto")
+    );
+    // use crypto.subtle
+    if (crypto.subtle) {
+        KK = await crypto.subtle.importKey("raw", KK, {
+            name: "AES-KW"
+        }, false, [
+            "unwrapKey", "wrapKey"
+        ]);
+        if (mode === "unwrap") {
+            RR = await crypto.subtle.unwrapKey("raw", RR, KK, {
+                name: "AES-KW"
+            }, {
+                name: "AES-CBC"
+            }, true, [
+                "decrypt", "encrypt"
+            ]);
+            RR = await crypto.subtle.exportKey("raw", RR);
+        } else {
+            RR = await crypto.subtle.importKey("raw", RR, {
+                name: "AES-CBC"
+            }, true, [
+                "decrypt", "encrypt"
+            ]);
+            RR = await crypto.subtle.wrapKey("raw", RR, KK, "AES-KW");
+        }
+        return new Uint8Array(RR);
+    }
+    crypto = (
+        mode === "unwrap"
+        ? crypto.createDecipheriv
+        : crypto.createCipheriv
+    );
+    // init loop
+    loop = async function () {
+        // AA xor tt
+        if (mode === "unwrap") {
+            tt = nn * jj + ii;
+            AA[4] ^= ((tt >>> 24) & 0xff);
+            AA[5] ^= ((tt >> 16) & 0xff);
+            AA[6] ^= ((tt >> 8) & 0xff);
+            AA[7] ^= (tt & 0xff);
+        }
+        // init RR
+        AA[8] = RR[8 * ii];
+        AA[9] = RR[8 * ii + 1];
+        AA[10] = RR[8 * ii + 2];
+        AA[11] = RR[8 * ii + 3];
+        AA[12] = RR[8 * ii + 4];
+        AA[13] = RR[8 * ii + 5];
+        AA[14] = RR[8 * ii + 6];
+        AA[15] = RR[8 * ii + 7];
+        // encrypt / decrypt RR
+        BB = crypto("aes-128-cbc", KK, iv);
+        BB.setAutoPadding(false);
+        BB = Buffer.concat([
+            BB.update(AA), BB.final()
+        ]);
+        // update RR
+        AA[0] = BB[0];
+        AA[1] = BB[1];
+        AA[2] = BB[2];
+        AA[3] = BB[3];
+        AA[4] = BB[4];
+        AA[5] = BB[5];
+        AA[6] = BB[6];
+        AA[7] = BB[7];
+        RR[8 * ii + 0] = BB[8];
+        RR[8 * ii + 1] = BB[9];
+        RR[8 * ii + 2] = BB[10];
+        RR[8 * ii + 3] = BB[11];
+        RR[8 * ii + 4] = BB[12];
+        RR[8 * ii + 5] = BB[13];
+        RR[8 * ii + 6] = BB[14];
+        RR[8 * ii + 7] = BB[15];
+        // AA xor tt
+        if (mode !== "unwrap") {
+            tt = nn * jj + ii;
+            AA[4] ^= ((tt >>> 24) & 0xff);
+            AA[5] ^= ((tt >> 16) & 0xff);
+            AA[6] ^= ((tt >> 8) & 0xff);
+            AA[7] ^= (tt & 0xff);
+        }
+    };
+    if (mode === "unwrap") {
+        AA[0] = RR[0];
+        AA[1] = RR[1];
+        AA[2] = RR[2];
+        AA[3] = RR[3];
+        AA[4] = RR[4];
+        AA[5] = RR[5];
+        AA[6] = RR[6];
+        AA[7] = RR[7];
+        jj = 5;
+        while (0 <= jj) {
+            ii = nn;
+            while (1 <= ii) {
+                await loop();
+                ii -= 1;
+            }
+            jj -= 1;
+        }
+        return RR.slice(8);
+    }
+    BB = RR;
+    RR = new Uint8Array(BB.length + 8);
+    ii = 0;
+    while (ii < BB.length) {
+        RR[ii + 8] = BB[ii];
+        ii += 1;
+    }
+    AA[0] = 0xa6;
+    AA[1] = 0xa6;
+    AA[2] = 0xa6;
+    AA[3] = 0xa6;
+    AA[4] = 0xa6;
+    AA[5] = 0xa6;
+    AA[6] = 0xa6;
+    AA[7] = 0xa6;
+    jj = 0;
+    while (jj <= 5) {
+        ii = 1;
+        while (ii <= nn) {
+            await loop();
+            ii += 1;
+        }
+        jj += 1;
+    }
+    RR[0] = AA[0];
+    RR[1] = AA[1];
+    RR[2] = AA[2];
+    RR[3] = AA[3];
+    RR[4] = AA[4];
+    RR[5] = AA[5];
+    RR[6] = AA[6];
+    RR[7] = AA[7];
+    return RR;
+};
+
+local.cryptoRandomBuffer = function (nn) {
+/*
+ * this function will return random buf with length <nn>
+ */
+    return (
+        (globalThis.crypto && globalThis.crypto.subtle)
+        ? globalThis.crypto.getRandomValues(new Uint8Array(nn))
+        : require("crypto").randomBytes(nn)
+    );
+};
+
+local.cryptoSignHmacSha256 = async function (key, data) {
+/*
+ * this function will crypto-hmac-sha256 sign <data> using <key>
+ */
+    let crypto;
+    crypto = (
+        (globalThis.crypto && globalThis.crypto.subtle)
+        ? globalThis.crypto
+        : require("crypto")
+    );
+    if (crypto.subtle) {
+        key = await crypto.subtle.importKey("raw", key, {
+            hash: "SHA-256",
+            name: "HMAC"
+        }, false, [
+            "sign"
+        ]);
+        data = new Uint8Array(await crypto.subtle.sign({
+            name: "HMAC"
+        }, key, data));
+    } else {
+        data = crypto.createHmac("sha256", key).update(data).digest();
+    }
+    return data;
+};
+
+local.jweDecrypt = async function (opt) {
+/*
+ * this function will A128CBC-HS256 decrypt <opt>.jweCompact using <opt>.kek
+ */
+    opt.mode = "decrypt";
+    return local.jweEncrypt(opt);
+};
+
+local.jweEncrypt = async function (opt) {
+/*
+ * this function will A128CBC-HS256 encrypt <opt>.plaintext
+ * using <opt>.cek, <opt>.iv, <opt>.kek
+ * to jwe-compact-serialization
+ * from https://tools.ietf.org/html/rfc7516#appendix-A.3
+    BASE64URL(UTF8(JWE Protected Header)) || '.' ||
+    BASE64URL(JWE Encrypted Key) || '.' ||
+    BASE64URL(JWE Initialization Vector) || '.' ||
+    BASE64URL(JWE Ciphertext) || '.' ||
+    BASE64URL(JWE Authentication Tag)
+*/
+    let base64urlFromBuffer;
+    let base64urlToBuffer;
+    let sign;
+    let tmp;
+    base64urlFromBuffer = function (buf) {
+    /*
+     * this function will convert Uint8Array <buf> to base64url str
+     */
+        return (
+            typeof buf === "string"
+            ? buf
+            : local.base64urlFromBuffer(buf)
+        );
+    };
+    base64urlToBuffer = function (str) {
+    /*
+     * this function will convert base64url <str> to Uint8Array
+     */
+        return (
+            typeof str.byteLength === "number"
+            ? str
+            : local.base64ToBuffer(str)
+        );
+    };
+    sign = async function (cek, aad, iv, ciphertext) {
+    /*
+     * this function will hmac-sha-256 sign <opt>.ciphertext
+     * using <opt>.cek, <opt>.iv, <opt>.protectedHeader
+     * https://tools.ietf.org/html/rfc7516#appendix-B.5
+     */
+        let data;
+        let ii;
+        let jj;
+        // init aad
+        aad = new TextEncoder().encode(aad);
+        // init data
+        data = new Uint8Array(aad.length + iv.length + ciphertext.length + 8);
+        // concat data
+        ii = 0;
+        [
+            aad, iv, ciphertext, [
+                // 64-bit length of aad
+                0,
+                0,
+                0,
+                0,
+                (aad.length >>> 21) & 0xff,
+                (aad.length >> 13) & 0xff,
+                (aad.length >> 5) & 0xff,
+                (8 * aad.length) & 0xff
+            ]
+        ].forEach(function (elem) {
+            jj = 0;
+            while (jj < elem.length) {
+                data[ii] = elem[jj];
+                ii += 1;
+                jj += 1;
+            }
+        });
+        return base64urlFromBuffer((
+            await local.cryptoSignHmacSha256(cek.slice(0, 16), data)
+        ).slice(0, 16));
+    };
+    // init kek
+    opt.kek = base64urlToBuffer(opt.kek);
+    // {"alg":"A128KW","enc":"A128CBC-HS256"}
+    opt.protectedHeader = "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0";
+    switch (opt.mode) {
+    /*
+     * parse jweCompact to jwe-json-serialization
+     * from https://tools.ietf.org/html/rfc7516#section-3.2
+        "protected", with the value BASE64URL(UTF8(JWE Protected Header))
+        "unprotected", with the value JWE Shared Unprotected Header
+        "header", with the value JWE Per-Recipient Unprotected Header
+        "encrypted_key", with the value BASE64URL(JWE Encrypted Key)
+        "iv", with the value BASE64URL(JWE Initialization Vector)
+        "ciphertext", with the value BASE64URL(JWE Ciphertext)
+        "tag", with the value BASE64URL(JWE Authentication Tag)
+        "aad", with the value BASE64URL(JWE AAD)
+     */
+    case "decrypt":
+    case "validate":
+        tmp = opt.jweCompact.split(".");
+        opt.encrypted_key = tmp[1];
+        opt.iv = base64urlToBuffer(tmp[2]);
+        opt.ciphertext = base64urlToBuffer(tmp[3]);
+        opt.tag = tmp[4];
+        // unwrapKey encrypted_key to cek
+        opt.cek = base64urlToBuffer(opt.cek || await local.cryptoKeyUnwrap256(
+            opt.kek,
+            base64urlToBuffer(opt.encrypted_key)
+        ));
+        // validate tag
+        local.assertOrThrow(tmp.length === 5 && opt.tag === await sign(
+            opt.cek,
+            opt.protectedHeader,
+            opt.iv,
+            opt.ciphertext
+        ), "invalid signature");
+        if (opt.mode === "validate") {
+            return;
+        }
+        // decrypt ciphertext to plaintext
+        opt.plaintext = await local.cryptoEncryptAes128cbc(
+            opt.cek.slice(16),
+            opt.iv,
+            opt.ciphertext,
+            "decrypt"
+        );
+        opt.plaintext = new TextDecoder().decode(opt.plaintext);
+        return opt.plaintext;
+    // encrypt
+    default:
+        // init cek
+        if (!opt.cek) {
+            opt.cek = local.cryptoRandomBuffer(32);
+            delete opt.encrypted_key;
+            delete opt.iv;
+        }
+        opt.cek = base64urlToBuffer(opt.cek);
+        // wrapKey cek to encrypted_key
+        opt.encrypted_key = base64urlFromBuffer(
+            opt.encrypted_key || await local.cryptoKeyWrap256(
+                opt.kek,
+                opt.cek
+            )
+        );
+        // init iv
+        opt.iv = base64urlToBuffer(
+            opt.ivOverride || local.cryptoRandomBuffer(16)
+        );
+        // encrypt plaintext to ciphertext
+        opt.ciphertext = await local.cryptoEncryptAes128cbc(
+            opt.cek.slice(16),
+            opt.iv,
+            opt.plaintext
+        );
+        // init tag
+        opt.tag = await sign(
+            opt.cek,
+            opt.protectedHeader,
+            opt.iv,
+            opt.ciphertext
+        );
+        opt.jweCompact = (
+            opt.protectedHeader + "."
+            + opt.encrypted_key + "."
+            + base64urlFromBuffer(opt.iv) + "."
+            + base64urlFromBuffer(opt.ciphertext) + "."
+            + opt.tag
+        );
+        return opt.jweCompact;
+    }
+};
+
+local.jweValidate = async function (opt) {
+/*
+ * this function will A128CBC-HS256 validate <opt>.jweCompact using <opt>.kek
+ */
+    opt.mode = "validate";
+    return local.jweEncrypt(opt);
+};
+
+local.jwsDecode = async function (key, jwsCompact) {
+/*
+ * this function will HS256 decode <jwsCompact> using <key>
+ */
+    return await local.jwsEncode(key, jwsCompact, "decode");
+};
+
+local.jwsEncode = async function (key, payload, mode) {
+/*
+ * this function will HS256 encode <payload> using <key>
+ * to jws-compact-serialization
+ * from https://tools.ietf.org/html/rfc7515#section-3.1
+    BASE64URL(UTF8(JWS Protected Header)) || '.' ||
+    BASE64URL(JWS Payload) || '.' ||
+    BASE64URL(JWS Signature)
+ */
+    let sign;
+    sign = async function (key, data) {
+        return local.base64urlFromBuffer(await local.cryptoSignHmacSha256(
+            local.base64ToBuffer(key),
+            new TextEncoder().encode(data)
+        ));
+    };
+    switch (mode) {
+    case "decode":
+    case "validate":
+        payload = payload.split(".");
+        local.assertOrThrow((
+            payload.length === 3
+            && payload[2] === (await sign(key, payload.slice(0, 2).join(".")))
+        ), "invalid signature");
+        if (mode === "validate") {
+            return;
+        }
+        return new TextDecoder().decode(local.base64ToBuffer(payload[1]));
+    // encode
+    default:
+        payload = (
+            "eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9."
+            + local.base64urlFromBuffer(payload)
+        );
+        return payload + "." + (await sign(key, payload));
+    }
+};
+
+local.jwsValidate = async function (key, jwsCompact) {
+/*
+ * this function will HS256 validate <jwsCompact> using <key>
+ */
+    return await local.jwsEncode(key, jwsCompact, "validate");
+};
 }());
 }());
 /* script-end /assets.my_app.js */
@@ -70589,7 +71838,7 @@ instruction
 // init local
 local = (
     globalThis.utility2_rollup
-    || globalThis.utility2_jose_lite
+    || globalThis.utility2_jose
     || globalThis.utility2_moduleExports
 );
 // init exports
@@ -70630,11 +71879,6 @@ if (!local.isBrowser) {
 });
 local.objectAssignDefault(local, globalThis.domOnEventDelegateDict);
 globalThis.domOnEventDelegateDict = local;
-if ((
-    /\bmodeTest=1\b/
-).test(location.search)) {
-    local.testRunBrowser();
-}
 }());
 
 
@@ -71073,7 +72317,7 @@ utility2-comment -->\n\
 <script>window.utility2_onReadyBefore.counter += 1;</script>\n\
 <script src="jsonp.utility2.stateInit?callback=window.utility2.stateInit"></script>\n\
 utility2-comment -->\n\
-<script src="assets.jose_lite.js"></script>\n\
+<script src="assets.jose.js"></script>\n\
 <script src="assets.example.js"></script>\n\
 <script src="assets.test.js"></script>\n\
 <script>\n\
@@ -71096,10 +72340,10 @@ utility2-comment -->\n\
 </html>\n\
 ';
 /* jslint ignore:end */
-local.assetsDict["/assets.jose_lite.js"] = (
-    local.assetsDict["/assets.jose_lite.js"]
+local.assetsDict["/assets.jose.js"] = (
+    local.assetsDict["/assets.jose.js"]
     || local.fs.readFileSync(
-        local.__dirname + "/lib.jose_lite.js",
+        local.__dirname + "/lib.jose.js",
         "utf8"
     ).replace((
         /^#!\//
@@ -71117,7 +72361,7 @@ local.assetsDict["/"] = local.assetsDict[
     case "npm_package_name":
         return "jose-lite";
     case "npm_package_nameLib":
-        return "jose_lite";
+        return "jose";
     case "npm_package_version":
         return "0.0.1";
     default:
@@ -71162,7 +72406,7 @@ local.http.createServer(function (req, res) {
 
 
 /* script-begin /assets.test.js */
-/* istanbul instrument in package jose_lite */
+/* istanbul instrument in package jose */
 // assets.utility2.header.js - start
 /* istanbul ignore next */
 /* jslint utility2:true */
@@ -71561,7 +72805,81 @@ local.testRunDefault(local);
 
 // run shared js-env code - function
 (function () {
-return;
+local.testCase_jweXxx_default = async function (opt, onError) {
+/*
+ * this function will test jweXxx's default handling-behavior
+ */
+    // test example from
+    // https://tools.ietf.org/html/rfc7516#appendix-A.3
+    opt = {};
+    opt.jweCompact = await local.jweEncrypt({
+        cek: "BNMfxVSd_P4LZJ36P6pqzmt81C1vawnbyLEA8I-cLM8",
+        ivOverride: "AxY8DCtDaGlsbGljb3RoZQ",
+        kek: "GawgguFyGrWKav7AX4VKUg",
+        plaintext: "Live long and prosper."
+    });
+    local.assertJsonEqual(opt.jweCompact, (
+        // protected
+        "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0."
+        // cek
+        + "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ."
+        // iv
+        + "AxY8DCtDaGlsbGljb3RoZQ."
+        // data
+        + "KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY."
+        // tag
+        + "U0m_YmjN04DJvceFICbCVQ"
+    ));
+    opt.jweDecrypted = await local.jweDecrypt({
+        jweCompact: opt.jweCompact,
+        kek: "GawgguFyGrWKav7AX4VKUg"
+    });
+    local.assertJsonEqual(opt.jweDecrypted, "Live long and prosper.");
+    await local.jweValidate({
+        jweCompact: opt.jweCompact,
+        kek: "GawgguFyGrWKav7AX4VKUg"
+    });
+    onError(undefined, opt);
+};
+
+local.testCase_jwsXxx_default = async function (opt, onError) {
+/*
+ * this function will test jweXxx's default handling-behavior
+ */
+    // test example from
+    // https://tools.ietf.org/html/rfc7515#section-3.3
+    opt = {};
+    opt.key = (
+        "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75"
+        + "aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow"
+    );
+    opt.payload = (
+        "{\"iss\":\"joe\",\r\n "
+        + "\"exp\":1300819380,\r\n "
+        + "\"http://example.com/is_root\":true}"
+    );
+    opt.jwsCompact = await local.jwsEncode(opt.key, opt.payload);
+    local.assertJsonEqual(opt.jwsCompact, (
+        // protected
+        "eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9."
+        // payload
+        + (
+            "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFt"
+            + "cGxlLmNvbS9pc19yb290Ijp0cnVlfQ."
+        )
+        // signature
+        + "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+    ));
+    local.assertJsonEqual(
+        await local.jwsDecode(opt.key, opt.jwsCompact),
+        opt.payload
+    );
+    await local.jwsValidate(opt.key, opt.jwsCompact);
+    onError(undefined, opt);
+};
+
+//!! local.testCase_jweXxx_default(undefined, local.onErrorDefault);
+//!! local.testCase_jwsXxx_default(undefined, local.onErrorDefault);
 }());
 }());
 /* script-end /assets.test.js */

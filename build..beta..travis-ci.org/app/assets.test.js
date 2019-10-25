@@ -1,4 +1,4 @@
-/* istanbul instrument in package jose_lite */
+/* istanbul instrument in package jose */
 // assets.utility2.header.js - start
 /* istanbul ignore next */
 /* jslint utility2:true */
@@ -397,6 +397,80 @@ local.testRunDefault(local);
 
 // run shared js-env code - function
 (function () {
-return;
+local.testCase_jweXxx_default = async function (opt, onError) {
+/*
+ * this function will test jweXxx's default handling-behavior
+ */
+    // test example from
+    // https://tools.ietf.org/html/rfc7516#appendix-A.3
+    opt = {};
+    opt.jweCompact = await local.jweEncrypt({
+        cek: "BNMfxVSd_P4LZJ36P6pqzmt81C1vawnbyLEA8I-cLM8",
+        ivOverride: "AxY8DCtDaGlsbGljb3RoZQ",
+        kek: "GawgguFyGrWKav7AX4VKUg",
+        plaintext: "Live long and prosper."
+    });
+    local.assertJsonEqual(opt.jweCompact, (
+        // protected
+        "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0."
+        // cek
+        + "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ."
+        // iv
+        + "AxY8DCtDaGlsbGljb3RoZQ."
+        // data
+        + "KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY."
+        // tag
+        + "U0m_YmjN04DJvceFICbCVQ"
+    ));
+    opt.jweDecrypted = await local.jweDecrypt({
+        jweCompact: opt.jweCompact,
+        kek: "GawgguFyGrWKav7AX4VKUg"
+    });
+    local.assertJsonEqual(opt.jweDecrypted, "Live long and prosper.");
+    await local.jweValidate({
+        jweCompact: opt.jweCompact,
+        kek: "GawgguFyGrWKav7AX4VKUg"
+    });
+    onError(undefined, opt);
+};
+
+local.testCase_jwsXxx_default = async function (opt, onError) {
+/*
+ * this function will test jweXxx's default handling-behavior
+ */
+    // test example from
+    // https://tools.ietf.org/html/rfc7515#section-3.3
+    opt = {};
+    opt.key = (
+        "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75"
+        + "aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow"
+    );
+    opt.payload = (
+        "{\"iss\":\"joe\",\r\n "
+        + "\"exp\":1300819380,\r\n "
+        + "\"http://example.com/is_root\":true}"
+    );
+    opt.jwsCompact = await local.jwsEncode(opt.key, opt.payload);
+    local.assertJsonEqual(opt.jwsCompact, (
+        // protected
+        "eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9."
+        // payload
+        + (
+            "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFt"
+            + "cGxlLmNvbS9pc19yb290Ijp0cnVlfQ."
+        )
+        // signature
+        + "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+    ));
+    local.assertJsonEqual(
+        await local.jwsDecode(opt.key, opt.jwsCompact),
+        opt.payload
+    );
+    await local.jwsValidate(opt.key, opt.jwsCompact);
+    onError(undefined, opt);
+};
+
+//!! local.testCase_jweXxx_default(undefined, local.onErrorDefault);
+//!! local.testCase_jwsXxx_default(undefined, local.onErrorDefault);
 }());
 }());

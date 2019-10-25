@@ -1,9 +1,9 @@
-<svg height="1086" width="720" xmlns="http://www.w3.org/2000/svg">
-<rect height="1086" fill="#555" width="720"></rect>
+<svg height="1214" width="720" xmlns="http://www.w3.org/2000/svg">
+<rect height="1214" fill="#555" width="720"></rect>
 <text fill="#7f7" font-family="Courier New" font-size="12" xml:space="preserve">
 <tspan x="10" y="26"></tspan>
 
-<tspan x="10" y="42">\x1b[35m[MODE_BUILD=npmTestPublished]\x1b[0m - 2019-10-25T14:39:10.438Z - npm-testing /tmp/npmTe\</tspan>
+<tspan x="10" y="42">\x1b[35m[MODE_BUILD=npmTestPublished]\x1b[0m - 2019-10-25T15:02:58.105Z - npm-testing /tmp/npmTe\</tspan>
 <tspan x="10" y="58">stPublished/node_modules/jose-lite</tspan>
 
 <tspan x="10" y="74"></tspan>
@@ -13,114 +13,127 @@
 <tspan x="10" y="106">covering $ /home/travis/.nvm/versions/node/v13.0.1/bin/node /tmp/npmTestPublished/node_modules/j\</tspan>
 <tspan x="10" y="122">ose-lite/test.js</tspan>
 
-<tspan x="10" y="138">&gt; http-server listening on port 59386</tspan>
+<tspan x="10" y="138">&gt; http-server listening on port 40816</tspan>
 
-<tspan x="10" y="154">testRunDefault - 7 ms - [node test-case 1 of 7 passed] - testCase_buildApidoc_default</tspan>
+<tspan x="10" y="154">testRunDefault - 18 ms - [node test-case 1 of 9 passed] - testCase_buildApidoc_default</tspan>
 
-<tspan x="10" y="170">testRunDefault - 42 ms - [node test-case 2 of 7 passed] - testCase_buildLib_default</tspan>
+<tspan x="10" y="170">testRunDefault - 70 ms - [node test-case 2 of 9 passed] - testCase_buildLib_default</tspan>
 
-<tspan x="10" y="186">testRunDefault - 55 ms - [node test-case 3 of 7 passed] - testCase_buildReadme_default</tspan>
+<tspan x="10" y="186">testRunDefault - 86 ms - [node test-case 3 of 9 passed] - testCase_buildReadme_default</tspan>
 
-<tspan x="10" y="202">testRunDefault - 57 ms - [node test-case 4 of 7 passed] - testCase_buildTest_default</tspan>
+<tspan x="10" y="202">testRunDefault - 90 ms - [node test-case 4 of 9 passed] - testCase_buildTest_default</tspan>
 
-<tspan x="10" y="218">testRunDefault - 58 ms - [node test-case 5 of 7 passed] - testCase_nop_default</tspan>
+<tspan x="10" y="218">testRunDefault - 99 ms - [node test-case 5 of 9 passed] - testCase_nop_default</tspan>
 
-<tspan x="10" y="234">jslint - 395ms /tmp/npmTestPublished/node_modules/jose-lite/README.md</tspan>
+<tspan x="10" y="234">jslint - 385ms /tmp/npmTestPublished/node_modules/jose-lite/README.md</tspan>
 
-<tspan x="10" y="250">jslint - 70ms /tmp/npmTestPublished/node_modules/jose-lite/lib.jose_lite.js</tspan>
+<tspan x="10" y="250">testRunDefault - 120 ms - [node test-case 6 of 9 passed] - testCase_jwsXxx_default</tspan>
 
-<tspan x="10" y="266">jslint - 2ms /tmp/npmTestPublished/node_modules/jose-lite/npm_scripts.sh</tspan>
+<tspan x="10" y="266">testRunDefault - 148 ms - [node test-case 7 of 9 passed] - testCase_jweXxx_default</tspan>
 
-<tspan x="10" y="282">jslint - 0ms /tmp/npmTestPublished/node_modules/jose-lite/package.json</tspan>
+<tspan x="10" y="282">jslint - 229ms /tmp/npmTestPublished/node_modules/jose-lite/lib.jose.js</tspan>
 
-<tspan x="10" y="298">jslint - 46ms /tmp/npmTestPublished/node_modules/jose-lite/test.js</tspan>
+<tspan x="10" y="298">jslint - 4ms /tmp/npmTestPublished/node_modules/jose-lite/npm_scripts.sh</tspan>
 
-<tspan x="10" y="314"></tspan>
+<tspan x="10" y="314">jslint - 0ms /tmp/npmTestPublished/node_modules/jose-lite/package.json</tspan>
 
-<tspan x="10" y="330">DevTools listening on ws://127.0.0.1:44217/devtools/browser/27ca654c-25d2-420e-8a77-8c5760fb5460</tspan>
+<tspan x="10" y="330">jslint - 71ms /tmp/npmTestPublished/node_modules/jose-lite/test.js</tspan>
 
-<tspan x="10" y="346">http-server listening on port 49254</tspan>
+<tspan x="10" y="346"></tspan>
 
-<tspan x="10" y="362">[1025/143911.792068:ERROR:command_buffer_proxy_impl.cc(124)] ContextResult::kTransientFailure: F\</tspan>
-<tspan x="10" y="378">ailed to send GpuChannelMsg_CreateCommandBuffer.</tspan>
+<tspan x="10" y="362">DevTools listening on ws://127.0.0.1:34375/devtools/browser/b41f33c4-7c0e-4cf1-b422-a41ca18628ea</tspan>
 
-<tspan x="10" y="394">[1025/143911.791908:WARNING:ipc_message_attachment_set.cc(49)] MessageAttachmentSet destroyed wi\</tspan>
-<tspan x="10" y="410">th unconsumed attachments: 0/1</tspan>
+<tspan x="10" y="378">[1025/150259.846943:ERROR:command_buffer_proxy_impl.cc(124)] ContextResult::kTransientFailure: F\</tspan>
+<tspan x="10" y="394">ailed to send GpuChannelMsg_CreateCommandBuffer.</tspan>
 
-<tspan x="10" y="426">[1025/143911.796046:ERROR:command_buffer_proxy_impl.cc(124)] ContextResult::kTransientFailure: F\</tspan>
-<tspan x="10" y="442">ailed to send GpuChannelMsg_CreateCommandBuffer.</tspan>
+<tspan x="10" y="410">[1025/150259.846911:WARNING:ipc_message_attachment_set.cc(49)] MessageAttachmentSet destroyed wi\</tspan>
+<tspan x="10" y="426">th unconsumed attachments: 0/1</tspan>
 
-<tspan x="10" y="458">[1025/143911.796021:WARNING:ipc_message_attachment_set.cc(49)] MessageAttachmentSet destroyed wi\</tspan>
-<tspan x="10" y="474">th unconsumed attachments: 0/1</tspan>
+<tspan x="10" y="442">[1025/150259.859419:ERROR:command_buffer_proxy_impl.cc(124)] ContextResult::kTransientFailure: F\</tspan>
+<tspan x="10" y="458">ailed to send GpuChannelMsg_CreateCommandBuffer.</tspan>
 
-<tspan x="10" y="490">[1025/143912.154633:INFO:CONSOLE(546)] "Uncaught TypeError: local.testRunBrowser is not a functi\</tspan>
-<tspan x="10" y="506">on", source: http://127.0.0.1:59386/assets.example.js (546)</tspan>
+<tspan x="10" y="474">[1025/150259.865772:WARNING:ipc_message_attachment_set.cc(49)] MessageAttachmentSet destroyed wi\</tspan>
+<tspan x="10" y="490">th unconsumed attachments: 0/1</tspan>
 
-<tspan x="10" y="522">[1025/143912.169554:INFO:CONSOLE(526)] "testRunDefault - 6 ms - [browser test-case 1 of 1 passed\</tspan>
-<tspan x="10" y="538">] - testCase_nop_default", source: http://127.0.0.1:59386/assets.example.js (526)</tspan>
+<tspan x="10" y="506">[1025/150259.887652:WARNING:ipc_message_attachment_set.cc(49)] MessageAttachmentSet destroyed wi\</tspan>
+<tspan x="10" y="522">th unconsumed attachments: 0/1</tspan>
 
-<tspan x="10" y="554">[1025/143912.261628:INFO:CONSOLE(526)] "domOnEventWindowOnloadTimeElapsed = 271", source: http:/\</tspan>
-<tspan x="10" y="570">/127.0.0.1:59386/assets.example.js (526)</tspan>
+<tspan x="10" y="538">[1025/150259.888085:WARNING:ipc_message_attachment_set.cc(49)] MessageAttachmentSet destroyed wi\</tspan>
+<tspan x="10" y="554">th unconsumed attachments: 0/1</tspan>
 
-<tspan x="10" y="586">testRunDefault - 1340 ms - [node test-case 6 of 7 passed] - testCase_webpage_default</tspan>
+<tspan x="10" y="570">http-server listening on port 54119</tspan>
 
-<tspan x="10" y="602">testRunDefault - 5624 ms - [node test-case 7 of 7 passed] - testCase_buildApp_default</tspan>
+<tspan x="10" y="586">[1025/150300.310716:INFO:CONSOLE(528)] "testRunDefault - 7 ms - [browser test-case 1 of 3 passed\</tspan>
+<tspan x="10" y="602">] - testCase_nop_default", source: http://127.0.0.1:40816/assets.example.js (528)</tspan>
 
-<tspan x="10" y="618">-----------------------|-----------|-----------|-----------|-----------|</tspan>
+<tspan x="10" y="618">[1025/150300.325723:INFO:CONSOLE(528)] "testRunDefault - 23 ms - [browser test-case 2 of 3 passe\</tspan>
+<tspan x="10" y="634">d] - testCase_jwsXxx_default", source: http://127.0.0.1:40816/assets.example.js (528)</tspan>
 
-<tspan x="10" y="634">File                   |   % Stmts |% Branches |   % Funcs |   % Lines |</tspan>
+<tspan x="10" y="650">[1025/150300.331631:INFO:CONSOLE(528)] "testRunDefault - 28 ms - [browser test-case 3 of 3 passe\</tspan>
+<tspan x="10" y="666">d] - testCase_jweXxx_default", source: http://127.0.0.1:40816/assets.example.js (528)</tspan>
 
-<tspan x="10" y="650">-----------------------|-----------|-----------|-----------|-----------|</tspan>
+<tspan x="10" y="682">[1025/150300.399910:INFO:CONSOLE(528)] "domOnEventWindowOnloadTimeElapsed = 317", source: http:/\</tspan>
+<tspan x="10" y="698">/127.0.0.1:40816/assets.example.js (528)</tspan>
 
-<tspan x="10" y="666">   jose-lite/          |       100 |       100 |       100 |       100 |</tspan>
+<tspan x="10" y="714">testRunDefault - 1603 ms - [node test-case 8 of 9 passed] - testCase_webpage_default</tspan>
 
-<tspan x="10" y="682">      lib.jose_lite.js |       100 |       100 |       100 |       100 |</tspan>
+<tspan x="10" y="730">testRunDefault - 5721 ms - [node test-case 9 of 9 passed] - testCase_buildApp_default</tspan>
 
-<tspan x="10" y="698">      test.js          |       100 |       100 |       100 |       100 |</tspan>
+<tspan x="10" y="746">------------------|-----------|-----------|-----------|-----------|</tspan>
 
-<tspan x="10" y="714">-----------------------|-----------|-----------|-----------|-----------|</tspan>
+<tspan x="10" y="762">File              |   % Stmts |% Branches |   % Funcs |   % Lines |</tspan>
 
-<tspan x="10" y="730">All files              |       100 |       100 |       100 |       100 |</tspan>
+<tspan x="10" y="778">------------------|-----------|-----------|-----------|-----------|</tspan>
 
-<tspan x="10" y="746">-----------------------|-----------|-----------|-----------|-----------|</tspan>
+<tspan x="10" y="794">   jose-lite/     |      99.4 |      96.5 |     98.59 |      99.4 |</tspan>
 
-<tspan x="10" y="762"></tspan>
+<tspan x="10" y="810">      lib.jose.js |     99.12 |     94.76 |     97.78 |     99.12 |</tspan>
 
-<tspan x="10" y="778">created coverage file /tmp/npmTestPublished/node_modules/jose-lite/tmp/build/coverage.html/index\</tspan>
-<tspan x="10" y="794">.html</tspan>
+<tspan x="10" y="826">      test.js     |       100 |       100 |       100 |       100 |</tspan>
 
-<tspan x="10" y="810"></tspan>
+<tspan x="10" y="842">------------------|-----------|-----------|-----------|-----------|</tspan>
 
-<tspan x="10" y="826">-------------------------------------------------------</tspan>
+<tspan x="10" y="858">All files         |      99.4 |      96.5 |     98.59 |      99.4 |</tspan>
 
-<tspan x="10" y="842">| test-report - npmTestPublished - browser - / - Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537\</tspan>
-<tspan x="10" y="858">.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.70 Safari/537.36 - 2019-10-25T14:39:12.089Z</tspan>
+<tspan x="10" y="874">------------------|-----------|-----------|-----------|-----------|</tspan>
 
-<tspan x="10" y="874">|      14 ms            0 failed        1 passed      |</tspan>
+<tspan x="10" y="890"></tspan>
 
-<tspan x="10" y="890">-------------------------------------------------------</tspan>
+<tspan x="10" y="906">created coverage file /tmp/npmTestPublished/node_modules/jose-lite/tmp/build/coverage.html/index\</tspan>
+<tspan x="10" y="922">.html</tspan>
 
-<tspan x="10" y="906">| test-report - npmTestPublished - node - linux v13.0.1 - 2019-10-25T14:39:10.633Z</tspan>
+<tspan x="10" y="938"></tspan>
 
-<tspan x="10" y="922">|    5624 ms            0 failed        7 passed      |</tspan>
+<tspan x="10" y="954">-------------------------------------------------------</tspan>
 
-<tspan x="10" y="938">-------------------------------------------------------</tspan>
+<tspan x="10" y="970">| test-report - npmTestPublished - browser - / - Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537\</tspan>
+<tspan x="10" y="986">.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.70 Safari/537.36 - 2019-10-25T15:03:00.220Z</tspan>
 
-<tspan x="10" y="954"></tspan>
+<tspan x="10" y="1002">|      32 ms            0 failed        3 passed      |</tspan>
 
-<tspan x="10" y="970">created test-report file /tmp/npmTestPublished/node_modules/jose-lite/tmp/build/test-report.html</tspan>
+<tspan x="10" y="1018">-------------------------------------------------------</tspan>
 
-<tspan x="10" y="986"></tspan>
+<tspan x="10" y="1034">| test-report - npmTestPublished - node - linux v13.0.1 - 2019-10-25T15:02:58.315Z</tspan>
 
-<tspan x="10" y="1002"></tspan>
+<tspan x="10" y="1050">|    5722 ms            0 failed        9 passed      |</tspan>
 
-<tspan x="10" y="1018">npmTestPublished - 0 failed tests</tspan>
+<tspan x="10" y="1066">-------------------------------------------------------</tspan>
 
-<tspan x="10" y="1034"></tspan>
+<tspan x="10" y="1082"></tspan>
 
-<tspan x="10" y="1050"></tspan>
+<tspan x="10" y="1098">created test-report file /tmp/npmTestPublished/node_modules/jose-lite/tmp/build/test-report.html</tspan>
 
-<tspan x="10" y="1066">\x1b[35m[MODE_BUILD=npmTestPublished]\x1b[0m - 2019-10-25T14:39:16.856Z - EXIT_CODE - 0</tspan>
+<tspan x="10" y="1114"></tspan>
+
+<tspan x="10" y="1130"></tspan>
+
+<tspan x="10" y="1146">npmTestPublished - 0 failed tests</tspan>
+
+<tspan x="10" y="1162"></tspan>
+
+<tspan x="10" y="1178"></tspan>
+
+<tspan x="10" y="1194">\x1b[35m[MODE_BUILD=npmTestPublished]\x1b[0m - 2019-10-25T15:03:04.875Z - EXIT_CODE - 0</tspan>
 
 </text>
 </svg>

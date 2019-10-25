@@ -279,7 +279,7 @@
 </script>
 <div class="header high">
     <h1 style="font-weight: bold;">
-        <a href="https://github.com/kaizhu256/node-jose-lite">jose-lite (2019.10.18)</a>
+        <a href="https://github.com/kaizhu256/node-jose-lite">jose-lite (2019.10.25)</a>
     </h1>
     <h1>Code coverage report for <span class="entity">node-jose-lite/test.js</span></h1>
     <table class="tableHeader">
@@ -294,10 +294,10 @@
     </thead>
     <tbody>
         <td>statements: 121<br>branches: 74<br>functions: 19</td>
-        <td>100%<br>(195 / 195)</td>
+        <td>100%<br>(211 / 211)</td>
         <td>100%<br>(95 / 95)</td>
-        <td>100%<br>(24 / 24)</td>
-        <td>100%<br>(195 / 195)</td>
+        <td>100%<br>(26 / 26)</td>
+        <td>100%<br>(211 / 211)</td>
     </tbody>
     </table>
     <div class="path"><a href="../index.html">All files</a> &#187; <a href="index.html">node-jose-lite/</a> &#187; test.js</div>
@@ -708,6 +708,80 @@
 <a href="#L402" id="L402">402</a>
 <a href="#L403" id="L403">403</a>
 <a href="#L404" id="L404">404</a>
+<a href="#L405" id="L405">405</a>
+<a href="#L406" id="L406">406</a>
+<a href="#L407" id="L407">407</a>
+<a href="#L408" id="L408">408</a>
+<a href="#L409" id="L409">409</a>
+<a href="#L410" id="L410">410</a>
+<a href="#L411" id="L411">411</a>
+<a href="#L412" id="L412">412</a>
+<a href="#L413" id="L413">413</a>
+<a href="#L414" id="L414">414</a>
+<a href="#L415" id="L415">415</a>
+<a href="#L416" id="L416">416</a>
+<a href="#L417" id="L417">417</a>
+<a href="#L418" id="L418">418</a>
+<a href="#L419" id="L419">419</a>
+<a href="#L420" id="L420">420</a>
+<a href="#L421" id="L421">421</a>
+<a href="#L422" id="L422">422</a>
+<a href="#L423" id="L423">423</a>
+<a href="#L424" id="L424">424</a>
+<a href="#L425" id="L425">425</a>
+<a href="#L426" id="L426">426</a>
+<a href="#L427" id="L427">427</a>
+<a href="#L428" id="L428">428</a>
+<a href="#L429" id="L429">429</a>
+<a href="#L430" id="L430">430</a>
+<a href="#L431" id="L431">431</a>
+<a href="#L432" id="L432">432</a>
+<a href="#L433" id="L433">433</a>
+<a href="#L434" id="L434">434</a>
+<a href="#L435" id="L435">435</a>
+<a href="#L436" id="L436">436</a>
+<a href="#L437" id="L437">437</a>
+<a href="#L438" id="L438">438</a>
+<a href="#L439" id="L439">439</a>
+<a href="#L440" id="L440">440</a>
+<a href="#L441" id="L441">441</a>
+<a href="#L442" id="L442">442</a>
+<a href="#L443" id="L443">443</a>
+<a href="#L444" id="L444">444</a>
+<a href="#L445" id="L445">445</a>
+<a href="#L446" id="L446">446</a>
+<a href="#L447" id="L447">447</a>
+<a href="#L448" id="L448">448</a>
+<a href="#L449" id="L449">449</a>
+<a href="#L450" id="L450">450</a>
+<a href="#L451" id="L451">451</a>
+<a href="#L452" id="L452">452</a>
+<a href="#L453" id="L453">453</a>
+<a href="#L454" id="L454">454</a>
+<a href="#L455" id="L455">455</a>
+<a href="#L456" id="L456">456</a>
+<a href="#L457" id="L457">457</a>
+<a href="#L458" id="L458">458</a>
+<a href="#L459" id="L459">459</a>
+<a href="#L460" id="L460">460</a>
+<a href="#L461" id="L461">461</a>
+<a href="#L462" id="L462">462</a>
+<a href="#L463" id="L463">463</a>
+<a href="#L464" id="L464">464</a>
+<a href="#L465" id="L465">465</a>
+<a href="#L466" id="L466">466</a>
+<a href="#L467" id="L467">467</a>
+<a href="#L468" id="L468">468</a>
+<a href="#L469" id="L469">469</a>
+<a href="#L470" id="L470">470</a>
+<a href="#L471" id="L471">471</a>
+<a href="#L472" id="L472">472</a>
+<a href="#L473" id="L473">473</a>
+<a href="#L474" id="L474">474</a>
+<a href="#L475" id="L475">475</a>
+<a href="#L476" id="L476">476</a>
+<a href="#L477" id="L477">477</a>
+<a href="#L478" id="L478">478</a>
 </td><td class="line-coverage"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1111,7 +1185,81 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js" tabIndex="0">/* istanbul instrument in package jose_lite */
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-yes">2</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js" tabIndex="0">/* istanbul instrument in package jose */
 // assets.utility2.header.js - start
 /* istanbul ignore next */
 /* jslint utility2:true */
@@ -1510,7 +1658,81 @@ local.testRunDefault(local);
 &nbsp;
 // run shared js-env code - function
 (function () {
-return;
+local.testCase_jweXxx_default = async function (opt, onError) {
+/*
+ * this function will test jweXxx's default handling-behavior
+ */
+    // test example from
+    // https://tools.ietf.org/html/rfc7516#appendix-A.3
+    opt = {};
+    opt.jweCompact = await local.jweEncrypt({
+        cek: "BNMfxVSd_P4LZJ36P6pqzmt81C1vawnbyLEA8I-cLM8",
+        ivOverride: "AxY8DCtDaGlsbGljb3RoZQ",
+        kek: "GawgguFyGrWKav7AX4VKUg",
+        plaintext: "Live long and prosper."
+    });
+    local.assertJsonEqual(opt.jweCompact, (
+        // protected
+        "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0."
+        // cek
+        + "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ."
+        // iv
+        + "AxY8DCtDaGlsbGljb3RoZQ."
+        // data
+        + "KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY."
+        // tag
+        + "U0m_YmjN04DJvceFICbCVQ"
+    ));
+    opt.jweDecrypted = await local.jweDecrypt({
+        jweCompact: opt.jweCompact,
+        kek: "GawgguFyGrWKav7AX4VKUg"
+    });
+    local.assertJsonEqual(opt.jweDecrypted, "Live long and prosper.");
+    await local.jweValidate({
+        jweCompact: opt.jweCompact,
+        kek: "GawgguFyGrWKav7AX4VKUg"
+    });
+    onError(undefined, opt);
+};
+&nbsp;
+local.testCase_jwsXxx_default = async function (opt, onError) {
+/*
+ * this function will test jweXxx's default handling-behavior
+ */
+    // test example from
+    // https://tools.ietf.org/html/rfc7515#section-3.3
+    opt = {};
+    opt.key = (
+        "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75"
+        + "aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow"
+    );
+    opt.payload = (
+        "{\"iss\":\"joe\",\r\n "
+        + "\"exp\":1300819380,\r\n "
+        + "\"http://example.com/is_root\":true}"
+    );
+    opt.jwsCompact = await local.jwsEncode(opt.key, opt.payload);
+    local.assertJsonEqual(opt.jwsCompact, (
+        // protected
+        "eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9."
+        // payload
+        + (
+            "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFt"
+            + "cGxlLmNvbS9pc19yb290Ijp0cnVlfQ."
+        )
+        // signature
+        + "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+    ));
+    local.assertJsonEqual(
+        await local.jwsDecode(opt.key, opt.jwsCompact),
+        opt.payload
+    );
+    await local.jwsValidate(opt.key, opt.jwsCompact);
+    onError(undefined, opt);
+};
+&nbsp;
+//!! local.testCase_jweXxx_default(undefined, local.onErrorDefault);
+//!! local.testCase_jwsXxx_default(undefined, local.onErrorDefault);
 }());
 }());
 &nbsp;
@@ -1518,7 +1740,7 @@ return;
 </table></pre>
 </div>
 <div class="footer">
-    <div class="meta">Generated by <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a> at Tue, 22 Oct 2019 15:39:32 GMT</div>
+    <div class="meta">Generated by <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a> at Fri, 25 Oct 2019 15:03:43 GMT</div>
 </div>
 </body>
 </html>
